@@ -50,18 +50,6 @@ async function checkForUpdate() {
 }
 
 app.whenReady().then(() => {
-    const exePath = process.execPath;
-    const tempDir = (process.env.TEMP || "").toLowerCase();
-    const installDir = path.join(process.env.LOCALAPPDATA || "", "RainCord");
-    const installedExe = path.join(installDir, "RainCord-Installer.exe");
-
-    if (exePath.toLowerCase().includes(tempDir) || exePath.toLowerCase().includes("\\appdata\\local\\temp")) {
-        fs.mkdirSync(installDir, { recursive: true });
-        fs.copyFileSync(exePath, installedExe);
-        spawn(installedExe, [], { detached: true, stdio: "ignore" }).unref();
-        app.quit();
-        return;
-    }
     mainWindow = new BrowserWindow({
         width: 680,
         height: 520,
