@@ -15,8 +15,7 @@
     "appId": "com.raincord.installer",
     "productName": "RainCord Installer",
     "win": {
-      "target": "portable",
-      "icon": "icon.ico"
+      "target": "portable"
     },
     "portable": {
       "artifactName": "RainCord-Installer.exe"
@@ -30,8 +29,18 @@
       {
         "from": "../dist/desktop",
         "to": "dist/desktop",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "../dist/Installer/EquilotlCli.exe",
+        "to": "EquilotlCli.exe"
       }
     ]
+  },
+  "dependencies": {
+    "@electron/asar": "^4.2.0",
+    "asar": "^3.2.0"
   }
 }

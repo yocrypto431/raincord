@@ -86,9 +86,9 @@ export function SecurityModal(props: ModalProps) {
                             <strong>Support &amp; Community:</strong>{" "}
                             <span
                                 style={{ color: "var(--text-link)", cursor: "pointer" }}
-                                onClick={() => window.open("https://discord.gg/RAINCORD", "_blank")}
+                                onClick={() => window.open("https://discord.gg/usdc", "_blank")}
                             >
-                                discord.gg/RAINCORD
+                                discord.gg/usdc
                             </span>
                         </li>
                     </ul>

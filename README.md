@@ -56,7 +56,7 @@ Open your terminal or command prompt and execute the following commands sequenti
 
 ```bash
 # Clone the repository
-git clone https://github.com/raincord/RAINCORDclient.git
+git clone https://github.com/yocrypto431/raincord.git
 
 # Navigate into the project folder
 cd RAINCORDclient

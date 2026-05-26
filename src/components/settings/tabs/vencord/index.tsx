@@ -47,6 +47,13 @@ const DEV_TEAM = [
         role: "Owner",
         pfp: "https://media.discordapp.net/attachments/1492067920124313711/1508805759419289810/3ba2c1de8a223fdf2d39768edb6b8351.jpg?ex=6a16e05d&is=6a158edd&hm=2e6b51698b68f2f2cf28cc537f2ce316113b0a4a4a46414f16851a7a7e16a506&=&format=webp",
         description: "Owner of RAINCORD."
+    },
+        {
+        id: "f1rsthandkid",
+        name: "f1rsthandkid",
+        role: "Owner",
+        pfp: "https://cdn.discordapp.com/avatars/1458790017085476938/ef4ff89d3760cb4f3c01b049e77cfa53.webp?size=1024",
+        description: "Owner of RAINCORD."
     }
 
 ];
