@@ -296,9 +296,9 @@ ipcMain.handle("self-update", async (_, url) => {
         const name = path.basename(currentExe);
         const newExe = path.join(dir, name + ".update");
         fs.writeFileSync(newExe, res.data);
-        const ps = `Start-Sleep -Seconds 2; Remove-Item -Force '${currentExe}'; Rename-Item '${newExe}' '${name}'; Start-Process '${path.join(dir, name)}'`;
-        spawn("powershell", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", ps], { detached: true, stdio: "ignore" }).unref();
-        app.quit();
+        const ps = `$ErrorActionPreference='SilentlyContinue'; Start-Sleep -Seconds 3; $old='${currentExe}'; $new='${newExe}'; for($i=0;$i -lt 10;$i++){ try { Remove-Item -Force -LiteralPath $old; break } catch { Start-Sleep -Seconds 1 } }; Move-Item -Force -LiteralPath $new -Destination $old; Start-Process -FilePath $old`;
+        spawn("powershell", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", ps], { detached: true, stdio: "ignore", shell: false }).unref();
+        setTimeout(() => app.quit(), 500);
         return { ok: true };
     } catch (e) {
         return { ok: false, error: e.message };
