@@ -15,8 +15,10 @@
     "appId": "com.raincord.installer",
     "productName": "RainCord Installer",
     "win": {
-      "target": "portable"
+      "target": "portable",
+      "signAndEditExecutable": false
     },
+    "forceCodeSigning": false,
     "portable": {
       "artifactName": "RainCord-Installer.exe"
     },
