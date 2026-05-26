@@ -31,7 +31,7 @@ export default definePlugin({
     name: "HideNativeButtons",
     description: "Hides unwanted native Discord buttons (Logs, Help, DevTools, Inbox)",
     authors: [Devs.Ven],
-    required: true,
+    enabledByDefault: true,
     patches: [],
 
     start() {

@@ -152,6 +152,7 @@ function openProfile(userId: string) {
 
 function FriendLogModal({ onClose }: { onClose: () => void; }) {
     const [localEvents, setLocalEvents] = useState<FriendEvent[]>([...events].reverse());
+    const [filter, setFilter] = useState<"all" | EventType>("all");
 
     useEffect(() => {
         loadEvents().then(() => setLocalEvents([...events].reverse()));
@@ -161,57 +162,136 @@ function FriendLogModal({ onClose }: { onClose: () => void; }) {
 
     const clearAll = async () => { events = []; await saveEvents(); setLocalEvents([]); };
 
+    const filtered = filter === "all" ? localEvents : localEvents.filter(e => e.type === filter);
+
+    const filterButtons: Array<{ key: "all" | EventType; label: string; color: string; }> = [
+        { key: "all", label: "All", color: "#5865f2" },
+        { key: "request_received", label: "Requests", color: "#5865f2" },
+        { key: "friend_added", label: "Added", color: "#23a55a" },
+        { key: "friend_removed", label: "Removed", color: "#f23f43" },
+        { key: "request_cancelled", label: "Cancelled", color: "#80848e" },
+    ];
+
     return (
         <>
-            <ModalHeader separator={false}>
-                <Forms.FormTitle tag="h2" style={{ margin: 0, flex: 1 }}>FriendLog</Forms.FormTitle>
+            <ModalHeader separator={false} style={{ padding: "16px 20px", background: "linear-gradient(180deg, var(--background-secondary) 0%, transparent 100%)" }}>
+                <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{
+                        width: 32, height: 32, borderRadius: 8,
+                        background: "linear-gradient(135deg, #5865f2, #4752c4)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                            <path d="M18.5 4A1.5 1.5 0 0 0 17 5.5V7h-4V5.5A1.5 1.5 0 0 0 11.5 4h-3A1.5 1.5 0 0 0 7 5.5V7H5.5A1.5 1.5 0 0 0 4 8.5v10A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-10A1.5 1.5 0 0 0 18.5 7H17V5.5A1.5 1.5 0 0 0 15.5 4h-3z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <Forms.FormTitle tag="h2" style={{ margin: 0, fontSize: 18 }}>FriendLog</Forms.FormTitle>
+                        <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{localEvents.length} events</div>
+                    </div>
+                </div>
                 <button
                     onClick={clearAll}
                     style={{
-                        background: "none", border: "none", color: "var(--interactive-normal)",
-                        cursor: "pointer", fontSize: 12, padding: "4px 8px",
+                        background: "var(--button-secondary-background)",
+                        border: "none", color: "var(--text-normal)",
+                        cursor: "pointer", fontSize: 12, fontWeight: 600,
+                        padding: "8px 14px", borderRadius: 6,
+                        marginRight: 8,
                     }}
                 >
-                    Mark All Read
+                    Clear All
                 </button>
                 <ModalCloseButton onClick={onClose} />
             </ModalHeader>
-            <ModalContent>
-                <div style={{ paddingBottom: 16 }}>
-                    {localEvents.length === 0 ? (
-                        <div style={{ textAlign: "center", padding: 48, color: "var(--text-muted)", fontSize: 14 }}>
-                            Nothing here yet.
+            <ModalContent style={{ padding: 0 }}>
+                <div style={{ display: "flex", gap: 6, padding: "12px 20px", overflowX: "auto", borderBottom: "1px solid var(--background-modifier-accent)" }}>
+                    {filterButtons.map(b => (
+                        <button
+                            key={b.key}
+                            onClick={() => setFilter(b.key)}
+                            style={{
+                                background: filter === b.key ? b.color : "var(--background-modifier-hover)",
+                                color: filter === b.key ? "white" : "var(--text-normal)",
+                                border: "none",
+                                padding: "6px 12px",
+                                borderRadius: 14,
+                                fontSize: 12,
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                whiteSpace: "nowrap",
+                                transition: "all 0.15s",
+                            }}
+                        >
+                            {b.label}
+                        </button>
+                    ))}
+                </div>
+                <div style={{ padding: "8px 0 16px" }}>
+                    {filtered.length === 0 ? (
+                        <div style={{ textAlign: "center", padding: 60, color: "var(--text-muted)" }}>
+                            <div style={{ fontSize: 48, marginBottom: 8 }}>📭</div>
+                            <div style={{ fontSize: 14, fontWeight: 600 }}>No events yet</div>
+                            <div style={{ fontSize: 12, marginTop: 4 }}>Friend activity will appear here.</div>
                         </div>
-                    ) : localEvents.map(ev => (
+                    ) : filtered.map(ev => (
                         <div
                             key={ev.id}
                             onClick={() => openProfile(ev.userId)}
                             style={{
                                 display: "flex",
                                 alignItems: "center",
-                                gap: 12,
-                                padding: "12px 16px",
+                                gap: 14,
+                                padding: "12px 20px",
                                 cursor: "pointer",
-                                borderBottom: "1px solid var(--background-modifier-accent)",
+                                transition: "background 0.15s",
+                                position: "relative",
                             }}
                             onMouseEnter={e => (e.currentTarget.style.background = "var(--background-modifier-hover)")}
                             onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
                         >
-                            <img
-                                src={ev.avatar ?? `https://cdn.discordapp.com/embed/avatars/${parseInt(ev.userId) % 5}.png`}
-                                width={40}
-                                height={40}
-                                style={{ borderRadius: "50%", flexShrink: 0 }}
-                                onError={e => { (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png"; }}
-                            />
+                            <div style={{
+                                position: "absolute",
+                                left: 0, top: "50%", transform: "translateY(-50%)",
+                                width: 3, height: "60%",
+                                background: getEventDot(ev.type),
+                                borderRadius: "0 2px 2px 0",
+                            }} />
+                            <div style={{ position: "relative", flexShrink: 0 }}>
+                                <img
+                                    src={ev.avatar ?? `https://cdn.discordapp.com/embed/avatars/${parseInt(ev.userId) % 5}.png`}
+                                    width={44}
+                                    height={44}
+                                    style={{ borderRadius: "50%" }}
+                                    onError={e => { (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png"; }}
+                                />
+                                <div style={{
+                                    position: "absolute",
+                                    bottom: -2, right: -2,
+                                    width: 18, height: 18,
+                                    borderRadius: "50%",
+                                    background: getEventDot(ev.type),
+                                    border: "2px solid var(--background-primary)",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: 10,
+                                }}>
+                                    {ev.type === "request_received" ? "📨" : ev.type === "friend_added" ? "✓" : ev.type === "friend_removed" ? "✕" : "↩"}
+                                </div>
+                            </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: 14, lineHeight: "18px" }}>
+                                <div style={{ fontSize: 14, lineHeight: "18px", marginBottom: 2 }}>
                                     <strong style={{ color: "var(--text-normal)" }}>{ev.username}</strong>
                                     {" "}
                                     <span style={{ color: "var(--text-muted)" }}>{getEventText(ev)}</span>
                                 </div>
-                                <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
-                                    {timeAgo(ev.timestamp)}
+                                <div style={{ fontSize: 11, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6 }}>
+                                    <span>{timeAgo(ev.timestamp)}</span>
+                                    <span>•</span>
+                                    <span style={{ color: getEventDot(ev.type), fontWeight: 600 }}>
+                                        {ev.type === "request_received" ? "Request" : ev.type === "friend_added" ? "Friend Added" : ev.type === "friend_removed" ? "Removed" : "Cancelled"}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -224,7 +304,7 @@ function FriendLogModal({ onClose }: { onClose: () => void; }) {
 
 function openFriendLogModal() {
     openModal(props => (
-        <ModalRoot {...props} size={ModalSize.SMALL}>
+        <ModalRoot {...props} size={ModalSize.MEDIUM}>
             <FriendLogModal onClose={props.onClose} />
         </ModalRoot>
     ));

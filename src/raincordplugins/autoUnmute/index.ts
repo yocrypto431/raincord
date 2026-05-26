@@ -61,8 +61,8 @@ export default definePlugin({
                         setTimeout(async () => {
                             try {
                                 await unmuteUserViaAPI(currentUserId, guildId);
-                            } catch {
-                                try { VoiceActions.toggleSelfMute(); } catch {}
+                            } catch (e) {
+                                console.warn("[AutoUnmute] Failed to unmute via API:", e);
                             }
                         }, 100);
                     }
@@ -74,8 +74,8 @@ export default definePlugin({
                         setTimeout(async () => {
                             try {
                                 await undeafenUserViaAPI(currentUserId, guildId);
-                            } catch {
-                                try { VoiceActions.toggleSelfDeaf(); } catch {}
+                            } catch (e) {
+                                console.warn("[AutoUnmute] Failed to undeafen via API:", e);
                             }
                         }, 100);
                     }

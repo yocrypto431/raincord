@@ -61,7 +61,6 @@ export default definePlugin({
     enabledByDefault: true,
     description: "Click on the central Discord title to open RAINCORD.online",
     authors: [{ name: "RAINCORD", id: 0n }],
-    required: true,
     patches: [],
 
     start() {

@@ -23,7 +23,6 @@ export default definePlugin({
     enabledByDefault: true,
     description: "Hides all plugin buttons without disabling them. Shortcut: Ctrl+Shift+H. The toggle is in RAINCORD Settings.",
     authors: [{ name: "RAINCORD", id: 0n }],
-    required: true,
     managedStyle: style,
 
     start() {
