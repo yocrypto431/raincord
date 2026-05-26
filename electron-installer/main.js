@@ -202,40 +202,44 @@ ipcMain.handle("uninject", async (_, resourcesPath) => {
 
         if (fs.existsSync(backup)) {
             if (fs.existsSync(appAsar)) {
-                try {
-                    fs.unlinkSync(appAsar);
-                } catch {
-                    try {
-                        execSync(`del /F /Q "${appAsar}"`, { stdio: "ignore", shell: true });
-                    } catch {
-                        try {
-                            execSync(`powershell -NoProfile -Command "Remove-Item -Force '${appAsar}'"`, { stdio: "ignore" });
-                        } catch {
+                try { fs.unlinkSync(appAsar); } catch {
+                    try { execSync(`del /F /Q "${appAsar}"`, { stdio: "ignore", shell: true }); } catch {
+                        try { execSync(`powershell -NoProfile -Command "Remove-Item -Force '${appAsar}'"`, { stdio: "ignore" }); } catch {
                             return { ok: false, error: "Could not remove app.asar — file is locked. Try running as Administrator." };
                         }
                     }
                 }
             }
             await new Promise(r => setTimeout(r, 500));
-            try {
-                fs.renameSync(backup, appAsar);
-            } catch {
-                try {
-                    execSync(`move /Y "${backup}" "${appAsar}"`, { stdio: "ignore", shell: true });
-                } catch {
+            try { fs.renameSync(backup, appAsar); } catch {
+                try { execSync(`move /Y "${backup}" "${appAsar}"`, { stdio: "ignore", shell: true }); } catch {
                     return { ok: false, error: "Could not restore original app.asar." };
                 }
             }
         } else if (fs.existsSync(appAsar)) {
             const size = fs.statSync(appAsar).size;
-            if (size < 100000) {
-                fs.unlinkSync(appAsar);
+            if (size < 500000) {
+                try { fs.unlinkSync(appAsar); } catch {
+                    try { execSync(`del /F /Q "${appAsar}"`, { stdio: "ignore", shell: true }); } catch { }
+                }
+                const updateExe = path.join(resourcesPath, "..", "..", "Update.exe");
+                if (fs.existsSync(updateExe)) {
+                    await new Promise(r => setTimeout(r, 1000));
+                    try { execFileSync(updateExe, ["--processStart", procName + ".exe"], { stdio: "ignore", timeout: 10000 }); } catch { }
+                }
+                const permanentDir = path.join(process.env.LOCALAPPDATA || "", "RainCord");
+                if (fs.existsSync(permanentDir)) try { fs.rmSync(permanentDir, { recursive: true, force: true }); } catch { }
+                return { ok: true };
             }
         }
 
         const permanentDir = path.join(process.env.LOCALAPPDATA || "", "RainCord");
-        if (fs.existsSync(permanentDir)) {
-            try { fs.rmSync(permanentDir, { recursive: true, force: true }); } catch { }
+        if (fs.existsSync(permanentDir)) try { fs.rmSync(permanentDir, { recursive: true, force: true }); } catch { }
+
+        await new Promise(r => setTimeout(r, 1000));
+        const updateExe = path.join(resourcesPath, "..", "..", "Update.exe");
+        if (fs.existsSync(updateExe)) {
+            try { execFileSync(updateExe, ["--processStart", procName + ".exe"], { stdio: "ignore", timeout: 10000 }); } catch { }
         }
 
         return { ok: true };
