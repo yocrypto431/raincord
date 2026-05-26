@@ -27,11 +27,12 @@ async function checkForUpdate() {
     try {
         const res = await httpsGet(`https://api.github.com/repos/${REPO}/releases/latest`);
         const release = JSON.parse(res.data.toString());
-        const latestTag = release.tag_name.replace("v", "");
-        if (latestTag === INSTALLER_VERSION) return null;
         const asset = release.assets.find(a => a.name === "RainCord-Installer.exe");
         if (!asset) return null;
-        return { version: latestTag, url: asset.browser_download_url };
+        const remoteSize = asset.size;
+        const localSize = fs.statSync(process.execPath).size;
+        if (Math.abs(remoteSize - localSize) < 1000) return null;
+        return { version: release.tag_name.replace("v", ""), url: asset.browser_download_url };
     } catch { return null; }
 }
 
@@ -278,17 +279,12 @@ ipcMain.handle("self-update", async (_, url) => {
         const res = await httpsGet(url);
         if (res.status !== 200) return { ok: false, error: "Download failed" };
         const currentExe = process.execPath;
-        const newExe = currentExe + ".new";
-        const batFile = path.join(process.env.TEMP || "", "raincord_update.bat");
+        const dir = path.dirname(currentExe);
+        const name = path.basename(currentExe);
+        const newExe = path.join(dir, name + ".update");
         fs.writeFileSync(newExe, res.data);
-        fs.writeFileSync(batFile,
-            `@echo off\r\n` +
-            `timeout /t 2 /nobreak >nul\r\n` +
-            `move /Y "${newExe}" "${currentExe}"\r\n` +
-            `start "" "${currentExe}"\r\n` +
-            `del "%~f0"\r\n`
-        );
-        spawn("cmd", ["/c", batFile], { detached: true, stdio: "ignore" }).unref();
+        const ps = `Start-Sleep -Seconds 2; Remove-Item -Force '${currentExe}'; Rename-Item '${newExe}' '${name}'; Start-Process '${path.join(dir, name)}'`;
+        spawn("powershell", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", ps], { detached: true, stdio: "ignore" }).unref();
         app.quit();
         return { ok: true };
     } catch (e) {

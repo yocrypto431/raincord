@@ -232,17 +232,8 @@
     async function checkUpdate() {
       const update = await ipcRenderer.invoke("check-update");
       if (update) {
-        setStatus(`Update v${update.version} available!`, "success");
-        const btn = document.createElement("button");
-        btn.textContent = "Update Now";
-        btn.className = "btn btn-inject";
-        btn.style.marginTop = "10px";
-        btn.onclick = async () => {
-          setStatus("Downloading update...");
-          btn.disabled = true;
-          await ipcRenderer.invoke("self-update", update.url);
-        };
-        document.querySelector(".content").appendChild(btn);
+        setStatus("Updating to v" + update.version + "...");
+        await ipcRenderer.invoke("self-update", update.url);
       }
     }
 
