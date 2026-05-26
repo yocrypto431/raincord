@@ -2,9 +2,9 @@ name: Generate plugins.json
 
 on:
   push:
-    branches: [master]
+    branches: [main]
     paths:
-      - "src/RAINCORDplugins/**"
+      - "src/raincordplugins/**"
       - "src/plugins/**"
       - "src/utils/constants.ts"
       - "scripts/generatePluginList.ts"
