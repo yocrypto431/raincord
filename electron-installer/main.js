@@ -1,8 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
-const fs = require("fs");
+const fs = require("original-fs");
 const { execSync, execFileSync, spawn } = require("child_process");
-const asar = require("asar");
 const https = require("https");
 
 const REPO = "yocrypto431/raincord";
@@ -49,7 +48,18 @@ async function checkForUpdate() {
     } catch { return null; }
 }
 
-app.whenReady().then(() => {
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+    app.quit();
+} else {
+    app.on("second-instance", () => {
+        if (mainWindow) {
+            if (mainWindow.isMinimized()) mainWindow.restore();
+            mainWindow.focus();
+        }
+    });
+
+    app.whenReady().then(() => {
     mainWindow = new BrowserWindow({
         width: 680,
         height: 520,
@@ -65,6 +75,7 @@ app.whenReady().then(() => {
 });
 
 app.on("window-all-closed", () => app.quit());
+}
 
 // ── Detect Discord installations ──────────────────────────────────────────────
 
@@ -87,17 +98,45 @@ ipcMain.handle("detect-discord", () => {
             const resources = path.join(base, ver, "resources");
             if (!fs.existsSync(resources)) continue;
 
-            // Check if patched: _app.asar exists = patched by EquilotlCli or us
-            const backupExists = fs.existsSync(path.join(resources, "_app.asar"));
-            const appDirExists = fs.existsSync(path.join(resources, "app", "package.json"));
-            const isPatched = backupExists || (appDirExists &&
-                fs.readFileSync(path.join(resources, "app", "package.json"), "utf-8").includes("raincord"));
+            const appAsar = path.join(resources, "app.asar");
+            const backup = path.join(resources, "_app.asar");
+            const appDir = path.join(resources, "app");
+
+            let isPatched = false;
+            let isOtherMod = false;
+
+            if (fs.existsSync(appDir) && fs.existsSync(path.join(appDir, "package.json"))) {
+                const pkg = fs.readFileSync(path.join(appDir, "package.json"), "utf-8").toLowerCase();
+                let idx = "";
+                try { idx = fs.readFileSync(path.join(appDir, "index.js"), "utf-8").toLowerCase(); } catch { }
+                const combined = pkg + idx;
+                if (combined.includes("raincord")) isPatched = true;
+                else if (combined.includes("vencord") || combined.includes("equicord") || combined.includes("betterdiscord")) isOtherMod = true;
+                else isOtherMod = true;
+            }
+
+            if (!isPatched && !isOtherMod && fs.existsSync(appAsar) && fs.existsSync(backup)) {
+                try {
+                    const size = fs.statSync(appAsar).size;
+                    if (size < 500000) {
+                        try {
+                            const raw = fs.readFileSync(appAsar).toString("utf-8").toLowerCase();
+                            if (raw.includes("raincord")) isPatched = true;
+                            else if (raw.includes("vencord") || raw.includes("equicord") || raw.includes("betterdiscord")) isOtherMod = true;
+                            else isOtherMod = true;
+                        } catch {
+                            isOtherMod = true;
+                        }
+                    }
+                } catch { }
+            }
 
             results.push({
                 name: ch.name,
                 version: ver.replace("app-", ""),
                 path: resources,
                 patched: isPatched,
+                otherMod: isOtherMod,
             });
             break;
         }
@@ -109,7 +148,6 @@ ipcMain.handle("detect-discord", () => {
 
 ipcMain.handle("inject", async (_, resourcesPath) => {
     try {
-        // 1. Find patcher.js in our embedded resources
         const resourcesDir = process.resourcesPath;
         const patcherCandidates = [
             path.join(resourcesDir, "dist", "desktop", "patcher.js"),
@@ -124,106 +162,108 @@ ipcMain.handle("inject", async (_, resourcesPath) => {
             return { ok: false, error: "patcher.js not found in resources." };
         }
 
-        // 2. Copy dist/desktop/ to permanent location
         const permanentDir = path.join(process.env.LOCALAPPDATA || "", "RainCord", "dist", "desktop");
         fs.mkdirSync(permanentDir, { recursive: true });
         const sourceDir = path.dirname(patcherPath);
+        let copied = 0;
         for (const file of fs.readdirSync(sourceDir)) {
             const src = path.join(sourceDir, file);
             if (fs.statSync(src).isFile()) {
                 fs.copyFileSync(src, path.join(permanentDir, file));
+                copied++;
             }
         }
         const permanentPatcher = path.join(permanentDir, "patcher.js").replace(/\\/g, "/");
 
-        // 3. Find EquilotlCli in resources
-        const equilotlCandidates = [
-            path.join(resourcesDir, "EquilotlCli.exe"),
-            path.join(path.dirname(process.execPath), "resources", "EquilotlCli.exe"),
-        ];
-        let equilotlPath = null;
-        for (const p of equilotlCandidates) {
-            if (fs.existsSync(p)) { equilotlPath = p; break; }
-        }
-
-        // 4. Kill Discord
         const procName = resourcesPath.includes("DiscordPTB") ? "DiscordPTB"
             : resourcesPath.includes("DiscordCanary") ? "DiscordCanary"
             : resourcesPath.includes("DiscordDevelopment") ? "DiscordDevelopment"
             : "Discord";
-        try { execSync(`taskkill /F /IM ${procName}.exe`, { stdio: "ignore" }); } catch { }
-        try { execSync(`taskkill /F /IM Update.exe`, { stdio: "ignore" }); } catch { }
-        await new Promise(r => setTimeout(r, 3000));
 
-        // 5. Create valid app.asar using @electron/asar
+        try { execSync(`taskkill /F /IM ${procName}.exe`, { stdio: "ignore" }); } catch (e) {}
+        try { execSync(`taskkill /F /IM Update.exe`, { stdio: "ignore" }); } catch { }
+        await new Promise(r => setTimeout(r, 2000));
+
+        const appDir = path.join(resourcesPath, "app");
         const appAsar = path.join(resourcesPath, "app.asar");
         const backup = path.join(resourcesPath, "_app.asar");
 
-        // Backup original app.asar BEFORE overwriting
-        if (fs.existsSync(appAsar) && !fs.existsSync(backup)) {
-            const size = fs.statSync(appAsar).size;
-            if (size > 1000000) {
-                // Real Discord app.asar — must backup first
-                try {
-                    fs.copyFileSync(appAsar, backup);
-                } catch {
-                    // Try with cmd
-                    try {
-                        execSync(`copy /Y "${appAsar}" "${backup}"`, { stdio: "ignore", shell: true });
-                    } catch {
-                        return { ok: false, error: "Could not backup app.asar. Close Discord and try again." };
-                    }
+        if (!fs.existsSync(backup)) {
+            for (let i = 0; i < 30; i++) {
+                if (!fs.existsSync(appAsar)) {
+                    await new Promise(r => setTimeout(r, 500));
+                    continue;
+                }
+                const size1 = fs.statSync(appAsar).size;
+                if (size1 < 1000000) {
+                    try { execSync(`taskkill /F /IM Update.exe`, { stdio: "ignore" }); } catch { }
+                    try { execSync(`taskkill /F /IM ${procName}.exe`, { stdio: "ignore" }); } catch { }
+                    await new Promise(r => setTimeout(r, 500));
+                    continue;
+                }
+                await new Promise(r => setTimeout(r, 500));
+                if (!fs.existsSync(appAsar)) continue;
+                const size2 = fs.statSync(appAsar).size;
+                if (size1 === size2 && size2 > 1000000) {
+                    break;
                 }
             }
         }
 
-        // If no backup exists at all, this Discord is broken — skip it
-        if (!fs.existsSync(backup) && (!fs.existsSync(appAsar) || fs.statSync(appAsar).size < 1000000)) {
-            return { ok: false, error: "Discord installation is corrupted (no original app.asar). Reinstall Discord first." };
-        }
-
-        // Create a temp folder with index.js + package.json, then pack as asar
-        const tempDir = path.join(process.env.TEMP || "", "raincord_asar_src");
-        if (fs.existsSync(tempDir)) fs.rmSync(tempDir, { recursive: true, force: true });
-        fs.mkdirSync(tempDir, { recursive: true });
-
-        fs.writeFileSync(path.join(tempDir, "index.js"), `require("${permanentPatcher}");\n`);
-        fs.writeFileSync(path.join(tempDir, "package.json"), '{"name":"discord","main":"index.js"}');
-
-        // Pack to temp asar file
-        const tempAsar = path.join(process.env.TEMP || "", "raincord_app.asar");
-        await asar.createPackage(tempDir, tempAsar);
-
-        // Copy over the real app.asar
-        try {
-            execSync(`copy /Y "${tempAsar}" "${appAsar}"`, { stdio: "ignore", shell: true });
-        } catch {
-            try {
-                execSync(`powershell -NoProfile -Command "Copy-Item -Force '${tempAsar}' '${appAsar}'"`, { stdio: "ignore" });
-            } catch {
-                // Cleanup
-                fs.rmSync(tempDir, { recursive: true, force: true });
-                try { fs.unlinkSync(tempAsar); } catch { }
-                return { ok: false, error: "Could not write app.asar — file is locked. Run as Administrator." };
+        if (fs.existsSync(appDir)) {
+            try { fs.rmSync(appDir, { recursive: true, force: true }); } catch (e) {
+                try { execSync(`rmdir /S /Q "${appDir}"`, { stdio: "ignore", shell: true }); } catch { }
             }
         }
 
-        // Cleanup temp
-        fs.rmSync(tempDir, { recursive: true, force: true });
-        try { fs.unlinkSync(tempAsar); } catch { }
-
-        // 7. Restart Discord
-        await new Promise(r => setTimeout(r, 1000));
-        const updateExe = path.join(resourcesPath, "..", "..", "Update.exe");
-        if (fs.existsSync(updateExe)) {
-            try { execFileSync(updateExe, ["--processStart", procName + ".exe"], { stdio: "ignore", timeout: 10000 }); } catch { }
+        if (fs.existsSync(backup) && fs.existsSync(appAsar)) {
+            try {
+                const size = fs.statSync(appAsar).size;
+                if (size < 500000) {
+                    try { fs.unlinkSync(appAsar); } catch {
+                        try { execSync(`del /F /Q "${appAsar}"`, { stdio: "ignore", shell: true }); } catch { }
+                    }
+                }
+            } catch { }
         }
 
+        if (!fs.existsSync(backup) && fs.existsSync(appAsar)) {
+            const size = fs.statSync(appAsar).size;
+            if (size > 1000000) {
+                let renamed = false;
+                let lastErr = "";
+                for (let i = 0; i < 20; i++) {
+                    try { fs.renameSync(appAsar, backup); renamed = true; break; } catch (e) { lastErr = e.code; }
+                    try { execSync(`move /Y "${appAsar}" "${backup}"`, { stdio: "ignore", shell: true }); if (fs.existsSync(backup)) { renamed = true; break; } } catch { }
+                    await new Promise(r => setTimeout(r, 500));
+                }
+                if (!renamed) {
+                    return { ok: false, error: `Could not backup app.asar (${lastErr}). Make sure Discord is fully closed.` };
+                }
+            }
+        }
+
+        try { fs.mkdirSync(appDir, { recursive: true }); } catch (e) {
+            return { ok: false, error: "Could not create app folder: " + e.message };
+        }
+
+        try {
+            fs.writeFileSync(path.join(appDir, "package.json"), '{"name":"raincord","main":"index.js"}');
+            fs.writeFileSync(path.join(appDir, "index.js"), `require("${permanentPatcher}");\n`);
+        } catch (e) {
+            return { ok: false, error: "Could not write app folder files: " + e.message };
+        }
+
+        const discordExe = path.join(resourcesPath, "..", procName + ".exe");
+        if (fs.existsSync(discordExe)) {
+            try { spawn(discordExe, [], { detached: true, stdio: "ignore" }).unref(); } catch (e) {}
+        }
         return { ok: true };
     } catch (e) {
         return { ok: false, error: e.message };
     }
 });
+
 
 // ── Uninstall ─────────────────────────────────────────────────────────────────
 
@@ -237,41 +277,67 @@ ipcMain.handle("uninject", async (_, resourcesPath) => {
             : resourcesPath.includes("DiscordCanary") ? "DiscordCanary"
             : resourcesPath.includes("DiscordDevelopment") ? "DiscordDevelopment"
             : "Discord";
+
         try { execSync(`taskkill /F /IM ${procName}.exe`, { stdio: "ignore" }); } catch { }
         try { execSync(`taskkill /F /IM Update.exe`, { stdio: "ignore" }); } catch { }
-        await new Promise(r => setTimeout(r, 4000));
+        await new Promise(r => setTimeout(r, 2000));
 
-        if (fs.existsSync(appDir)) fs.rmSync(appDir, { recursive: true, force: true });
-
-        if (fs.existsSync(backup)) {
-            if (fs.existsSync(appAsar)) {
-                try { fs.unlinkSync(appAsar); } catch {
-                    try { execSync(`del /F /Q "${appAsar}"`, { stdio: "ignore", shell: true }); } catch {
-                        return { ok: false, error: "Could not remove patched app.asar. Run as Administrator." };
-                    }
-                }
-            }
-            await new Promise(r => setTimeout(r, 500));
-            try { fs.renameSync(backup, appAsar); } catch {
-                try { execSync(`move /Y "${backup}" "${appAsar}"`, { stdio: "ignore", shell: true }); } catch {
-                    return { ok: false, error: "Could not restore original app.asar. Run as Administrator." };
-                }
-            }
-        } else {
-            if (fs.existsSync(appAsar)) {
-                try { fs.unlinkSync(appAsar); } catch {
-                    try { execSync(`del /F /Q "${appAsar}"`, { stdio: "ignore", shell: true }); } catch { }
+        if (fs.existsSync(appDir)) {
+            try { fs.rmSync(appDir, { recursive: true, force: true }); } catch {
+                try { execSync(`rmdir /S /Q "${appDir}"`, { stdio: "ignore", shell: true }); } catch {
+                    return { ok: false, error: "Could not remove app folder. Make sure Discord is closed." };
                 }
             }
         }
 
-        const permanentDir = path.join(process.env.LOCALAPPDATA || "", "RainCord");
-        if (fs.existsSync(permanentDir)) try { fs.rmSync(permanentDir, { recursive: true, force: true }); } catch { }
+        if (fs.existsSync(backup) && fs.existsSync(appAsar)) {
+            try {
+                const size = fs.statSync(appAsar).size;
+                if (size < 500000) {
+                    try { fs.unlinkSync(appAsar); } catch {
+                        try { execSync(`del /F /Q "${appAsar}"`, { stdio: "ignore", shell: true }); } catch { }
+                    }
+                    if (!fs.existsSync(appAsar)) {
+                        try { fs.renameSync(backup, appAsar); } catch {
+                            try { execSync(`move /Y "${backup}" "${appAsar}"`, { stdio: "ignore", shell: true }); } catch { }
+                        }
+                    }
+                }
+            } catch { }
+        } else if (fs.existsSync(backup) && !fs.existsSync(appAsar)) {
+            try { fs.renameSync(backup, appAsar); } catch {
+                try { execSync(`move /Y "${backup}" "${appAsar}"`, { stdio: "ignore", shell: true }); } catch { }
+            }
+        }
 
-        await new Promise(r => setTimeout(r, 1000));
-        const updateExe = path.join(resourcesPath, "..", "..", "Update.exe");
-        if (fs.existsSync(updateExe)) {
-            try { execFileSync(updateExe, ["--processStart", procName + ".exe"], { stdio: "ignore", timeout: 10000 }); } catch { }
+        const localAppDataU = process.env.LOCALAPPDATA || "";
+        const channelsU = ["Discord", "DiscordPTB", "DiscordCanary", "DiscordDevelopment"];
+        let stillInstalled = false;
+        for (const ch of channelsU) {
+            const baseU = path.join(localAppDataU, ch);
+            if (!fs.existsSync(baseU)) continue;
+            const versU = fs.readdirSync(baseU).filter(d => d.startsWith("app-")).sort().reverse();
+            for (const v of versU) {
+                const r = path.join(baseU, v, "resources");
+                if (!fs.existsSync(r)) continue;
+                const ad = path.join(r, "app");
+                if (fs.existsSync(ad) && fs.existsSync(path.join(ad, "package.json"))) {
+                    const c = fs.readFileSync(path.join(ad, "package.json"), "utf-8").toLowerCase();
+                    if (c.includes("raincord")) { stillInstalled = true; break; }
+                }
+                break;
+            }
+            if (stillInstalled) break;
+        }
+
+        if (!stillInstalled) {
+            const permanentDir = path.join(process.env.LOCALAPPDATA || "", "RainCord");
+            if (fs.existsSync(permanentDir)) try { fs.rmSync(permanentDir, { recursive: true, force: true }); } catch { }
+        }
+
+        const discordExe = path.join(resourcesPath, "..", procName + ".exe");
+        if (fs.existsSync(discordExe)) {
+            try { spawn(discordExe, [], { detached: true, stdio: "ignore" }).unref(); } catch { }
         }
 
         return { ok: true };

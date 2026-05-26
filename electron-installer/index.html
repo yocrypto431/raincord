@@ -86,6 +86,7 @@
     }
     .status-patched { background: rgba(35, 165, 90, 0.15); color: #23a55a; }
     .status-clean { background: rgba(100, 116, 139, 0.15); color: #64748b; }
+    .status-other { background: rgba(250, 166, 26, 0.15); color: #faa61a; }
 
     .actions {
       display: flex;
@@ -179,14 +180,14 @@
             <div class="card-name">${d.name}</div>
             <div class="card-version">v${d.version}</div>
           </div>
-          <span class="card-status ${d.patched ? 'status-patched' : 'status-clean'}">
-            ${d.patched ? '✓ Installed' : 'Not installed'}
+          <span class="card-status ${d.patched ? 'status-patched' : (d.otherMod ? 'status-other' : 'status-clean')}">
+            ${d.patched ? '✓ RainCord' : (d.otherMod ? '⚠ Other mod' : 'Not installed')}
           </span>
         </div>
       `).join("");
 
       document.getElementById("btn-inject").disabled = selected === null;
-      document.getElementById("btn-uninject").disabled = selected === null || !discords[selected]?.patched;
+      document.getElementById("btn-uninject").disabled = selected === null || (!discords[selected]?.patched && !discords[selected]?.otherMod);
     }
 
     function select(i) {
@@ -202,11 +203,13 @@
 
     async function inject() {
       if (selected === null) return;
+      const sel = selected;
       setStatus("Installing RainCord...");
-      const result = await ipcRenderer.invoke("inject", discords[selected].path);
+      const result = await ipcRenderer.invoke("inject", discords[sel].path);
       if (result.ok) {
-        setStatus("✓ RainCord installed! Open Discord.", "success");
-        discords[selected].patched = true;
+        setStatus("✓ RainCord installed! You can open Discord now.", "success");
+        discords = await ipcRenderer.invoke("detect-discord");
+        selected = sel;
         render();
       } else {
         setStatus("✗ " + result.error, "error");
@@ -215,11 +218,13 @@
 
     async function uninject() {
       if (selected === null) return;
+      const sel = selected;
       setStatus("Uninstalling...");
-      const result = await ipcRenderer.invoke("uninject", discords[selected].path);
+      const result = await ipcRenderer.invoke("uninject", discords[sel].path);
       if (result.ok) {
-        setStatus("✓ RainCord removed.", "success");
-        discords[selected].patched = false;
+        setStatus("✓ RainCord removed. You can open Discord now.", "success");
+        discords = await ipcRenderer.invoke("detect-discord");
+        selected = sel;
         render();
       } else {
         setStatus("✗ " + result.error, "error");
