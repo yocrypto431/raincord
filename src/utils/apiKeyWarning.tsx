@@ -40,7 +40,7 @@ function ApiKeyWarningModal({ pluginName, onClose }: { pluginName: string; onClo
                     }}
                     onClick={() => {
                         onClose();
-                        const plugin = Plugins["RAINCORDAI"];
+                        const plugin = Plugins["raincordAI"];
                         if (plugin) openPluginModal(plugin);
                     }}
                 >

@@ -18,7 +18,7 @@ import { EquicordDevs } from "@utils/constants";
 import { openModal, ModalRoot, ModalSize } from "@utils/modal";
 import definePlugin, { IconComponent, PluginNative } from "@utils/types";
 import { React, useState, useEffect, useRef, Select, MediaEngineStore } from "@webpack/common";
-import { t, useTranslation } from "../../plugins/autoTranslateRAINCORD";
+import { t, useTranslation } from "../autoTranslateRaincord";
 
 // ─── Native (IPC → main process) ─────────────────────────────────────────────
 

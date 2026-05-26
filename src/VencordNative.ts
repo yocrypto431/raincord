@@ -102,7 +102,7 @@ export default {
     RAINCORD: {
         checkVBCable: () => invoke<{ installed: boolean; }>(IpcEvents.CHECK_VB_CABLE),
         installVBCable: () => invoke<{ success: boolean; error?: string; }>(IpcEvents.INSTALL_VB_CABLE),
-
+        importPlugins: (mode: "folder" | "files") => invoke<{ canceled?: boolean; ok?: boolean; imported: string[]; }>(IpcEvents.IMPORT_PLUGINS, mode),
         relaunch: () => invoke<void>(IpcEvents.RELAUNCH_APP),
     },
 

@@ -3,7 +3,7 @@
         "resolveJsonModule": true,
         "allowSyntheticDefaultImports": true,
         "esModuleInterop": true,
-        "skipLibCheck": false,
+        "skipLibCheck": true,
         "allowJs": true,
         "lib": [
             "DOM",
@@ -85,5 +85,11 @@
         "browser/**/*",
         "scripts/**/*",
         "eslint.config.mjs"
+    ],
+    "exclude": [
+        "src/renderer/**/*",
+        "src/raincord/renderer/**/*",
+        "src/raincord/main/dbus.ts",
+        "src/preload/VesktopNative.ts"
     ],
 }

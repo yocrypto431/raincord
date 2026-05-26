@@ -20,7 +20,7 @@ import { onceDefined } from "@shared/onceDefined";
 import electron, { app, BrowserWindowConstructorOptions, Menu, session } from "electron";
 import { existsSync as fsExistsSync, statSync as fsStatSync } from "original-fs";
 import { dirname, join } from "path";
-import { registerMediaPermissionsForSession } from "../RAINCORD/main/mediaPermissions";
+import { registerMediaPermissionsForSession } from "../raincord/main/mediaPermissions";
 
 // Note: RAINCORDTray removed — RAINCORD injects silently into Discord,
 // Discord manages its own tray icon (same behaviour as Equicord).

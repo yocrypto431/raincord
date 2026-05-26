@@ -159,6 +159,7 @@ const DefaultSettings: Settings = {
     },
 
     userCssVars: {},
+    ignoreResetWarning: false,
 };
 
 const settings = !IS_REPORTER ? VencordNative.settings.get() : {} as Settings;

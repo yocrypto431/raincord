@@ -22,7 +22,7 @@ mkdirSync(USERPLUGINS_DIR, { recursive: true });
 
 registerCspIpcHandlers();
 
-import * as ghostNative from "../RAINCORDplugins/ghostClient/native";
+import * as ghostNative from "../raincordplugins/ghostClient/native";
 (async () => {
     try {
         await (ghostNative as any).init(null);
@@ -62,7 +62,7 @@ function getThemeData(fileName: string) {
 
 ipcMain.handle(IpcEvents.WORLD_BOMB_TYPE, async (event, text: string, delay: number = 50) => {
     const { spawn } = require("child_process");
-    const { writeFileSync, unlinkSync, mkdtempSync } = require("fs");
+    const { writeFileSync, unlinkSync, mkdtempSync, rmdirSync } = require("fs");
     const { join } = require("path");
     const { tmpdir } = require("os");
 
@@ -104,7 +104,7 @@ ipcMain.handle(IpcEvents.WORLD_BOMB_TYPE, async (event, text: string, delay: num
 
 function runPowershellScript(psScript: string): Promise<void> {
     const { spawn } = require("child_process");
-    const { writeFileSync, unlinkSync, mkdtempSync } = require("fs");
+    const { writeFileSync, unlinkSync, mkdtempSync, rmdirSync } = require("fs");
     const { join } = require("path");
     const { tmpdir } = require("os");
     const tempDir = mkdtempSync(join(tmpdir(), "RAINCORD-ps-"));
@@ -166,7 +166,7 @@ ipcMain.handle(IpcEvents.WORLD_BOMB_SEQUENCE, async (
     targetY: number = -1
 ) => {
     const { spawn } = require("child_process");
-    const { writeFileSync, unlinkSync, mkdtempSync } = require("fs");
+    const { writeFileSync, unlinkSync, mkdtempSync, rmdirSync } = require("fs");
     const { join } = require("path");
     const { tmpdir } = require("os");
 
@@ -250,7 +250,7 @@ ipcMain.handle(IpcEvents.KEYBOARD_SOUNDS_START_GLOBAL, (event) => {
     if (globalHookProcess) return;
 
     const { spawn } = require("child_process");
-    const { writeFileSync, unlinkSync } = require("fs");
+    const { writeFileSync, unlinkSync, mkdtempSync, rmdirSync } = require("fs");
     const { join } = require("path");
     const { tmpdir } = require("os");
 

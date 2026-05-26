@@ -20,7 +20,7 @@ import definePlugin, { PluginNative } from "@utils/types";
 import { ModalCloseButton, ModalContent, ModalHeader, ModalRoot, openModal } from "@utils/modal";
 import { findByProps } from "@webpack";
 import { Forms, React, ReactDOM, UserStore } from "@webpack/common";
-import { t } from "../autoTranslateRAINCORD";
+import { t } from "../autoTranslateRaincord";
 import "./styles.css";
 
 const Native = VencordNative.pluginHelpers.MultiInstance as PluginNative<typeof import("./native")>;

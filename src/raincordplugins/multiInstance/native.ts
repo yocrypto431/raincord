@@ -11,7 +11,7 @@
 import { BrowserWindow, screen, session, nativeImage, app, ipcMain } from "electron";
 import { writeFileSync, mkdirSync, existsSync } from "fs";
 import { join } from "path";
-import { registerMediaPermissionsForSession } from "../../RAINCORD/main/mediaPermissions";
+import { registerMediaPermissionsForSession } from "../../raincord/main/mediaPermissions";
 
 const openWindows = new Map<string, BrowserWindow>();
 

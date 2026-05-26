@@ -29,7 +29,7 @@ import { React, Select, UserStore, NavigationRouter, Avatar } from "@webpack/com
 import { _notifyStealthChange, isStealthModeEnabled, syncStealthBodyClass, toggleStealthMode } from "@api/HeaderBar";
 import { openNotificationSettingsModal } from "./NotificationSettings";
 import { openModal } from "@utils/modal";
-import { ContributeModal } from "../../../../RAINCORD/renderer/components/ContributeModal";
+import { ContributeModal } from "../../../../raincord/renderer/components/ContributeModal";
 
 const cl = classNameFactory("vc-vencord-tab-");
 

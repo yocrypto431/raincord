@@ -1,5 +1,5 @@
 import { React, useState, useEffect, useRef, ReactDOM, createRoot, MessageActions, SelectedChannelStore, ComponentDispatch } from "@webpack/common";
-import { getGroqKey } from "../../RAINCORDAI/groqManager";
+import { getGroqKey } from "../../raincordAI/groqManager";
 
 const DICT_URLS = [
     "https://raw.githubusercontent.com/words/an-array-of-french-words/master/index.json",
@@ -349,7 +349,7 @@ export function WordBombOverlay() {
             setDefinition("Generating AI definition...");
             const groqKey = await getGroqKey().catch(() => "");
             if (!groqKey) {
-                setDefinition("Error: Groq API key missing in RAINCORDAI.");
+                setDefinition("Error: Groq API key missing in raincordAI.");
             } else {
                 fetch("https://api.groq.com/openai/v1/chat/completions", {
                     method: "POST",

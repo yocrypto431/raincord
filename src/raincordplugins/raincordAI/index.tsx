@@ -101,7 +101,7 @@ function findFriend(name: string): { id: string; username: string; } | null {
             if (uname === query || tag === query || uname.includes(query) || tag.includes(query))
                 return { id, username: user.globalName ?? user.username };
         }
-    } catch (e) { console.warn("[RAINCORDAI] findFriend:", e); }
+    } catch (e) { console.warn("[raincordAI] findFriend:", e); }
     return null;
 }
 
@@ -211,7 +211,7 @@ function joinVoiceChannel(name: string): void {
                 return;
             }
         }
-    } catch (e) { console.warn("[RAINCORDAI] joinVoiceChannel guild search:", e); }
+    } catch (e) { console.warn("[raincordAI] joinVoiceChannel guild search:", e); }
 
     // Fallback : chercher dans ChannelStore directement
     const allChannels: any[] = Object.values((ChannelStore as any).getChannels?.() ?? {});
@@ -350,7 +350,7 @@ function renderMarkdown(text: string): React.ReactNode {
 
 // ── Chat UI ────────────────────────────────────────────────────────────────────
 
-function RAINCORDAIChat({ rootProps, panelMode, initialMessage }: { rootProps?: any; panelMode?: boolean; initialMessage?: string; }) {
+function raincordAIChat({ rootProps, panelMode, initialMessage }: { rootProps?: any; panelMode?: boolean; initialMessage?: string; }) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState(initialMessage ?? "");
     const [loading, setLoading] = useState(false);
@@ -585,7 +585,7 @@ Rules:
                             </div>
                             <p className="nai-empty-title">How can I help you?</p>
                             <p className="nai-empty-sub">
-                                {hasKey ? "Ask anything!" : "Configure your API key in Equicord Settings → Plugins → RAINCORDAI"}
+                                {hasKey ? "Ask anything!" : "Configure your API key in Equicord Settings → Plugins → raincordAI"}
                             </p>
                             <div className="nai-chips">
                                 {hasKey
@@ -594,7 +594,7 @@ Rules:
                                             {s}
                                         </button>
                                     ))
-                                    : <button className="nai-chip nai-chip--link" onClick={() => showApiKeyWarning("RAINCORDAI")}>🔑 Groq Key (free)</button>
+                                    : <button className="nai-chip nai-chip--link" onClick={() => showApiKeyWarning("raincordAI")}>🔑 Groq Key (free)</button>
                                 }
                             </div>
                         </div>
@@ -736,14 +736,14 @@ Rules:
 
 // ── Panneau latéral (mode page) ────────────────────────────────────────────────
 
-export function RAINCORDAIPanel() {
-    return <RAINCORDAIChat panelMode={true} />;
+export function raincordAIPanel() {
+    return <raincordAIChat panelMode={true} />;
 }
 
 // ── Bouton RAINCORD AI dans le panneau DM (remplace Boutique) ─────────────────
 
-function RAINCORDAINavButton({ selected }: { selected?: boolean; }) {
-    const handleClick = () => openModal(p => <RAINCORDAIChat rootProps={p} />);
+function raincordAINavButton({ selected }: { selected?: boolean; }) {
+    const handleClick = () => openModal(p => <raincordAIChat rootProps={p} />);
     return (
         <div className={`nai-nav-item ${selected ? "selected" : ""}`} role="button" tabIndex={0}
             onClick={handleClick}
@@ -764,7 +764,7 @@ function RAINCORDAINavButton({ selected }: { selected?: boolean; }) {
 // ── Plugin ─────────────────────────────────────────────────────────────────────
 
 export default definePlugin({
-    name: "RAINCORDAI",
+    name: "raincordAI",
     enabledByDefault: true,
     description: "AI Chat (Groq) integrated in Discord. Replaces 'Shop' in the DM panel.",
     authors: [{ name: "RAINCORD", id: 0n }],
@@ -772,7 +772,7 @@ export default definePlugin({
 
     patches: [
         {
-            // Patch 1 : Remplace la page Boutique (Shop) par notre panneau RAINCORDAI
+            // Patch 1 : Remplace la page Boutique (Shop) par notre panneau raincordAI
             find: "CollectiblesShop",
             replacement: [
                 {
@@ -793,7 +793,7 @@ export default definePlugin({
             ]
         },
         {
-            // Patch 2 : Injecter le bouton RAINCORDAI dans la barre latérale DM (Ancien système réactivé avec correctif de version)
+            // Patch 2 : Injecter le bouton raincordAI dans la barre latérale DM (Ancien système réactivé avec correctif de version)
             find: ".FRIENDS},\"friends\"",
             replacement: {
                 // On cible l'injection du bouton Boutique (Shop) dans le composant Sidebar
@@ -811,7 +811,7 @@ export default definePlugin({
             getGroqKey().then(stored => {
                 if (!stored) {
                     setGroqKey(keyFromSettings);
-                    console.log("[RAINCORDAI] API key migrated to shared DataStore");
+                    console.log("[raincordAI] API key migrated to shared DataStore");
                 }
             });
         }
@@ -851,7 +851,7 @@ export default definePlugin({
 
             if (createRoot) {
                 this._reactRoot = createRoot(container);
-                this._reactRoot.render(<RAINCORDAINavButton />);
+                this._reactRoot.render(<raincordAINavButton />);
             } else {
                 container.innerHTML = `<div class="nai-nav-item" role="button" tabindex="0" id="nai-nav-btn-raw">
                     <div class="nai-nav-icon-wrap">
@@ -864,7 +864,7 @@ export default definePlugin({
                     <span class="nai-nav-pill">AI</span>
                 </div>`;
                 document.getElementById("nai-nav-btn-raw")?.addEventListener("click", () => {
-                    openModal(p => <RAINCORDAIChat rootProps={p} />);
+                    openModal(p => <raincordAIChat rootProps={p} />);
                 });
             }
         };
@@ -894,11 +894,11 @@ export default definePlugin({
     },
 
     renderNavButton(selected?: boolean) {
-        return <RAINCORDAINavButton selected={selected} />;
+        return <raincordAINavButton selected={selected} />;
     },
 
     renderPanel() {
-        return <RAINCORDAIPanel />;
+        return <raincordAIPanel />;
     },
 
     contextMenus: {
@@ -927,7 +927,7 @@ export default definePlugin({
                     icon={RAINCORDIcon}
                     action={() => {
                         openModal(p => (
-                            <RAINCORDAIChat
+                            <raincordAIChat
                                 rootProps={p}
                                 initialMessage={content}
                             />
@@ -940,7 +940,7 @@ export default definePlugin({
 
     toolboxActions: {
         "RAINCORD AI"() {
-            openModal(props => <RAINCORDAIChat rootProps={props} />);
+            openModal(props => <raincordAIChat rootProps={props} />);
         },
     },
 });

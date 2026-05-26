@@ -9,7 +9,7 @@ import { ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalRoot, op
 import definePlugin from "@utils/types";
 import { findStoreLazy } from "@webpack";
 import { Checkbox, React, RestAPI, ScrollerThin, useEffect, useRef, useState, Select, IconUtils } from "@webpack/common";
-import { t } from "../autoTranslateRAINCORD";
+import { t } from "../autoTranslateRaincord";
 import { Button } from "@components/Button";
 import { HeadingPrimary, HeadingSecondary } from "@components/Heading";
 import { Margins } from "@utils/margins";

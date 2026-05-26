@@ -8,7 +8,7 @@ import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
 import { definePluginSettings } from "@api/Settings";
 import definePlugin, { OptionType } from "@utils/types";
 import { React } from "@webpack/common";
-import { groqChat, getGroqKey } from "../RAINCORDAI/groqManager";
+import { groqChat, getGroqKey } from "../raincordAI/groqManager";
 import { showApiKeyWarning } from "@utils/apiKeyWarning";
 
 // ── Settings ───────────────────────────────────────────────────────────────────
@@ -161,7 +161,7 @@ const AutoCorrectChatBarButton: ChatBarButtonFactory = ({ type }) => {
 export default definePlugin({
     name: "AutoCorrect",
     enabledByDefault: true,
-    description: "Automatically corrects spelling and grammar before sending. Requires a free Groq API key configured in RAINCORDAI.",
+    description: "Automatically corrects spelling and grammar before sending. Requires a free Groq API key configured in raincordAI.",
     authors: [{ name: "RAINCORD", id: 0n }],
     settings,
 

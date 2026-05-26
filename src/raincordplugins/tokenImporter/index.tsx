@@ -7,7 +7,7 @@
 import { addHeaderBarButton, HeaderBarButton, removeHeaderBarButton } from "@api/HeaderBar";
 import { PluginNative } from "@utils/types";
 import definePlugin from "@utils/types";
-import { t } from "../autoTranslateRAINCORD";
+import { t } from "../autoTranslateRaincord";
 import { openModal, ModalRoot, ModalHeader, ModalContent, ModalCloseButton } from "@utils/modal";
 import { React, useState, useRef, useEffect, useCallback, useMemo } from "@webpack/common";
 import { Forms } from "@webpack/common";

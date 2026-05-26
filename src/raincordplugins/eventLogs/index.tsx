@@ -10,7 +10,7 @@ import definePlugin from "@utils/types";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
 import { Forms, Menu, ContextMenuApi, showToast, Toasts, Select } from "@webpack/common";
 import { React, useState, useEffect, useMemo, useCallback } from "@webpack/common";
-import { t, useTranslation } from "../autoTranslateRAINCORD";
+import { t, useTranslation } from "../autoTranslateRaincord";
 import "./styles.css";
 
 const Dispatcher = findByPropsLazy("dispatch", "subscribe", "unsubscribe");

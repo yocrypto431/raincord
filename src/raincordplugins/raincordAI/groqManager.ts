@@ -45,7 +45,7 @@ export function registerSettingsFallback(fn: () => string) {
 export async function getGroqKey(): Promise<string> {
     const key = await DataStore.get(DS_API_KEY) as string | null;
     if (key?.trim()) return key.trim();
-    // Fallback : lire depuis les Settings RAINCORDAI si disponible
+    // Fallback : lire depuis les Settings raincordAI si disponible
     if (_settingsFallback) {
         const fallback = _settingsFallback();
         if (fallback) return fallback;
@@ -132,7 +132,7 @@ async function _groqChat(opts: GroqCallOptions, attempt = 0): Promise<string> {
     const { messages, temperature = 0.7, maxTokens = 1000, forceModel, maxRetries = 3 } = opts;
 
     const apiKey = await getGroqKey();
-    if (!apiKey) throw new Error("Clé API Groq missinge — configure-la dans Settings → RAINCORDAI");
+    if (!apiKey) throw new Error("Clé API Groq missinge — configure-la dans Settings → raincordAI");
 
     const model = forceModel ?? getAvailableModel();
 

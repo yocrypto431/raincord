@@ -19,7 +19,7 @@
 import "./PluginModal.css";
 
 import { generateId } from "@api/Commands";
-import { hasAnyVisibleSettings, isSettingHidden } from "@api/PluginManager";
+import { hasAnyVisibleSettings } from "@api/PluginManager";
 import { useSettings } from "@api/Settings";
 import { BaseText } from "@components/BaseText";
 import { Button } from "@components/Button";
@@ -38,6 +38,7 @@ import { OptionType, Plugin } from "@utils/types";
 import { findComponentByCodeLazy, findCssClassesLazy } from "@webpack";
 import { FluxDispatcher, React, Toasts, Tooltip, UserStore, useState } from "@webpack/common";
 import { Constructor } from "type-fest";
+import { User } from "@vencord/discord-types";
 
 import { PluginMeta } from "~plugins";
 

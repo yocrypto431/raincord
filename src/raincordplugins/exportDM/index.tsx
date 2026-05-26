@@ -10,7 +10,7 @@ import definePlugin from "@utils/types";
 import { React, useState, useEffect } from "@webpack/common";
 import { Forms } from "@webpack/common";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
-import { t, useTranslation } from "../autoTranslateRAINCORD";
+import { t, useTranslation } from "../autoTranslateRaincord";
 import "./styles.css";
 
 const ChannelStore = findStoreLazy("ChannelStore");

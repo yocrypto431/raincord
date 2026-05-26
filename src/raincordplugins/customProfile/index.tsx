@@ -8,7 +8,7 @@ import { ProfileBadge } from "@api/Badges";
 import { addContextMenuPatch, NavContextMenuPatchCallback, removeContextMenuPatch } from "@api/ContextMenu";
 import { addHeaderBarButton, HeaderBarButton, removeHeaderBarButton } from "@api/HeaderBar";
 import { DataStore } from "@api/index";
-import { t } from "../autoTranslateRAINCORD";
+import { t } from "../autoTranslateRaincord";
 import { ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalRoot, openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
 import { Button, Menu, React, Select, UserStore, IconUtils, FluxDispatcher, AuthenticationStore, SnowflakeUtils, ScrollerThin } from "@webpack/common";

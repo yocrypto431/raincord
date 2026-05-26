@@ -2,7 +2,7 @@ import definePlugin, { OptionType } from "@utils/types";
 import { definePluginSettings } from "@api/Settings";
 import { UserStore, ChannelStore, RestAPI, FluxDispatcher, React } from "@webpack/common";
 import { DataStore } from "@api/index";
-import { groqChat, getGroqKey } from "../RAINCORDAI/groqManager";
+import { groqChat, getGroqKey } from "../raincordAI/groqManager";
 import { ChatBarButton } from "@api/ChatButtons";
 import { findByPropsLazy } from "@webpack";
 
@@ -28,7 +28,7 @@ const settings = definePluginSettings({
                     <div style={{ fontWeight: "bold", color: "var(--status-warning)" }}>API Key Required</div>
                     <div style={{ fontSize: "13px", marginTop: "4px" }}>
                         AutoResponder requires a Groq API Key to function.
-                        Please configure it once in the <strong>RAINCORDAI</strong> settings.
+                        Please configure it once in the <strong>raincordAI</strong> settings.
                     </div>
                 </div>
             </div>
@@ -117,12 +117,12 @@ async function handleMessage(message: any) {
                 const { openConfirmationModal } = findByPropsLazy("openConfirmationModal");
                 openConfirmationModal({
                     header: "API Key Required",
-                    content: "AutoResponder requires a Groq API Key to function. Please configure it once in the RAINCORDAI settings.",
-                    confirmText: "Configure RAINCORDAI",
+                    content: "AutoResponder requires a Groq API Key to function. Please configure it once in the raincordAI settings.",
+                    confirmText: "Configure raincordAI",
                     cancelText: "Cancel",
                     onConfirm: () => {
                         const { openModal } = findByPropsLazy("openModal");
-                        // Logique pour ouvrir les settings RAINCORDAI si possible
+                        // Logique pour ouvrir les settings raincordAI si possible
                     }
                 });
             } catch (e) {
@@ -256,7 +256,7 @@ const AutoResponderButton = () => {
                     const { openConfirmationModal } = findByPropsLazy("openConfirmationModal");
                     openConfirmationModal({
                         header: "API Key Required",
-                        content: "AutoResponder requires a Groq API Key to function. Please configure it once in the RAINCORDAI settings.",
+                        content: "AutoResponder requires a Groq API Key to function. Please configure it once in the raincordAI settings.",
                         confirmText: "Close",
                         confirmColor: "brand"
                     });

@@ -18,12 +18,12 @@
 
 import { isSettingDisabled } from "@api/PluginManager";
 import { Switch } from "@components/Switch";
-import { PluginSettingBooleanDef } from "@utils/types";
+import { PluginSettingBooleanDef, PluginSettingCommon } from "@utils/types";
 import { React, useState } from "@webpack/common";
 
 import { resolveError, SettingProps, SettingsSection } from "./Common";
 
-export function BooleanSetting({ setting, pluginSettings, definedSettings, id, onChange }: SettingProps<PluginSettingBooleanDef>) {
+export function BooleanSetting({ option: setting, pluginSettings, definedSettings, id, onChange }: SettingProps<PluginSettingBooleanDef & PluginSettingCommon>) {
     const def = pluginSettings[id] ?? setting.default;
 
     const [state, setState] = useState(def ?? false);

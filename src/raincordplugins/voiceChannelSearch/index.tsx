@@ -10,7 +10,7 @@ import definePlugin from "@utils/types";
 import { Forms, UserStore } from "@webpack/common";
 import { React, useState, useRef, useEffect } from "@webpack/common";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
-import { t } from "../autoTranslateRAINCORD";
+import { t } from "../autoTranslateRaincord";
 import "./styles.css";
 
 const GuildStore = findStoreLazy("GuildStore");

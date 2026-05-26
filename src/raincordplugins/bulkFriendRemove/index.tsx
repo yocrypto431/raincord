@@ -10,7 +10,7 @@ import definePlugin from "@utils/types";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
 import { Forms } from "@webpack/common";
 import { React, useState, useEffect, useMemo } from "@webpack/common";
-import { t, useTranslation } from "../autoTranslateRAINCORD";
+import { t, useTranslation } from "../autoTranslateRaincord";
 import "./styles.css";
 
 const RelationshipStore = findStoreLazy("RelationshipStore");

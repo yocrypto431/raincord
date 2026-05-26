@@ -74,8 +74,9 @@ export const enum IpcEvents {
 
 
 
-    // Relaunch de l'app Electron
     RELAUNCH_APP = "RAINCORDRelaunchApp",
+
+    IMPORT_PLUGINS = "RAINCORDImportPlugins",
 
     // WorldBomb — Simulation Clavier/Souris Native
     WORLD_BOMB_TYPE = "WorldBombType",
