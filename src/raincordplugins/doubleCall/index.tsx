@@ -124,7 +124,6 @@ const DoubleCallButton: UserAreaButtonFactory = ({ iconForeground }: UserAreaRen
 
 export default definePlugin({
     name: "DoubleCall",
-    enabledByDefault: true,
     description: "Join two voice channels simultaneously with your own account.",
     authors: [{ name: "RAINCORD", id: 0n }],
     userAreaButton: { icon: PhoneIcon, render: DoubleCallButton, priority: 2 },

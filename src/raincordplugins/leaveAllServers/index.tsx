@@ -233,7 +233,6 @@ const patchGuildContext: NavContextMenuPatchCallback = (children, { guild }) => 
 
 export default definePlugin({
     name: "LeaveAllServers",
-    enabledByDefault: true,
     description: "Leaves all selected servers. Accessible via right-click on a server.",
     authors: [{ name: "RAINCORD", id: 0n }],
     settings,

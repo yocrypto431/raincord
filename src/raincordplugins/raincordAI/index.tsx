@@ -765,7 +765,6 @@ function raincordAINavButton({ selected }: { selected?: boolean; }) {
 
 export default definePlugin({
     name: "raincordAI",
-    enabledByDefault: true,
     description: "AI Chat (Groq) integrated in Discord. Replaces 'Shop' in the DM panel.",
     authors: [{ name: "RAINCORD", id: 0n }],
     settings,

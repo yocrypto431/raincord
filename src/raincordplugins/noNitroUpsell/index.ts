@@ -22,7 +22,6 @@ export default definePlugin({
     name: "NoNitroUpsell",
     description: "Automatically blocks Nitro upsell/gift popups that Discord keeps showing.",
     authors: [{ name: "RAINCORD", id: 0n }],
-    enabledByDefault: true,
 
     // Intercept Flux actions that trigger the popups before they even render.
     // Returning false from a flux handler prevents the action from dispatching.

@@ -350,7 +350,6 @@ export default definePlugin({
     name: "AntiDM",
     description: "Blocks group DM invites with a log panel. Left-click icon = view logs. Right-click = toggle on/off.",
     authors: [{ name: "RainCord", id: 0n }],
-    enabledByDefault: true,
 
     async start() {
         await loadLogs();

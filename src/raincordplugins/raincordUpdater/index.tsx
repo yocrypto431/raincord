@@ -9,9 +9,7 @@ import { React, useState, useEffect } from "@webpack/common";
 import { findByPropsLazy } from "@webpack";
 
 // ── Config ────────────────────────────────────────────────────────────────────
-// DISABLED: No GitHub repo exists for RainCord yet.
-// When you create your own repo, replace this URL.
-const REMOTE_VERSION_URL = "";
+const REMOTE_VERSION_URL = "https://api.github.com/repos/yocrypto431/raincord/releases/latest";
 
 // ── Version locale (injectée au build via define) ─────────────────────────────
 declare const VERSION: string;
@@ -237,9 +235,10 @@ function unmountBanner() {
 // ── Plugin ────────────────────────────────────────────────────────────────────
 export default definePlugin({
     name: "RAINCORDUpdater",
-    enabledByDefault: true,
     description: "Checks for updates on startup. Green banner only if a newer version exists on GitHub.",
     authors: [{ name: "RAINCORD", id: 0n }],
+    enabledByDefault: true,
+    required: true,
 
     start() {
         // Monte la bannière dès que le DOM est prêt

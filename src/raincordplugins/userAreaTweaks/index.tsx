@@ -78,7 +78,6 @@ export default definePlugin({
     name: "UserAreaTweaks",
     description: "Creates an elegant floating dock for RAINCORD plugins using pure CSS, preventing overlap and crashes.",
     authors: [{ name: "RAINCORD", id: 0n }],
-    enabledByDefault: true,
 
     start() {
         const style = document.createElement("style");

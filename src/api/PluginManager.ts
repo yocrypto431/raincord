@@ -380,15 +380,12 @@ export const initPluginManager = onlyOnce(function init() {
 
     const neededApiPlugins = new Set<string>();
 
-    // Migration: force tous les plugins a OFF sauf required/enabledByDefault
-    const MIGRATION_FLAG = "__RAINCORD_default_off_v1__";
+    const MIGRATION_FLAG = "__RAINCORD_default_off_v2__";
     if (!(SettingsStore.plain as any)[MIGRATION_FLAG]) {
         for (const p of pluginsValues) {
-            const shouldBeOn = p.required || p.enabledByDefault;
-            if (!shouldBeOn) {
-                const s = SettingsStore.plain.plugins[p.name];
-                if (s) s.enabled = false;
-            }
+            if (p.required) continue;
+            const s = SettingsStore.plain.plugins[p.name];
+            if (s && !p.enabledByDefault) s.enabled = false;
         }
         (SettingsStore.plain as any)[MIGRATION_FLAG] = true;
         SettingsStore.markAsChanged();

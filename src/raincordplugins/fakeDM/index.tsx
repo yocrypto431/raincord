@@ -592,7 +592,6 @@ const FakeDMButton: ChatBarButtonFactory = (props: any) => {
 // ─── Plugin ───────────────────────────────────────────────────────────────────
 export default definePlugin({
     name: "FakeDM",
-    enabledByDefault: true,
     description: "Injects fake local messages into a DM or group DM. Button in the text bar. Persists across restarts.",
     authors: [{ name: "RAINCORD", id: 0n }],
     dependencies: ["ChatInputButtonAPI"],

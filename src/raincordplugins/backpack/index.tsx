@@ -264,7 +264,6 @@ const BackpackChatBarButton: ChatBarButtonFactory = (props) => {
 
 export default definePlugin({
     name: "Backpack",
-    enabledByDefault: true,
     description: "Organize chat bar buttons into a backpack. Left-click to use packed buttons, right-click to pack/unpack buttons.",
     authors: [EquicordDevs.nobody],
     dependencies: ["ChatInputButtonAPI"],

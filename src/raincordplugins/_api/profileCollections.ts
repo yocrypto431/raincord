@@ -17,7 +17,6 @@ export default definePlugin({
     name: "ProfileCollectionsAPI",
     description: "API to add collections to the user profile panel like discords game collection.",
     authors: [Devs.thororen],
-    enabledByDefault: true,
     start() {
         console.log("[RAINCORD ProfileCollectionsAPI] Started");
         (Vencord.Api as any).ProfileCollections = ProfileCollections;

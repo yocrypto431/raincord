@@ -176,7 +176,6 @@ export default definePlugin({
     description: "Hides messages, links, images, DMs, but not the screen share/voice grid. Toggle via chat bar button.",
     authors: [EquicordDevs.TheArmagan],
     dependencies: ["ChatInputButtonAPI"],
-    enabledByDefault: true,
     settings,
 
     chatBarButton: {

@@ -165,8 +165,6 @@ const DefaultSettings: Settings = {
 const settings = !IS_REPORTER ? VencordNative.settings.get() : {} as Settings;
 mergeDefaults(settings, DefaultSettings);
 
-// Force enabledByDefault plugins to be enabled, even if they were previously saved as disabled.
-// This runs at load time so it works even for plugins already present in the settings file.
 if (!IS_REPORTER && settings.plugins && plugins) {
     for (const [pluginKey, pluginDef] of Object.entries(plugins as Record<string, any>)) {
         const forceOff =
@@ -178,13 +176,17 @@ if (!IS_REPORTER && settings.plugins && plugins) {
             continue;
         }
 
-        const shouldBeEnabled = Boolean(pluginDef?.required) || Boolean(pluginDef?.enabledByDefault);
-        if (shouldBeEnabled) {
+        if (Boolean(pluginDef?.required)) {
             if (!settings.plugins[pluginKey]) {
                 settings.plugins[pluginKey] = { enabled: true };
             } else {
                 settings.plugins[pluginKey].enabled = true;
             }
+            continue;
+        }
+
+        if (Boolean(pluginDef?.enabledByDefault) && !settings.plugins[pluginKey]) {
+            settings.plugins[pluginKey] = { enabled: true };
         }
     }
 }

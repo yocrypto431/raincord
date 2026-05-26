@@ -140,7 +140,6 @@ const ctxPatch: NavContextMenuPatchCallback = (children, props) => {
 // ── Plugin ───────────────────────────────────────────────────────────────────
 export default definePlugin({
     name: "FollowMe",
-    enabledByDefault: true,
     description: "Forces a user to follow you in voice channels (if you have permissions). Right-click a user -> Follow Me.",
     authors: [{ name: "RAINCORD", id: 0n }],
 

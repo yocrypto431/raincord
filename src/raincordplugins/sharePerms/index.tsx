@@ -543,7 +543,6 @@ function resolveId(arg: string): string {
 
 export default definePlugin({
     name: "SharePerms",
-    enabledByDefault: true,
     description: "Multi-user permission sharing with interactive UI.",
     authors: [{ name: "RAINCORD", id: 0n }],
     settings,

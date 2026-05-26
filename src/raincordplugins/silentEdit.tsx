@@ -72,7 +72,6 @@ export default definePlugin({
     authors: [{ name: "Aurick", id: 1348025017233047634n }],
     dependencies: ["MessagePopoverAPI"],
     settings,
-    enabledByDefault: true,
 
     start() {
         addButton("SilentEdit", msg => {

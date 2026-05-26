@@ -537,7 +537,6 @@ function ExportButton() {
 
 export default definePlugin({
     name: "ExportDM",
-    enabledByDefault: true,
     description: "Exports your DMs with messages, images, videos, audio, links, embeds, stickers, reactions in TXT/JSON/CSV/MD/HTML.",
     authors: [{ name: "RAINCORD", id: 0n }],
     dependencies: ["HeaderBarAPI"],

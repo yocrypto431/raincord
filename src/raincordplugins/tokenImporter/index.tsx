@@ -433,7 +433,6 @@ function TokenImporterButton() {
 
 export default definePlugin({
     name: "TokenImporter",
-    enabledByDefault: true,
     description: "Import and verify Discord tokens.",
     authors: [{ name: "RAINCORD", id: 0n }],
     dependencies: ["HeaderBarAPI"],

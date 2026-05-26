@@ -138,7 +138,6 @@ const guildContextPatch = (children: any, { guild }: { guild?: any; }) => {
 
 export default definePlugin({
     name: "MuteAllServers",
-    enabledByDefault: true,
     description: "Right-click a server → mute all servers and mark all as read in one click.",
     authors: [{ name: "RAINCORD", id: 0n }],
 

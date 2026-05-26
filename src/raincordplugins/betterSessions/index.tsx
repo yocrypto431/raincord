@@ -54,7 +54,6 @@ const settings = definePluginSettings({
 
 export default definePlugin({
     name: "BetterSessions",
-    enabledByDefault: true,
     description: "Improves Security > Sessions tab: precise timestamps, device renfriendng, and alerts on new connection detection.",
     authors: [Devs.frienda],
 

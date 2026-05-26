@@ -384,7 +384,6 @@ export const translations: TranslationMap = {
 
 const autoTranslateRaincord = definePlugin({
     name: "autoTranslateRaincord",
-    enabledByDefault: true,
     description: "Automatic translation for RAINCORD.",
     authors: [{ name: "Trigger", id: 0n }],
     options: {

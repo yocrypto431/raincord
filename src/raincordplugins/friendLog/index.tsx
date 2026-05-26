@@ -281,7 +281,6 @@ export default definePlugin({
     name: "FriendLog",
     description: "Logs friend requests and removals. Click entries to view profiles.",
     authors: [{ name: "RainCord", id: 0n }],
-    enabledByDefault: true,
 
     flux: {
         RELATIONSHIP_ADD: onRelationshipAdd,

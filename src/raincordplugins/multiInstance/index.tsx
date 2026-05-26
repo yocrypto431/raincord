@@ -563,7 +563,6 @@ function MultiInstanceButton() {
 
 export default definePlugin({
     name: "MultiInstance",
-    enabledByDefault: true,
     description: "Opens a 2nd Discord (new window or split screen) with another account.",
     authors: [{ name: "RAINCORD", id: 0n }],
     dependencies: ["HeaderBarAPI"],

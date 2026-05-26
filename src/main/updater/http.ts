@@ -13,8 +13,8 @@ import { exec } from "child_process";
 
 import { serializeErrors } from "./common";
 
-const RELEASES_REPO = ""; // RainCord: no remote repo — updater disabled
-const API_BASE      = "";
+const RELEASES_REPO = "yocrypto431/raincord";
+const API_BASE      = "https://api.github.com/repos/yocrypto431/raincord";
 const REPO_URL      = "https://github.com/yocrypto431/raincord";
 declare const VERSION: string;
 const CURRENT_VERSION = `v${VERSION}`;

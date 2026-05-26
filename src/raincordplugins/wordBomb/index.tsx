@@ -19,7 +19,6 @@ export default definePlugin({
     name: "WordBomb",
     description: "Assistant BombParty/WordBomb avec overlay persistant, IA intégrée et alphabet track.",
     authors: [{ name: "RAINCORD", id: 0n }],
-    enabledByDefault: true,
 
     start() {
         addHeaderBarButton("wordbomb", () => (

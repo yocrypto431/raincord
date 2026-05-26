@@ -33,7 +33,6 @@ export default definePlugin({
     name: "UnlimitedAccounts",
     description: "Increases the amount of accounts you can add.",
     authors: [Devs.thororen],
-    enabledByDefault: true,
     settings,
     patches: [
         {

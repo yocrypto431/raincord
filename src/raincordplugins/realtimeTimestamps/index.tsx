@@ -74,7 +74,6 @@ export default definePlugin({
     description: "Replaces Discord timestamps (e.g. 15:31) with live seconds (e.g. 15:34:21), updated every second.",
     tags: ["Appearance", "Chat", "Utility"],
     authors: [{ name: "RAINCORD", id: 253979869n }],
-    enabledByDefault: true,
     settings,
 
     renderTimestamp,
