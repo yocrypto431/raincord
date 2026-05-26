@@ -222,9 +222,11 @@ export default definePlugin({
         else window.addEventListener("load", mountWhenReady, { once: true });
 
         setTimeout(() => checkForUpdates(), 5000);
+        this._interval = setInterval(() => checkForUpdates(), 30 * 60 * 1000);
     },
 
     stop() {
+        if (this._interval) clearInterval(this._interval);
         unmountBanner();
         pendingUpdate = null;
         updateAttempted = false;
