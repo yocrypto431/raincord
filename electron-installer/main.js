@@ -195,17 +195,47 @@ ipcMain.handle("uninject", async (_, resourcesPath) => {
             : resourcesPath.includes("DiscordDevelopment") ? "DiscordDevelopment"
             : "Discord";
         try { execSync(`taskkill /F /IM ${procName}.exe`, { stdio: "ignore" }); } catch { }
-        await new Promise(r => setTimeout(r, 3000));
+        try { execSync(`taskkill /F /IM Update.exe`, { stdio: "ignore" }); } catch { }
+        await new Promise(r => setTimeout(r, 4000));
 
-        // Remove app/ folder if exists
         if (fs.existsSync(appDir)) fs.rmSync(appDir, { recursive: true, force: true });
 
-        // Restore backup
         if (fs.existsSync(backup)) {
             if (fs.existsSync(appAsar)) {
-                try { fs.unlinkSync(appAsar); } catch { }
+                try {
+                    fs.unlinkSync(appAsar);
+                } catch {
+                    try {
+                        execSync(`del /F /Q "${appAsar}"`, { stdio: "ignore", shell: true });
+                    } catch {
+                        try {
+                            execSync(`powershell -NoProfile -Command "Remove-Item -Force '${appAsar}'"`, { stdio: "ignore" });
+                        } catch {
+                            return { ok: false, error: "Could not remove app.asar — file is locked. Try running as Administrator." };
+                        }
+                    }
+                }
             }
-            try { fs.renameSync(backup, appAsar); } catch { }
+            await new Promise(r => setTimeout(r, 500));
+            try {
+                fs.renameSync(backup, appAsar);
+            } catch {
+                try {
+                    execSync(`move /Y "${backup}" "${appAsar}"`, { stdio: "ignore", shell: true });
+                } catch {
+                    return { ok: false, error: "Could not restore original app.asar." };
+                }
+            }
+        } else if (fs.existsSync(appAsar)) {
+            const size = fs.statSync(appAsar).size;
+            if (size < 100000) {
+                fs.unlinkSync(appAsar);
+            }
+        }
+
+        const permanentDir = path.join(process.env.LOCALAPPDATA || "", "RainCord");
+        if (fs.existsSync(permanentDir)) {
+            try { fs.rmSync(permanentDir, { recursive: true, force: true }); } catch { }
         }
 
         return { ok: true };
