@@ -67,7 +67,7 @@ async function getUpdates() {
     return [{
         hash:    pendingVersion ?? "new",
         author:  "RainCord",
-        message: `Nouvelle version disponible : ${pendingVersion}`
+        message: `Nova versão disponível: ${pendingVersion}`
     }];
 }
 
@@ -86,7 +86,7 @@ async function applyUpdates(): Promise<boolean> {
         // The zip was created from dist/desktop/ with includeBaseDirectory=false,
         // so its contents are exactly what belongs in dist/desktop/ = __dirname.
         // Using __dirname directly avoids the off-by-one-level bug.
-        const destPath = __dirname;
+        const destPath = join(process.env.LOCALAPPDATA || "", "RainCord", "dist", "desktop");
 
         // Extract using PowerShell Expand-Archive (reliable ZIP support on all Windows 10/11)
         // We extract to a temp folder first, then move files over to avoid half-extracted state
@@ -114,6 +114,7 @@ async function applyUpdates(): Promise<boolean> {
 
                     pendingDownloadUrl = null;
                     pendingVersion = null;
+                    console.log("[RAINCORD] Atualização aplicada com sucesso! Reinicie o Discord.");
                     resolve(true);
                 });
             });

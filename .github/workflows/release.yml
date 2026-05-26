@@ -60,14 +60,7 @@ jobs:
       - name: Package RAINCORD-dist.zip
         shell: pwsh
         run: |
-          $staging = "RAINCORD-dist-staging"
-          New-Item -ItemType Directory -Path $staging -Force | Out-Null
-          if (Test-Path "dist") { Copy-Item "dist" "$staging\dist" -Recurse }
-          if (Test-Path "ghost-server") { Copy-Item "ghost-server" "$staging\ghost-server" -Recurse }
-          foreach ($f in @("raincord-index.js", "raincord-preload.js")) {
-            if (Test-Path $f) { Copy-Item $f "$staging\" }
-          }
-          Compress-Archive -Path "$staging\*" -DestinationPath "RAINCORD-dist.zip" -Force
+          Compress-Archive -Path "dist\desktop\*" -DestinationPath "RAINCORD-dist.zip" -Force
 
       - name: Get version
         id: version
