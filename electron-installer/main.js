@@ -1,10 +1,39 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const fs = require("fs");
-const { execSync, execFileSync } = require("child_process");
+const { execSync, execFileSync, spawn } = require("child_process");
 const asar = require("asar");
+const https = require("https");
+
+const REPO = "yocrypto431/raincord";
+const INSTALLER_VERSION = require("./package.json").version;
 
 let mainWindow;
+
+function httpsGet(url) {
+    return new Promise((resolve, reject) => {
+        https.get(url, { headers: { "User-Agent": "RainCord-Installer" } }, res => {
+            if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+                return httpsGet(res.headers.location).then(resolve).catch(reject);
+            }
+            const chunks = [];
+            res.on("data", c => chunks.push(c));
+            res.on("end", () => resolve({ status: res.statusCode, data: Buffer.concat(chunks) }));
+        }).on("error", reject);
+    });
+}
+
+async function checkForUpdate() {
+    try {
+        const res = await httpsGet(`https://api.github.com/repos/${REPO}/releases/latest`);
+        const release = JSON.parse(res.data.toString());
+        const latestTag = release.tag_name.replace("v", "");
+        if (latestTag === INSTALLER_VERSION) return null;
+        const asset = release.assets.find(a => a.name === "RainCord-Installer.exe");
+        if (!asset) return null;
+        return { version: latestTag, url: asset.browser_download_url };
+    } catch { return null; }
+}
 
 app.whenReady().then(() => {
     mainWindow = new BrowserWindow({
@@ -239,3 +268,30 @@ ipcMain.handle("uninject", async (_, resourcesPath) => {
 
 ipcMain.handle("close-app", () => app.quit());
 ipcMain.handle("minimize-app", () => mainWindow?.minimize());
+
+ipcMain.handle("check-update", async () => {
+    return await checkForUpdate();
+});
+
+ipcMain.handle("self-update", async (_, url) => {
+    try {
+        const res = await httpsGet(url);
+        if (res.status !== 200) return { ok: false, error: "Download failed" };
+        const currentExe = process.execPath;
+        const newExe = currentExe + ".new";
+        const batFile = path.join(process.env.TEMP || "", "raincord_update.bat");
+        fs.writeFileSync(newExe, res.data);
+        fs.writeFileSync(batFile,
+            `@echo off\r\n` +
+            `timeout /t 2 /nobreak >nul\r\n` +
+            `move /Y "${newExe}" "${currentExe}"\r\n` +
+            `start "" "${currentExe}"\r\n` +
+            `del "%~f0"\r\n`
+        );
+        spawn("cmd", ["/c", batFile], { detached: true, stdio: "ignore" }).unref();
+        app.quit();
+        return { ok: true };
+    } catch (e) {
+        return { ok: false, error: e.message };
+    }
+});
