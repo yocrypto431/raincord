@@ -42,17 +42,17 @@ const DEV_TEAM = [
         description: "Founder and owner of RAINCORD."
     },
     {
+        id: "f1rsthandkid",
+        name: "f1rsthandkid",
+        role: "Owner",
+        pfp: "https://raw.githubusercontent.com/yocrypto431/raincord/main/static/devs/f1rsthandkid.jpg",
+        description: "Owner of RAINCORD."
+    },
+    {
         id: "nix",
         name: "nix",
         role: "Owner",
         pfp: "https://media.discordapp.net/attachments/1492067920124313711/1508805759419289810/3ba2c1de8a223fdf2d39768edb6b8351.jpg?ex=6a16e05d&is=6a158edd&hm=2e6b51698b68f2f2cf28cc537f2ce316113b0a4a4a46414f16851a7a7e16a506&=&format=webp",
-        description: "Owner of RAINCORD."
-    },
-        {
-        id: "f1rsthandkid",
-        name: "f1rsthandkid",
-        role: "Owner",
-        pfp: "https://cdn.discordapp.com/avatars/1458790017085476938/ef4ff89d3760cb4f3c01b049e77cfa53.webp?size=1024",
         description: "Owner of RAINCORD."
     }
 
@@ -99,7 +99,7 @@ function DevTeamSection() {
             </QuickActionCard>
 
             {showDevs && (
-                <div style={{ marginTop: "16px", display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px", animation: "slideIn 0.3s ease-out" }}>
+                <div style={{ marginTop: "16px", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", animation: "slideIn 0.3s ease-out" }}>
                     <style>{`
                         @keyframes slideIn {
                             from { opacity: 0; transform: translateY(-10px); }
