@@ -116,12 +116,27 @@ ipcMain.handle("inject", async (_, resourcesPath) => {
         const appAsar = path.join(resourcesPath, "app.asar");
         const backup = path.join(resourcesPath, "_app.asar");
 
-        // Backup original
+        // Backup original app.asar BEFORE overwriting
         if (fs.existsSync(appAsar) && !fs.existsSync(backup)) {
             const size = fs.statSync(appAsar).size;
             if (size > 1000000) {
-                try { fs.renameSync(appAsar, backup); } catch { }
+                // Real Discord app.asar — must backup first
+                try {
+                    fs.copyFileSync(appAsar, backup);
+                } catch {
+                    // Try with cmd
+                    try {
+                        execSync(`copy /Y "${appAsar}" "${backup}"`, { stdio: "ignore", shell: true });
+                    } catch {
+                        return { ok: false, error: "Could not backup app.asar. Close Discord and try again." };
+                    }
+                }
             }
+        }
+
+        // If no backup exists at all, this Discord is broken — skip it
+        if (!fs.existsSync(backup) && (!fs.existsSync(appAsar) || fs.statSync(appAsar).size < 1000000)) {
+            return { ok: false, error: "Discord installation is corrupted (no original app.asar). Reinstall Discord first." };
         }
 
         // Create a temp folder with index.js + package.json, then pack as asar
