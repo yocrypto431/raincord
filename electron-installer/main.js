@@ -24,10 +24,6 @@ function httpsGet(url) {
 
 async function checkForUpdate() {
     try {
-        const exePath = process.execPath;
-        const tempDir = (process.env.TEMP || "").toLowerCase();
-        if (exePath.toLowerCase().includes(tempDir)) return null;
-
         const res = await httpsGet(`https://api.github.com/repos/${REPO}/releases/latest`);
         const release = JSON.parse(res.data.toString());
         const latestVer = release.tag_name.replace("v", "");
