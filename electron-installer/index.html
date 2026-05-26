@@ -144,7 +144,7 @@
 
   <div class="content">
     <h1>RainCord</h1>
-    <p class="subtitle">Close Discord completely before installing</p>
+    <p class="subtitle">v<span id="current-ver">...</span> — <span id="update-status">checking...</span></p>
 
     <div class="discord-list" id="list"></div>
 
@@ -235,10 +235,15 @@
     function minimize() { ipcRenderer.invoke("minimize-app"); }
 
     async function checkUpdate() {
+      const ver = await ipcRenderer.invoke("get-version");
+      document.getElementById("current-ver").textContent = ver;
       const update = await ipcRenderer.invoke("check-update");
       if (update) {
-        setStatus("Updating to v" + update.version + "...");
+        document.getElementById("update-status").innerHTML = `<span style="color:#faa61a">updating to v${update.version}...</span>`;
         await ipcRenderer.invoke("self-update", update.url);
+      } else {
+        document.getElementById("update-status").textContent = "latest";
+        document.getElementById("update-status").style.color = "#23a55a";
       }
     }
 

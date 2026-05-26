@@ -348,6 +348,7 @@ ipcMain.handle("uninject", async (_, resourcesPath) => {
 
 ipcMain.handle("close-app", () => app.quit());
 ipcMain.handle("minimize-app", () => mainWindow?.minimize());
+ipcMain.handle("get-version", () => INSTALLER_VERSION);
 
 ipcMain.handle("check-update", async () => {
     return await checkForUpdate();
