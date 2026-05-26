@@ -44,7 +44,7 @@ function mountOverlay() {
             ReactDOM.render(<WordBombOverlay />, overlayContainer);
         }
     } catch (e) {
-        console.error("[WordBomb] Erreur de montage:", e);
+        console.error("[WordBomb] Erro ao montar:", e);
     }
 }
 
@@ -233,7 +233,7 @@ export function WordBombOverlay() {
                     }
                 }
             } catch (err) {
-                setStatus("❌ Erreur calibrage: " + String(err));
+                setStatus("❌ Erro na calibração: " + String(err));
             } finally {
                 setIsCalibrating(false);
                 setTimeout(() => inputRef.current?.focus(), 100);
@@ -403,8 +403,8 @@ export function WordBombOverlay() {
             }
             setStatus("Prêt !");
         } catch (e) {
-            console.error("[WordBomb] Erreur saisie:", e);
-            setStatus("Erreur de saisie");
+            console.error("[WordBomb] Erro de digitação:", e);
+            setStatus("Erro de digitação");
         } finally {
             isTypingRef.current = false;
             setIsTyping(false);

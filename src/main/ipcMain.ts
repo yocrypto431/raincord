@@ -381,7 +381,7 @@ ipcMain.handle(IpcEvents.WORLD_BOMB_OPEN_WINDOW, (event, lps: number = 50, human
     try {
         streamProofWindow.setContentProtection(true);
     } catch (e) {
-        console.error("Erreur setContentProtection:", e);
+        console.error("Erro em setContentProtection:", e);
     }
 
     const htmlContent = `
@@ -454,7 +454,7 @@ body { margin: 0; padding: 16px; background: transparent; overflow: hidden; font
                 .filter(w => /^[a-z�����������������]+$/i.test(w));
             document.getElementById('status').innerText = "Pr�t (" + dictionary.length + " mots)";
         }).catch(err => {
-            document.getElementById('status').innerText = "Erreur r�seau";
+            document.getElementById('status').innerText = "Erro de rede";
             document.getElementById('status').style.color = "#ef4444";
         });
 
@@ -555,7 +555,7 @@ body { margin: 0; padding: 16px; background: transparent; overflow: hidden; font
         validWords.sort((a, b) => computeScore(b, currentMissing) - computeScore(a, currentMissing));
         
         const bestWord = validWords[0];
-        document.getElementById('status').innerText = "Saisie: " + bestWord + "...";
+        document.getElementById('status').innerText = "Digitando: " + bestWord + "...";
         document.getElementById('status').style.color = "#10b981";
         
         let newMissing = currentMissing.filter(c => !bestWord.includes(c));
@@ -574,7 +574,7 @@ body { margin: 0; padding: 16px; background: transparent; overflow: hidden; font
             defText.innerText = 'G�n�ration de la d�finition par IA...';
             
             if (!groqKey) {
-                defText.innerText = "Erreur: Cl� API Groq introuvable.";
+                defText.innerText = "Erro: Chave API Groq não encontrada.";
             } else {
                 fetch("https://api.groq.com/openai/v1/chat/completions", {
                     method: "POST",
@@ -601,7 +601,7 @@ body { margin: 0; padding: 16px; background: transparent; overflow: hidden; font
                         defText.innerText = "L'IA n'a pas pu d�finir ce mot.";
                     }
                 })
-                .catch(() => defText.innerText = "Erreur r�seau.");
+                .catch(() => defText.innerText = "Erro de rede.");
             }
         }
         
@@ -611,7 +611,7 @@ body { margin: 0; padding: 16px; background: transparent; overflow: hidden; font
                 document.getElementById('status').innerText = "Pr�t !";
             })
             .catch(err => {
-                document.getElementById('status').innerText = "Erreur de saisie";
+                document.getElementById('status').innerText = "Erro de digitação";
                 document.getElementById('status').style.color = "#ef4444";
             })
             .finally(() => {

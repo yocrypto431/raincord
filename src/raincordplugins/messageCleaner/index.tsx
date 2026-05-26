@@ -13,7 +13,7 @@ import { Channel, Message } from "discord-types/general";
 const settings = definePluginSettings({
     enabled: {
         type: OptionType.BOOLEAN,
-        description: "Activer le plugin MessageCleaner",
+        description: "Ativar o plugin MessageCleaner",
         default: true
     },
     targetChannelId: {

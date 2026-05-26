@@ -173,29 +173,29 @@ function showGreenUpdateBanner() {
     let countdownTimer: ReturnType<typeof setInterval> | null = null;
 
     function setStatus(text: string) { statusSpan.textContent = text; }
-    setStatus(`Installation automatique dans ${countdown}s… (ou clique pour installer maintenant)`);
+    setStatus(`Instalação automática em ${countdown}s… (ou clique para instalar agora)`);
 
     async function doInstall() {
         if (installing) return;
         installing = true;
         if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
         updateBtn.style.cursor = "not-allowed";
-        updateBtn.textContent = "⏳ Installation…";
-        setStatus("⬇ Téléchargement en cours…");
+        updateBtn.textContent = "⏳ Instalando…";
+        setStatus("⬇ Baixando…");
 
         try {
             const downloaded = await update();
-            if (!downloaded) throw new Error("Téléchargement échoué");
-            setStatus("✓ Téléchargé ! Extraction en cours…");
+            if (!downloaded) throw new Error("Falha no download");
+            setStatus("✓ Baixado! Extraindo…");
             await rebuild();
-            setStatus("✅ Mise à jour réussie ! Redémarrage dans 3s…");
+            setStatus("✅ Atualização aplicada! Reiniciando em 3s…");
             setTimeout(() => relaunch(), 3_000);
         } catch (e) {
             UpdateLogger.error("Auto-install failed", e);
-            setStatus("❌ Erreur d'installation. Vérifie ta connexion. La mise à jour sera appliquée à la prochaine fermeture.");
+            setStatus("❌ Erro na instalação. Verifique sua conexão. A atualização será aplicada no próximo fechamento.");
             installing = false;
             updateBtn.style.cursor = "pointer";
-            updateBtn.textContent = "⬇ Réessayer";
+            updateBtn.textContent = "⬇ Tentar novamente";
         }
     }
 
@@ -207,7 +207,7 @@ function showGreenUpdateBanner() {
             countdownTimer = null;
             doInstall();
         } else {
-            setStatus(`Installation automatique dans ${countdown}s… (ou clique pour installer maintenant)`);
+            setStatus(`Instalação automática em ${countdown}s… (ou clique para instalar agora)`);
         }
     }, 1_000);
 

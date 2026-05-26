@@ -12,7 +12,7 @@ import { Constants, ChannelStore, RestAPI, UserStore } from "@webpack/common";
 const settings = definePluginSettings({
     enabled: {
         type: OptionType.BOOLEAN,
-        description: "Activer le plugin AntiGroup",
+        description: "Ativar o plugin AntiGroup",
         default: false
     },
     showNotifications: {

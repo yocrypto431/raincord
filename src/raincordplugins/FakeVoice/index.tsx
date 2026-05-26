@@ -80,7 +80,7 @@ function FakeDeafenUserButton({ iconForeground, hideTooltips, nameplate }: UserA
                 forceUpdate();
             }}
             onContextMenu={(e: React.MouseEvent) => ContextMenuApi.openContextMenu(e, () => <GhostContextMenu />)}
-            tooltipText={hideTooltips ? undefined : isGhostActive ? "Désactiver Fake Voice" : "Activer Fake Voice (Droit: Config)"}
+            tooltipText={hideTooltips ? undefined : isGhostActive ? "Desativar Fake Voice" : "Ativar Fake Voice (Direito: Config)"}
             icon={<FakeDeafenIcon className={iconForeground} />}
             role="switch"
             aria-checked={isGhostActive}

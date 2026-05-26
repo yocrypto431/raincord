@@ -1,24 +1,15 @@
-/*
- * RAINCORD — Auto-updater plugin
- * Au lancement : vérifie GitHub, affiche une bannière verte si version distante > locale.
- * Clic "Mettre à jour" : télécharge le Setup.exe via IPC main → le lance automatiquement.
- */
-
 import definePlugin from "@utils/types";
 import { React, useState, useEffect } from "@webpack/common";
 import { findByPropsLazy } from "@webpack";
 
-// ── Config ────────────────────────────────────────────────────────────────────
 const REMOTE_VERSION_URL = "https://api.github.com/repos/yocrypto431/raincord/releases/latest";
 
-// ── Version locale (injectée au build via define) ─────────────────────────────
 declare const VERSION: string;
 
 function getLocalVersion(): string {
     try { return VERSION; } catch { return "0.0.0"; }
 }
 
-// ── Comparaison semver : true seulement si remote > local ─────────────────────
 function isStrictlyNewer(remote: string, local: string): boolean {
     const parse = (v: string) => v.replace(/^v/, "").split(".").map(n => parseInt(n, 10) || 0);
     const r = parse(remote);
@@ -32,7 +23,6 @@ function isStrictlyNewer(remote: string, local: string): boolean {
     return false;
 }
 
-// ── État global ───────────────────────────────────────────────────────────────
 interface UpdateInfo {
     remoteVersion: string;
     localVersion: string;
@@ -41,14 +31,11 @@ interface UpdateInfo {
 
 let pendingUpdate: UpdateInfo | null = null;
 let listeners: Array<() => void> = [];
-// Anti-boucle : si l'user a déjà cliqué "Mettre à jour" dans cette session, on cache la bannière
 let updateAttempted = false;
 
 function notify() { listeners.forEach(f => f()); }
 
-// ── Vérification au lancement ─────────────────────────────────────────────────
 async function checkForUpdates() {
-    // RainCord: updater disabled — no remote repo configured
     if (!REMOTE_VERSION_URL) return;
     try {
         const localVersion = getLocalVersion();
@@ -69,13 +56,11 @@ async function checkForUpdates() {
             };
             notify();
         }
-        // Sinon : rien, pas de bannière
     } catch (e) {
-        console.error("[RAINCORDUpdater] Error vérification:", e);
+        console.error("[RAINCORDUpdater] Erro na verificação:", e);
     }
 }
 
-// ── Banner React ────────────────────────────────────────────────────────────
 function UpdateBanner() {
     const [info, setInfo] = useState<UpdateInfo | null>(pendingUpdate);
     const [dismissed, setDismissed] = useState(false);
@@ -93,47 +78,42 @@ function UpdateBanner() {
     async function doUpdate() {
         if (loading || !info) return;
         setLoading(true);
-        updateAttempted = true; // Marquer immédiatement pour éviter les double-clics
-        setStatus("Téléchargement en cours...");
+        updateAttempted = true;
+        setStatus("Baixando...");
 
         try {
             const VencordNative = (window as any).VencordNative;
             const ipc = VencordNative?.updater;
-            if (!ipc) throw new Error("VencordNative.updater non disponible");
+            if (!ipc) throw new Error("VencordNative.updater indisponível");
 
-            // Étape 1 : fetch GitHub metadata → stocke l'URL du zip dans le main process
             const updateRes: { ok: boolean; value?: boolean; error?: any; } = await ipc.update();
             if (!updateRes?.ok) {
-                throw new Error(updateRes?.error?.message ?? "Échec de la vérification des mises à jour");
+                throw new Error(updateRes?.error?.message ?? "Falha ao verificar atualizações");
             }
 
-            // Étape 2 : télécharge le zip + extrait dans dist/ (PowerShell)
-            setStatus("✓ Téléchargé ! Extraction en cours...");
+            setStatus("✓ Baixado! Extraindo...");
             const buildRes: { ok: boolean; value?: boolean; error?: any; } = await ipc.rebuild();
             if (!buildRes?.ok) {
-                // IpcRes ok=false → l'erreur est dans buildRes.error
-                const errMsg = buildRes?.error?.message ?? JSON.stringify(buildRes?.error) ?? "Échec de l'installation";
+                const errMsg = buildRes?.error?.message ?? JSON.stringify(buildRes?.error) ?? "Falha na instalação";
                 throw new Error(errMsg);
             }
 
-            setStatus("✓ Mise à jour appliquée — redémarrage dans 2s...");
+            setStatus("✓ Atualização aplicada — reiniciando em 2s...");
 
-            // Redémarrage propre via le handler RELAUNCH_APP du main process
             setTimeout(() => {
                 try {
                     VencordNative.RAINCORD?.relaunch?.();
                 } catch {
-                    // Fallback Discord Desktop
                     (window as any).DiscordNative?.app?.relaunch?.();
                     window.location.reload();
                 }
             }, 2000);
         } catch (e: any) {
-            console.error("[RAINCORDUpdater] Error mise à jour:", e);
-            const msg = e?.message ? e.message.substring(0, 120) : "Erreur inconnue";
-            setStatus(`❌ ${msg}. Vérifie ta connexion ou redémarre manuellement.`);
+            console.error("[RAINCORDUpdater] Erro ao atualizar:", e);
+            const msg = e?.message ? e.message.substring(0, 120) : "Erro desconhecido";
+            setStatus(`❌ ${msg}. Verifique sua conexão ou reinicie manualmente.`);
             setLoading(false);
-            updateAttempted = false; // Permet un retry
+            updateAttempted = false;
         }
     }
 
@@ -154,20 +134,18 @@ function UpdateBanner() {
             gap: 12,
         }
     },
-        // Texte gauche
         React.createElement("div", {
             style: { display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }
         },
             React.createElement("span", { style: { fontWeight: 700, flexShrink: 0 } },
-                `🔔 RAINCORD ${info.remoteVersion} available!`
+                `🔔 RAINCORD ${info.remoteVersion} disponível!`
             ),
             React.createElement("span", {
                 style: { opacity: 0.85, fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }
             },
-                status ?? `Current version: ${info.localVersion}`
+                status ?? `Versão atual: ${info.localVersion}`
             )
         ),
-        // Boutons droite
         React.createElement("div", { style: { display: "flex", gap: 8, flexShrink: 0 } },
             React.createElement("button", {
                 onClick: doUpdate,
@@ -183,7 +161,7 @@ function UpdateBanner() {
                     fontWeight: 700,
                     fontFamily: "inherit",
                 }
-            }, loading ? "..." : "⬇ Mettre à jour"),
+            }, loading ? "..." : "⬇ Atualizar"),
             React.createElement("button", {
                 onClick: () => setDismissed(true),
                 style: {
@@ -196,13 +174,12 @@ function UpdateBanner() {
                     fontFamily: "inherit",
                     lineHeight: 1,
                 },
-                title: "Dismiss"
+                title: "Dispensar"
             }, "✕")
         )
     );
 }
 
-// ── Monte la bannière dans le DOM ─────────────────────────────────────────────
 let bannerRoot: any = null;
 let bannerContainer: HTMLDivElement | null = null;
 
@@ -221,7 +198,7 @@ function mountBanner() {
             ReactDOM.render(React.createElement(UpdateBanner), bannerContainer);
         }
     } catch (e) {
-        console.error("[RAINCORDUpdater] Error montage bannière:", e);
+        console.error("[RAINCORDUpdater] Erro ao montar banner:", e);
     }
 }
 
@@ -232,21 +209,18 @@ function unmountBanner() {
     bannerRoot = null;
 }
 
-// ── Plugin ────────────────────────────────────────────────────────────────────
 export default definePlugin({
     name: "RAINCORDUpdater",
-    description: "Checks for updates on startup. Green banner only if a newer version exists on GitHub.",
+    description: "Verifica atualizações na inicialização. Banner verde aparece se houver versão nova no GitHub.",
     authors: [{ name: "RAINCORD", id: 0n }],
     enabledByDefault: true,
     required: true,
 
     start() {
-        // Monte la bannière dès que le DOM est prêt
         const mountWhenReady = () => setTimeout(mountBanner, 1500);
         if (document.readyState === "complete") mountWhenReady();
         else window.addEventListener("load", mountWhenReady, { once: true });
 
-        // Vérifie les mises à jour 5s après le lancement
         setTimeout(() => checkForUpdates(), 5000);
     },
 

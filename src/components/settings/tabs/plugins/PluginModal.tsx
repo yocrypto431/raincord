@@ -234,8 +234,8 @@ export function openWarningModal(plugin?: Plugin | null, onRestartNeeded?: (plug
         <ConfirmModal
             {...props}
             className={cl("confirm")}
-            header={isPlugin ? "Reset" : "Désactiver les plugins"}
-            confirmText={isPlugin ? "Reset" : "All désactiver"}
+            header={isPlugin ? "Reset" : "Desativar plugins"}
+            confirmText={isPlugin ? "Reset" : "Desativar todos"}
             cancelText="Cancel"
             onConfirm={() => {
                 if (isPlugin && plugin) {
@@ -248,8 +248,8 @@ export function openWarningModal(plugin?: Plugin | null, onRestartNeeded?: (plug
         >
             <Paragraph>
                 {isPlugin
-                    ? <>Reset tous les paramètres de <strong>{plugin?.name}</strong> ?</>
-                    : `Désactiver ${enabledPlugins} plugin(s) ?`
+                    ? <>Resetar todas as configurações de <strong>{plugin?.name}</strong>?</>
+                    : `Desativar ${enabledPlugins} plugin(s)?`
                 }
             </Paragraph>
             <div className={classes(Margins.top16, cl("warning"))}>
