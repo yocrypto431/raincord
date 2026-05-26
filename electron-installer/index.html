@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>RainCord Installer</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0f1a;
+      color: #e0f2fe;
+      height: 100vh;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      height: 36px;
+      -webkit-app-region: drag;
+      background: rgba(10, 15, 26, 0.95);
+      border-bottom: 1px solid #1a2744;
+    }
+
+    .titlebar-title { font-size: 12px; font-weight: 600; color: #64748b; }
+    .titlebar-controls { display: flex; gap: 8px; -webkit-app-region: no-drag; }
+    .titlebar-controls button {
+      width: 12px; height: 12px; border-radius: 50%; border: none; cursor: pointer;
+    }
+    .btn-close { background: #f23f43; }
+    .btn-min { background: #faa61a; }
+
+    .content {
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 36px);
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #e0f2fe, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+    }
+
+    .subtitle { font-size: 13px; color: #64748b; margin-bottom: 24px; }
+
+    .discord-list {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow-y: auto;
+    }
+
+    .discord-card {
+      display: flex;
+      align-items: center;
+      padding: 14px 16px;
+      background: #0f1628;
+      border: 1px solid #1a2744;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .discord-card:hover { border-color: #38bdf8; background: rgba(56, 189, 248, 0.05); }
+    .discord-card.selected { border-color: #38bdf8; background: rgba(56, 189, 248, 0.08); }
+
+    .card-info { flex: 1; }
+    .card-name { font-size: 14px; font-weight: 600; }
+    .card-version { font-size: 11px; color: #64748b; margin-top: 2px; }
+
+    .card-status {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+    .status-patched { background: rgba(35, 165, 90, 0.15); color: #23a55a; }
+    .status-clean { background: rgba(100, 116, 139, 0.15); color: #64748b; }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #38bdf8, #22d3ee);
+      color: #0a0f1a;
+    }
+    .btn-primary:not(:disabled):hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(56, 189, 248, 0.3); }
+
+    .btn-danger {
+      background: rgba(242, 63, 67, 0.1);
+      color: #f23f43;
+      border: 1px solid rgba(242, 63, 67, 0.3);
+    }
+    .btn-danger:not(:disabled):hover { background: rgba(242, 63, 67, 0.2); }
+
+    .status-bar {
+      margin-top: 16px;
+      font-size: 12px;
+      color: #64748b;
+      min-height: 18px;
+    }
+
+    .status-bar.success { color: #23a55a; }
+    .status-bar.error { color: #f23f43; }
+
+    .empty { text-align: center; padding: 40px; color: #64748b; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="titlebar">
+    <span class="titlebar-title">RainCord Installer</span>
+    <div class="titlebar-controls">
+      <button class="btn-min" onclick="minimize()"></button>
+      <button class="btn-close" onclick="closeApp()"></button>
+    </div>
+  </div>
+
+  <div class="content">
+    <h1>RainCord</h1>
+    <p class="subtitle">Select a Discord installation to patch</p>
+
+    <div class="discord-list" id="list"></div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="btn-inject" disabled onclick="inject()">Install RainCord</button>
+      <button class="btn btn-danger" id="btn-uninject" disabled onclick="uninject()">Uninstall</button>
+    </div>
+
+    <div class="status-bar" id="status"></div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require("electron");
+
+    let discords = [];
+    let selected = null;
+
+    async function load() {
+      discords = await ipcRenderer.invoke("detect-discord");
+      render();
+    }
+
+    function render() {
+      const list = document.getElementById("list");
+      if (discords.length === 0) {
+        list.innerHTML = '<div class="empty">No Discord installations found.</div>';
+        return;
+      }
+
+      list.innerHTML = discords.map((d, i) => `
+        <div class="discord-card ${selected === i ? 'selected' : ''}" onclick="select(${i})">
+          <div class="card-info">
+            <div class="card-name">${d.name}</div>
+            <div class="card-version">v${d.version}</div>
+          </div>
+          <span class="card-status ${d.patched ? 'status-patched' : 'status-clean'}">
+            ${d.patched ? '✓ Installed' : 'Not installed'}
+          </span>
+        </div>
+      `).join("");
+
+      document.getElementById("btn-inject").disabled = selected === null;
+      document.getElementById("btn-uninject").disabled = selected === null || !discords[selected]?.patched;
+    }
+
+    function select(i) {
+      selected = i;
+      render();
+    }
+
+    function setStatus(text, type = "") {
+      const el = document.getElementById("status");
+      el.textContent = text;
+      el.className = "status-bar " + type;
+    }
+
+    async function inject() {
+      if (selected === null) return;
+      setStatus("Installing RainCord...");
+      const result = await ipcRenderer.invoke("inject", discords[selected].path);
+      if (result.ok) {
+        setStatus("✓ RainCord installed! Open Discord.", "success");
+        discords[selected].patched = true;
+        render();
+      } else {
+        setStatus("✗ " + result.error, "error");
+      }
+    }
+
+    async function uninject() {
+      if (selected === null) return;
+      setStatus("Uninstalling...");
+      const result = await ipcRenderer.invoke("uninject", discords[selected].path);
+      if (result.ok) {
+        setStatus("✓ RainCord removed.", "success");
+        discords[selected].patched = false;
+        render();
+      } else {
+        setStatus("✗ " + result.error, "error");
+      }
+    }
+
+    function closeApp() { ipcRenderer.invoke("close-app"); }
+    function minimize() { ipcRenderer.invoke("minimize-app"); }
+
+    load();
+  </script>
+</body>
+</html>

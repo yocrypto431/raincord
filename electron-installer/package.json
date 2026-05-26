@@ -1,0 +1,37 @@
+{
+  "name": "raincord-installer",
+  "version": "1.0.0",
+  "description": "RainCord Installer",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win portable"
+  },
+  "devDependencies": {
+    "electron": "^30.5.1",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.raincord.installer",
+    "productName": "RainCord Installer",
+    "win": {
+      "target": "portable",
+      "icon": "icon.ico"
+    },
+    "portable": {
+      "artifactName": "RainCord-Installer.exe"
+    },
+    "files": [
+      "main.js",
+      "index.html",
+      "icon.ico"
+    ],
+    "extraResources": [
+      {
+        "from": "../dist/desktop",
+        "to": "dist/desktop",
+        "filter": ["**/*"]
+      }
+    ]
+  }
+}
