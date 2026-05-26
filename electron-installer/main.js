@@ -111,20 +111,24 @@ ipcMain.handle("detect-discord", () => {
                 else isOtherMod = true;
             }
 
-            if (!isPatched && !isOtherMod && fs.existsSync(appAsar) && fs.existsSync(backup)) {
-                try {
-                    const size = fs.statSync(appAsar).size;
-                    if (size < 500000) {
-                        try {
-                            const raw = fs.readFileSync(appAsar).toString("utf-8").toLowerCase();
-                            if (raw.includes("raincord")) isPatched = true;
-                            else if (raw.includes("vencord") || raw.includes("equicord") || raw.includes("betterdiscord")) isOtherMod = true;
-                            else isOtherMod = true;
-                        } catch {
-                            isOtherMod = true;
+            if (!isPatched && !isOtherMod && fs.existsSync(backup)) {
+                if (!fs.existsSync(appDir)) {
+                    isPatched = true;
+                } else if (fs.existsSync(appAsar)) {
+                    try {
+                        const size = fs.statSync(appAsar).size;
+                        if (size < 500000) {
+                            try {
+                                const raw = fs.readFileSync(appAsar).toString("utf-8").toLowerCase();
+                                if (raw.includes("raincord")) isPatched = true;
+                                else if (raw.includes("vencord") || raw.includes("equicord") || raw.includes("betterdiscord")) isOtherMod = true;
+                                else isOtherMod = true;
+                            } catch {
+                                isOtherMod = true;
+                            }
                         }
-                    }
-                } catch { }
+                    } catch { }
+                }
             }
 
             results.push({
