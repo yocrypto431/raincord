@@ -41,8 +41,5 @@
       }
     ]
   },
-  "dependencies": {
-    "@electron/asar": "^4.2.0",
-    "asar": "^3.2.0"
-  }
+  "dependencies": {}
 }
