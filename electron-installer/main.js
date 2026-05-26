@@ -25,18 +25,43 @@ function httpsGet(url) {
 
 async function checkForUpdate() {
     try {
+        const exePath = process.execPath;
+        const tempDir = (process.env.TEMP || "").toLowerCase();
+        if (exePath.toLowerCase().includes(tempDir)) return null;
+
         const res = await httpsGet(`https://api.github.com/repos/${REPO}/releases/latest`);
         const release = JSON.parse(res.data.toString());
+        const latestVer = release.tag_name.replace("v", "");
+        if (!latestVer || latestVer === INSTALLER_VERSION) return null;
+
+        const latestParts = latestVer.split(".").map(Number);
+        const localParts = INSTALLER_VERSION.split(".").map(Number);
+        let isNewer = false;
+        for (let i = 0; i < 3; i++) {
+            if ((latestParts[i] || 0) > (localParts[i] || 0)) { isNewer = true; break; }
+            if ((latestParts[i] || 0) < (localParts[i] || 0)) break;
+        }
+        if (!isNewer) return null;
+
         const asset = release.assets.find(a => a.name === "RainCord-Installer.exe");
         if (!asset) return null;
-        const remoteSize = asset.size;
-        const localSize = fs.statSync(process.execPath).size;
-        if (Math.abs(remoteSize - localSize) < 1000) return null;
-        return { version: release.tag_name.replace("v", ""), url: asset.browser_download_url };
+        return { version: latestVer, url: asset.browser_download_url };
     } catch { return null; }
 }
 
 app.whenReady().then(() => {
+    const exePath = process.execPath;
+    const tempDir = (process.env.TEMP || "").toLowerCase();
+    const installDir = path.join(process.env.LOCALAPPDATA || "", "RainCord");
+    const installedExe = path.join(installDir, "RainCord-Installer.exe");
+
+    if (exePath.toLowerCase().includes(tempDir) || exePath.toLowerCase().includes("\\appdata\\local\\temp")) {
+        fs.mkdirSync(installDir, { recursive: true });
+        fs.copyFileSync(exePath, installedExe);
+        spawn(installedExe, [], { detached: true, stdio: "ignore" }).unref();
+        app.quit();
+        return;
+    }
     mainWindow = new BrowserWindow({
         width: 680,
         height: 520,
