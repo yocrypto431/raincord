@@ -78,12 +78,29 @@ jobs:
           $ver = (Get-Content package.json | ConvertFrom-Json).version
           echo "version=$ver" >> $env:GITHUB_OUTPUT
 
+      - name: Generate changelog
+        id: changelog
+        shell: bash
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            COMMITS=$(git log --oneline -20 --pretty=format:"- %s")
+          else
+            COMMITS=$(git log --oneline ${PREV_TAG}..HEAD --pretty=format:"- %s")
+          fi
+          COMMITS=$(echo "$COMMITS" | grep -v "\[skip ci\]" | grep -v "chore: bump" | head -20)
+          echo "commits<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMITS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
       - name: Create/Update Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.version }}
           name: RainCord v${{ steps.version.outputs.version }}
-          generate_release_notes: true
+          body: |
+            ## Changes
+            ${{ steps.changelog.outputs.commits }}
           make_latest: true
           files: |
             RAINCORD-dist.zip
