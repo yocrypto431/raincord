@@ -46,10 +46,9 @@ function getMyVoiceState(): { channelId: string; guildId: string; } | null {
 function showToast(msg: string) {
     try {
         const W = (window as any).Vencord?.Webpack;
-        if (!W) { console.log("[DoubleCall]", msg); return; }
-        let Toasts: any = null;
-        try { Toasts = W.findByProps("createToast", "showToast"); } catch { }
-        if (!Toasts) try { Toasts = W.findByProps("showToast"); } catch { }
+        if (!W?.find || !W?.filters) { console.log("[DoubleCall]", msg); return; }
+        const Toasts = W.find(W.filters.byProps("createToast", "showToast"), { isIndirect: true })
+            ?? W.find(W.filters.byProps("showToast"), { isIndirect: true });
         if (Toasts?.showToast) {
             const toast = Toasts.createToast?.(msg, Toasts.Type?.MESSAGE) ?? msg;
             Toasts.showToast(toast);

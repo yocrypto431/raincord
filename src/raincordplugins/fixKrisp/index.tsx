@@ -17,10 +17,9 @@ const NativeModuleStore = findByPropsLazy("requireModule");
 function resetKrispPipeline() {
     try {
         const W = (window as any).Vencord?.Webpack;
-        if (!W) return;
-        let MediaSettingsStore: any = null;
-        try { MediaSettingsStore = W.findByProps("setNoiseSuppressionLevel", "getNoiseSuppression"); } catch { }
-        if (!MediaSettingsStore) try { MediaSettingsStore = W.findByProps("setNoiseSuppression", "getNoiseSuppression"); } catch { }
+        if (!W?.find || !W?.filters) return;
+        const MediaSettingsStore = W.find(W.filters.byProps("setNoiseSuppressionLevel", "getNoiseSuppression"), { isIndirect: true })
+            ?? W.find(W.filters.byProps("setNoiseSuppression", "getNoiseSuppression"), { isIndirect: true });
         if (!MediaSettingsStore) return;
 
         if (MediaSettingsStore.setNoiseSuppressionLevel) {
