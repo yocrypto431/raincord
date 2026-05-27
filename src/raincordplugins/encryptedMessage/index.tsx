@@ -6,7 +6,8 @@
 
 import { addContextMenuPatch, removeContextMenuPatch } from "@api/ContextMenu";
 import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
-import definePlugin from "@utils/types";
+import { definePluginSettings } from "@api/Settings";
+import definePlugin, { OptionType } from "@utils/types";
 import { Menu, Parser, Toasts, useState, useEffect, React } from "@webpack/common";
 import type { Message } from "@vencord/discord-types";
 
@@ -126,6 +127,26 @@ function autoDecrypt(ciphertext: string): { text: string; technique: number; } |
     return null;
 }
 
+const settings = definePluginSettings({
+    autoDecrypt: {
+        type: OptionType.BOOLEAN,
+        description: "Automatically decrypt encrypted messages",
+        default: true,
+    },
+    autoEncrypt: {
+        type: OptionType.BOOLEAN,
+        description: "Automatically encrypt all outgoing messages",
+        default: false,
+    },
+    defaultTechnique: {
+        type: OptionType.SLIDER,
+        description: "Default encryption technique (0-399)",
+        default: 0,
+        markers: [0, 50, 100, 150, 200, 250, 300, 350, 399],
+        stickToMarkers: false,
+    },
+});
+
 let encryptionEnabled = false;
 let currentTechnique = 0;
 
@@ -217,6 +238,12 @@ function DecryptionAccessory({ message }: { message: Message; }) {
     useEffect(() => {
         if ((message as any).vencordEmbeddedBy) return;
         DecryptionSetters.set(message.id, setDecrypted);
+
+        if (settings.store.autoDecrypt && isEncrypted(message.content)) {
+            const found = autoDecrypt(message.content);
+            if (found) setDecrypted(found.text);
+        }
+
         return () => void DecryptionSetters.delete(message.id);
     }, []);
 
@@ -271,10 +298,10 @@ const messageContextPatch = (children: any, { message }: { message: any; }) => {
                             } else {
                                 Toasts.show({ message: `🔓 ${found.text}`, type: Toasts.Type.SUCCESS, id: Toasts.genId() });
                             }
-                            Toasts.show({ message: `Technique détectée: ${found.technique}`, type: Toasts.Type.MESSAGE, id: Toasts.genId() });
+                            Toasts.show({ message: `Técnica detectada: ${found.technique}`, type: Toasts.Type.MESSAGE, id: Toasts.genId() });
                         } else {
                             Toasts.show({
-                                message: "❌ Impossible de déchiffrer — aucune technique ne fonctionne",
+                                message: "❌ Impossível decifrar — nenhuma técnica funciona",
                                 type: Toasts.Type.FAILURE,
                                 id: Toasts.genId(),
                             });
@@ -293,6 +320,7 @@ export default definePlugin({
     description: "Encrypts your messages with 400 unique techniques (0–399). Only those who know the key can decrypt.",
     authors: [{ name: "RAINCORD", id: 0n }],
     dependencies: ["ChatInputButtonAPI", "MessageEventsAPI", "MessageAccessoriesAPI"],
+    settings,
 
     chatBarButton: {
         icon: () => <LockIcon enabled={encryptionEnabled} />,
@@ -303,6 +331,7 @@ export default definePlugin({
 
     start() {
         addContextMenuPatch("message", messageContextPatch);
+        currentTechnique = settings.store.defaultTechnique;
     },
 
     stop() {
@@ -311,12 +340,13 @@ export default definePlugin({
     },
 
     async onBeforeMessageSend(_channelId: string, messageObj: { content: string; }) {
-        if (!encryptionEnabled || !messageObj.content || messageObj.content.trim().length === 0) return;
+        const shouldEncrypt = encryptionEnabled || settings.store.autoEncrypt;
+        if (!shouldEncrypt || !messageObj.content || messageObj.content.trim().length === 0) return;
 
         const encrypted = encrypt(messageObj.content, currentTechnique);
         if (encrypted.length > 2000) {
             Toasts.show({
-                message: `❌ Message trop long pour être chiffré (${encrypted.length}/2000)`,
+                message: `❌ Mensagem muito longa para encriptar (${encrypted.length}/2000)`,
                 type: Toasts.Type.FAILURE,
                 id: Toasts.genId(),
             });
