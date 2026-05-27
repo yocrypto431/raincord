@@ -53,22 +53,24 @@ function ReadAllButton() {
             onMouseLeave={() => setHover(false)}
             style={{
                 width: 48,
-                height: 48,
-                borderRadius: hover ? 16 : 24,
-                background: hover ? "#23a55a" : "var(--background-primary)",
+                height: 24,
+                borderRadius: 12,
+                background: hover ? "#23a55a" : "var(--background-tertiary)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
                 transition: "all 0.15s ease-out",
-                marginBottom: 8,
+                marginBottom: 4,
+                fontSize: 10,
+                fontWeight: 700,
+                color: hover ? "white" : "var(--interactive-normal)",
+                userSelect: "none",
             }}
             aria-label="Read All"
             role="button"
         >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill={hover ? "white" : "var(--interactive-normal)"}>
-                <path d="M0.41 13.41L6 19l1.41-1.42L1.83 12 7.41 6.41 6 5 0.41 10.59zM22.24 5.59L11.66 16.17 7.48 12l-1.41 1.41L11.66 19l12-12-1.42-1.41z" />
-            </svg>
+            Read
         </div>
     );
 }
