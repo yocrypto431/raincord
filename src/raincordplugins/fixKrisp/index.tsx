@@ -16,21 +16,18 @@ const NativeModuleStore = findByPropsLazy("requireModule");
  */
 function resetKrispPipeline() {
     try {
-        const MediaSettingsStore = (window as any).Vencord?.Webpack?.findByProps?.("setNoiseSuppressionLevel", "getNoiseSuppression");
+        const MediaSettingsStore = (window as any).Vencord?.Webpack?.findByProps?.("setNoiseSuppressionLevel", "getNoiseSuppression")
+            ?? (window as any).Vencord?.Webpack?.findByProps?.("setNoiseSuppression", "getNoiseSuppression");
         if (!MediaSettingsStore) return;
 
-        const original = MediaSettingsStore.getNoiseSuppression?.();
-
-        // Step 1: switch to Studio (full noise suppression — resets the pipeline)
-        MediaSettingsStore.setNoiseSuppressionLevel?.("studio");
-
-        // Step 2: switch back to Voice Isolation (Krisp) — now correctly initialised
-        setTimeout(() => {
-            try {
-                MediaSettingsStore.setNoiseSuppressionLevel?.("krisp");
-                console.log("[FixKrisp] Pipeline reset complete — Krisp correctly initialised.");
-            } catch { }
-        }, 400);
+        if (MediaSettingsStore.setNoiseSuppressionLevel) {
+            MediaSettingsStore.setNoiseSuppressionLevel("studio");
+            setTimeout(() => {
+                try { MediaSettingsStore.setNoiseSuppressionLevel("krisp"); } catch { }
+            }, 400);
+        } else if (MediaSettingsStore.setNoiseSuppression) {
+            MediaSettingsStore.setNoiseSuppression(true);
+        }
     } catch { }
 }
 
