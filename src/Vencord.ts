@@ -333,13 +333,45 @@ async function init() {
             await setLastSeenHash(gitHash);
             setTimeout(() => {
                 try {
+                    const { openModal } = require("@utils/modal");
+                    const { React } = require("@webpack/common");
+                    const { ModalRoot, ModalHeader, ModalContent, ModalFooter, ModalSize, ModalCloseButton } = require("@utils/modal");
+                    const { Button } = require("@components/Button");
+                    const { Forms } = require("@webpack/common");
+
+                    openModal((props: any) => React.createElement(ModalRoot, { ...props, size: ModalSize.MEDIUM },
+                        React.createElement(ModalHeader, { separator: false },
+                            React.createElement("div", { style: { flex: 1, display: "flex", alignItems: "center", gap: 12 } },
+                                React.createElement("div", { style: { width: 40, height: 40, borderRadius: 10, background: "linear-gradient(135deg, #23a55a, #5865f2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 } }, "🎉"),
+                                React.createElement("div", null,
+                                    React.createElement(Forms.FormTitle, { tag: "h2", style: { margin: 0 } }, "RainCord Atualizado!"),
+                                    React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", marginTop: 2 } }, `Build: ${gitHash.slice(0, 7)}`)
+                                )
+                            ),
+                            React.createElement(ModalCloseButton, { onClick: props.onClose })
+                        ),
+                        React.createElement(ModalContent, { style: { padding: "16px 20px" } },
+                            React.createElement("div", { style: { fontSize: 14, color: "var(--text-normal)", lineHeight: "20px" } },
+                                "O RainCord foi atualizado com sucesso! ",
+                                newPlugins.length > 0
+                                    ? React.createElement("span", null,
+                                        React.createElement("strong", { style: { color: "#23a55a" } }, `${newPlugins.length} novo(s) plugin(s)`),
+                                        " disponível(is):",
+                                        React.createElement("ul", { style: { margin: "8px 0", paddingLeft: 20 } },
+                                            ...newPlugins.slice(0, 10).map(p => React.createElement("li", { key: p, style: { color: "var(--text-muted)", fontSize: 13 } }, p))
+                                        )
+                                    )
+                                    : "Todas as melhorias e correções foram aplicadas."
+                            )
+                        ),
+                        React.createElement(ModalFooter, null,
+                            React.createElement(Button, { onClick: props.onClose, color: Button.Colors?.BRAND ?? "brand" }, "Entendido!")
+                        )
+                    ));
+                } catch (e) {
                     const { showNotification } = require("@api/Notifications");
-                    showNotification({
-                        title: "RainCord Atualizado!",
-                        body: `Versão atualizada com sucesso.${newPlugins.length > 0 ? ` ${newPlugins.length} novo(s) plugin(s) disponível(is).` : ""} Veja o changelog nas configurações.`,
-                        noPersist: false,
-                    });
-                } catch { }
+                    showNotification({ title: "RainCord Atualizado!", body: "Versão atualizada com sucesso.", noPersist: false });
+                }
             }, 5000);
         }
     } catch { }
