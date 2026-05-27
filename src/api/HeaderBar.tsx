@@ -7,13 +7,22 @@
 import ErrorBoundary from "@components/ErrorBoundary";
 import { Logger } from "@utils/Logger";
 import { classes } from "@utils/misc";
-import { findComponentByCodeLazy, findCssClassesLazy } from "@webpack";
+import { findComponentByCodeLazy } from "@webpack";
 import { Clickable, Tooltip, useEffect, useState, ReactDOM } from "@webpack/common";
 import type { ComponentType, JSX, MouseEventHandler, ReactNode } from "react";
 
 const logger = new Logger("HeaderBarAPI");
 
-const HeaderBarClasses = findCssClassesLazy("clickable", "withHighlight");
+const HeaderBarClasses: Record<string, string> = new Proxy({} as any, {
+    get(_, prop: string) {
+        try {
+            const W = (window as any).Vencord?.Webpack;
+            const cls = W?.find?.(W?.filters?.byProps?.("clickable", "withHighlight"), { isIndirect: true });
+            if (cls?.[prop]) return cls[prop];
+        } catch { }
+        return prop;
+    }
+});
 const HeaderBarIcon = findComponentByCodeLazy(".HEADER_BAR_BADGE_TOP:", '"aria-haspopup":') as ComponentType<ChannelToolbarButtonProps>;
 
 export interface HeaderBarButtonProps {

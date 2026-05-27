@@ -46,53 +46,43 @@ export default definePlugin({
         console.log("[FixKrisp] Forcing Krisp eligibility...");
 
         // Patch DiscordNative at the native level (one-shot, no interval)
-        const script = document.createElement("script");
-        script.textContent = `
-            (function() {
-                const patchNative = () => {
-                    if (!window.DiscordNative?.nativeModules?.requireModule) return;
-                    if (window.DiscordNative.nativeModules._krispPatched) return;
-                    
-                    const originalRequire = window.DiscordNative.nativeModules.requireModule;
-                    window.DiscordNative.nativeModules.requireModule = function(name) {
-                        const module = originalRequire.apply(this, arguments);
-                        if (name === "discord_voice" && module && !module._krispPatched) {
-                            module.getSupportsKrisp = () => true;
-                            if (module.getKrispModelPath) {
-                                module.getKrispModelPath = (cb) => {
-                                    if (typeof cb === 'function') cb("found");
-                                    return "found";
-                                };
-                            }
-                            module._krispPatched = true;
-                        }
-                        return module;
-                    };
-                    window.DiscordNative.nativeModules._krispPatched = true;
-                    console.log("[FixKrisp] Native Voice Module Hooked (one-shot)");
-                };
+        const patchNative = () => {
+            const DN = (window as any).DiscordNative;
+            if (!DN?.nativeModules?.requireModule) return;
+            if (DN.nativeModules._krispPatched) return;
 
-                // One-shot availability patch (no interval)
-                const forceKrisp = () => {
-                    try {
-                        const stores = window.Vencord?.Webpack?.findByProps("getMediaEngine", "isKrispAvailable");
-                        if (stores) {
-                            Object.defineProperty(stores, 'isKrispAvailable', { get: () => true, configurable: true });
-                            Object.defineProperty(stores, 'isKrispSupported', { get: () => true, configurable: true });
-                        }
-                        const experiments = window.Vencord?.Webpack?.findByProps("getKrispExperiment");
-                        if (experiments?.getKrispExperiment) {
-                            const res = experiments.getKrispExperiment();
-                            if (res) res.eligible = true;
-                        }
-                    } catch (e) {}
-                };
-                
-                patchNative();
-                forceKrisp(); // run once, no interval
-            })();
-        `;
-        document.head.appendChild(script);
+            const originalRequire = DN.nativeModules.requireModule;
+            DN.nativeModules.requireModule = function(name: string) {
+                const module = originalRequire.apply(this, arguments);
+                if (name === "discord_voice" && module && !module._krispPatched) {
+                    module.getSupportsKrisp = () => true;
+                    if (module.getKrispModelPath) {
+                        module.getKrispModelPath = (cb: any) => {
+                            if (typeof cb === "function") cb("found");
+                            return "found";
+                        };
+                    }
+                    module._krispPatched = true;
+                }
+                return module;
+            };
+            DN.nativeModules._krispPatched = true;
+        };
+
+        const forceKrisp = () => {
+            try {
+                const W = (window as any).Vencord?.Webpack;
+                if (!W?.find || !W?.filters) return;
+                const stores = W.find(W.filters.byProps("getMediaEngine", "isKrispAvailable"), { isIndirect: true });
+                if (stores) {
+                    Object.defineProperty(stores, "isKrispAvailable", { get: () => true, configurable: true });
+                    Object.defineProperty(stores, "isKrispSupported", { get: () => true, configurable: true });
+                }
+            } catch { }
+        };
+
+        patchNative();
+        forceKrisp();
 
         // Auto-reset pipeline when user joins a voice channel
         // This replaces the manual Studio → Isolation cycle

@@ -70,7 +70,7 @@ function ReadAllButton() {
             aria-label="Read All"
             role="button"
         >
-            Read
+            Read All
         </div>
     );
 }
@@ -79,6 +79,7 @@ export default definePlugin({
     name: "ReadAllButton",
     description: "Adds a button above the server list to mark all servers as read.",
     authors: [{ name: "RAINCORD", id: 0n }],
+    enabledByDefault: true,
 
     renderGuildButton: () => <ReadAllButton />,
 

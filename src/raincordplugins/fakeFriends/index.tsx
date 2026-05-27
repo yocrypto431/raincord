@@ -95,7 +95,7 @@ let origAccept: Function | null = null;
 
 function patchAcceptFriend() {
     try {
-        const RA = findByProps("acceptFriend", "addFriend") as any;
+        const RA = ((window as any).Vencord?.Webpack?.find?.((window as any).Vencord?.Webpack?.filters?.byProps?.("acceptFriend", "addFriend"), { isIndirect: true }) ?? null) as any;
         if (!RA || origAccept) return;
         origAccept = RA.acceptFriend;
         RA.acceptFriend = async function (userId: string, ...args: any[]) {
@@ -116,7 +116,7 @@ function patchAcceptFriend() {
 function unpatchAcceptFriend() {
     try {
         if (!origAccept) return;
-        const RA = findByProps("acceptFriend", "addFriend") as any;
+        const RA = ((window as any).Vencord?.Webpack?.find?.((window as any).Vencord?.Webpack?.filters?.byProps?.("acceptFriend", "addFriend"), { isIndirect: true }) ?? null) as any;
         if (RA) RA.acceptFriend = origAccept;
         origAccept = null;
     } catch { }
@@ -654,7 +654,7 @@ const fakeMessageRequests = new Map<string, { user: any; channelId: string; msgI
 function patchMessageRequestStore() {
     if (MessageRequestStore) return;
     try {
-        const store = findByProps("getRequests", "hasRequest") as any;
+        const store = ((window as any).Vencord?.Webpack?.find?.((window as any).Vencord?.Webpack?.filters?.byProps?.("getRequests", "hasRequest"), { isIndirect: true }) ?? null) as any;
 
         if (!store) return;
         MessageRequestStore = store;

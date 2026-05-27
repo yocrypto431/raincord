@@ -1,6 +1,5 @@
 import definePlugin from "@utils/types";
 import { React, useState, useEffect } from "@webpack/common";
-import { findByPropsLazy } from "@webpack";
 
 const REMOTE_VERSION_URL = "https://api.github.com/repos/yocrypto431/raincord/releases/latest";
 
@@ -189,8 +188,8 @@ function mountBanner() {
     bannerContainer.id = "RAINCORD-updater-root";
     document.body.appendChild(bannerContainer);
 
-    const ReactDOM = findByPropsLazy("createRoot", "render");
     try {
+        const ReactDOM = require("react-dom/client") ?? require("react-dom");
         if (ReactDOM?.createRoot) {
             bannerRoot = ReactDOM.createRoot(bannerContainer);
             bannerRoot.render(React.createElement(UpdateBanner));
@@ -198,7 +197,17 @@ function mountBanner() {
             ReactDOM.render(React.createElement(UpdateBanner), bannerContainer);
         }
     } catch (e) {
-        console.error("[RAINCORDUpdater] Erro ao montar banner:", e);
+        try {
+            const W = (window as any).Vencord?.Webpack;
+            const RD = W?.find?.(W?.filters?.byProps?.("createRoot", "render"), { isIndirect: true })
+                ?? W?.find?.(W?.filters?.byProps?.("render", "hydrate"), { isIndirect: true });
+            if (RD?.createRoot) {
+                bannerRoot = RD.createRoot(bannerContainer);
+                bannerRoot.render(React.createElement(UpdateBanner));
+            } else if (RD?.render) {
+                RD.render(React.createElement(UpdateBanner), bannerContainer);
+            }
+        } catch { }
     }
 }
 

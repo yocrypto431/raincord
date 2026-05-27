@@ -116,7 +116,6 @@ export default definePlugin({
     },
 
     userAreaButton: {
-        icon: FakeDeafenIcon,
         render: FakeDeafenUserButton
     },
 
