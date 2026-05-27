@@ -322,9 +322,14 @@ async function init() {
     syncSettings();
     initTrayIpc();
 
+    try {
+        const { initializeChangelog } = await import("@components/settings/tabs/changelog/changelogManager");
+        await initializeChangelog();
+    } catch { }
+
     if (!IS_WEB && !IS_UPDATER_DISABLED) {
         runUpdateCheck();
-        setInterval(runUpdateCheck, 1000 * 60 * 30); // 30 minutes
+        setInterval(runUpdateCheck, 1000 * 60 * 30);
     }
 
     if (IS_DEV) {

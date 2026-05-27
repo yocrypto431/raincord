@@ -396,8 +396,9 @@ export { RAINCORD_REPO_URL };
 export async function getCommitsSinceLastSeen(
     repoUrl: string,
 ): Promise<ChangelogEntry[]> {
-    // Toujours utiliser le repo RAINCORD, ignorer le repoUrl d'Equicord
-    return fetchCommitsBetween(RAINCORD_RELEASES_REPO, "HEAD~10", "HEAD").catch(() => []);
+    const lastHash = await getLastSeenHash();
+    if (!lastHash || lastHash === gitHash) return [];
+    return fetchCommitsBetween(RAINCORD_RELEASES_REPO, lastHash, gitHash).catch(() => []);
 }
 
 export async function updateKnownSettings(): Promise<void> {
