@@ -1,9 +1,20 @@
+import * as DataStore from "@api/DataStore";
 import definePlugin from "@utils/types";
-import { React, useState, useEffect } from "@webpack/common";
+import { ChannelStore, FluxDispatcher, React, SelectedChannelStore, useEffect, UserStore, useState, VoiceStateStore } from "@webpack/common";
 
 const REMOTE_VERSION_URL = "https://api.github.com/repos/yocrypto431/raincord/releases/latest";
+const REJOIN_KEY = "__RAINCORD_pendingUpdate_voiceRejoin";
+const REJOIN_MAX_AGE_MS = 5 * 60 * 1000;
+const REJOIN_DELAY_MS = 2000;
 
 declare const VERSION: string;
+
+interface PendingVoiceRejoin {
+    channelId: string;
+    guildId: string | null;
+    channelName: string;
+    timestamp: number;
+}
 
 function getLocalVersion(): string {
     try { return VERSION; } catch { return "0.0.0"; }
@@ -20,6 +31,96 @@ function isStrictlyNewer(remote: string, local: string): boolean {
         if (rv < lv) return false;
     }
     return false;
+}
+
+function getCurrentVoiceInfo(): PendingVoiceRejoin | null {
+    try {
+        const channelId = SelectedChannelStore.getVoiceChannelId();
+        if (!channelId) return null;
+
+        const currentUser = UserStore.getCurrentUser();
+        if (!currentUser) return null;
+
+        const myVoiceState = VoiceStateStore.getVoiceStateForUser(currentUser.id);
+        if (!myVoiceState?.channelId) return null;
+        if (myVoiceState.channelId !== channelId) return null;
+
+        const channel = ChannelStore.getChannel(channelId);
+        const channelName = channel?.name
+            ?? (channel?.recipients?.length ? `DM (${channel.recipients.length})` : "Voice channel");
+
+        return {
+            channelId,
+            guildId: channel?.guild_id ?? null,
+            channelName,
+            timestamp: Date.now(),
+        };
+    } catch (e) {
+        console.error("[RAINCORDUpdater] getCurrentVoiceInfo failed:", e);
+        return null;
+    }
+}
+
+async function saveVoiceStateForRejoin(info: PendingVoiceRejoin) {
+    try {
+        await DataStore.set(REJOIN_KEY, info);
+        console.log("[RAINCORDUpdater] Saved voice state for rejoin:", info.channelName);
+    } catch (e) {
+        console.error("[RAINCORDUpdater] Failed to save voice state:", e);
+    }
+}
+
+async function clearPendingRejoin() {
+    try { await DataStore.del(REJOIN_KEY); } catch { }
+}
+
+async function tryRejoinVoiceAfterUpdate() {
+    let saved: PendingVoiceRejoin | null = null;
+    try {
+        saved = await DataStore.get<PendingVoiceRejoin>(REJOIN_KEY) ?? null;
+    } catch { return; }
+
+    if (!saved?.channelId) return;
+
+    if (Date.now() - saved.timestamp > REJOIN_MAX_AGE_MS) {
+        await clearPendingRejoin();
+        return;
+    }
+
+    await clearPendingRejoin();
+
+    setTimeout(() => {
+        try {
+            const currentUser = UserStore.getCurrentUser();
+            if (!currentUser) return;
+
+            const myVoiceState = VoiceStateStore.getVoiceStateForUser(currentUser.id);
+            if (myVoiceState?.channelId) return;
+
+            let channel = ChannelStore.getChannel(saved.channelId);
+            const tryDispatch = (attempt = 0) => {
+                channel = ChannelStore.getChannel(saved!.channelId);
+                if (!channel) {
+                    if (attempt >= 20) {
+                        console.warn("[RAINCORDUpdater] Channel not found for rejoin:", saved!.channelId);
+                        return;
+                    }
+                    setTimeout(() => tryDispatch(attempt + 1), 250);
+                    return;
+                }
+
+                FluxDispatcher.dispatch({
+                    type: "VOICE_CHANNEL_SELECT",
+                    guildId: saved!.guildId,
+                    channelId: saved!.channelId,
+                });
+                console.log("[RAINCORDUpdater] Auto-rejoined voice channel:", saved!.channelName);
+            };
+            tryDispatch();
+        } catch (e) {
+            console.error("[RAINCORDUpdater] Auto-rejoin failed:", e);
+        }
+    }, REJOIN_DELAY_MS);
 }
 
 interface UpdateInfo {
@@ -77,6 +178,13 @@ function UpdateBanner() {
     async function doUpdate() {
         if (loading || !info) return;
         setLoading(true);
+
+        const voiceInfo = getCurrentVoiceInfo();
+        if (voiceInfo) {
+            await saveVoiceStateForRejoin(voiceInfo);
+            setStatus(`Salvando call: ${voiceInfo.channelName}...`);
+        }
+
         updateAttempted = true;
         setStatus("Baixando...");
 
@@ -97,7 +205,9 @@ function UpdateBanner() {
                 throw new Error(errMsg);
             }
 
-            setStatus("✓ Atualização aplicada — reiniciando em 2s...");
+            setStatus(voiceInfo
+                ? `✓ Atualização aplicada — voltando pra ${voiceInfo.channelName} em 2s...`
+                : "✓ Atualização aplicada — reiniciando em 2s...");
 
             setTimeout(() => {
                 try {
@@ -113,6 +223,7 @@ function UpdateBanner() {
             setStatus(`❌ ${msg}. Verifique sua conexão ou reinicie manualmente.`);
             setLoading(false);
             updateAttempted = false;
+            await clearPendingRejoin();
         }
     }
 
@@ -220,10 +331,20 @@ function unmountBanner() {
 
 export default definePlugin({
     name: "RAINCORDUpdater",
-    description: "Verifica atualizações na inicialização. Banner verde aparece se houver versão nova no GitHub.",
+    description: "Verifica atualizações na inicialização. Detecta call ativa e reconecta automaticamente após o update.",
     authors: [{ name: "RAINCORD", id: 0n }],
     enabledByDefault: true,
     required: true,
+
+    flux: {
+        async CONNECTION_OPEN() {
+            try {
+                await tryRejoinVoiceAfterUpdate();
+            } catch (e) {
+                console.error("[RAINCORDUpdater] CONNECTION_OPEN handler failed:", e);
+            }
+        },
+    },
 
     start() {
         const mountWhenReady = () => setTimeout(mountBanner, 1500);
