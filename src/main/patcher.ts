@@ -18,16 +18,51 @@
 
 import { onceDefined } from "@shared/onceDefined";
 import electron, { app, BrowserWindowConstructorOptions, Menu, session } from "electron";
-import { existsSync as fsExistsSync, statSync as fsStatSync } from "original-fs";
+import { existsSync as fsExistsSync, statSync as fsStatSync, mkdirSync, writeFileSync, renameSync, readdirSync } from "original-fs";
 import { dirname, join } from "path";
 import { registerMediaPermissionsForSession } from "../raincord/main/mediaPermissions";
-
-// Note: RAINCORDTray removed — RAINCORD injects silently into Discord,
-// Discord manages its own tray icon (same behaviour as Equicord).
 
 import { RendererSettings } from "./settings";
 import { patchTrayMenu } from "./trayMenu";
 import { IS_VANILLA } from "./utils/constants";
+
+(function autoRepairOtherDiscordVersions() {
+    try {
+        const currentResources = process.resourcesPath;
+        const appVersionDir = dirname(currentResources);
+        const discordBase = dirname(appVersionDir);
+        const versions = readdirSync(discordBase).filter(d => d.startsWith("app-")).sort().reverse();
+        const patcherFullPath = __filename;
+
+        for (const ver of versions) {
+            const resources = join(discordBase, ver, "resources");
+            if (!fsExistsSync(resources)) continue;
+            const appDir = join(resources, "app");
+            const appAsar = join(resources, "app.asar");
+            const backup = join(resources, "_app.asar");
+
+            if (fsExistsSync(appDir) && fsExistsSync(join(appDir, "package.json"))) continue;
+
+            if (fsExistsSync(appAsar) && !fsExistsSync(backup)) {
+                try {
+                    const size = fsStatSync(appAsar).size;
+                    if (size > 1000000) {
+                        renameSync(appAsar, backup);
+                    }
+                } catch { continue; }
+            }
+
+            if (fsExistsSync(backup)) {
+                try {
+                    mkdirSync(appDir, { recursive: true });
+                    writeFileSync(join(appDir, "package.json"), '{"name":"raincord","main":"index.js"}');
+                    writeFileSync(join(appDir, "index.js"), `require("${patcherFullPath.replace(/\\/g, "/")}");\n`);
+                    console.log("[RAINCORD] Auto-repaired", ver);
+                } catch { }
+            }
+        }
+    } catch { }
+})();
 
 console.log("[RAINCORD] Starting up...");
 
