@@ -18,13 +18,63 @@
 
 import { onceDefined } from "@shared/onceDefined";
 import electron, { app, BrowserWindowConstructorOptions, Menu, session } from "electron";
-import { existsSync as fsExistsSync, statSync as fsStatSync, mkdirSync, writeFileSync, renameSync, readdirSync } from "original-fs";
+import { existsSync as fsExistsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync as fsStatSync, writeFileSync } from "original-fs";
 import { dirname, join } from "path";
 import { registerMediaPermissionsForSession } from "../raincord/main/mediaPermissions";
 
 import { RendererSettings } from "./settings";
 import { patchTrayMenu } from "./trayMenu";
 import { IS_VANILLA } from "./utils/constants";
+
+const RAINCORD_LOADER_TAG = "RAINCORD auto-repatch loader";
+
+function buildSafeLoader(patcherFullPath: string): string {
+    const safePath = patcherFullPath.replace(/\\/g, "/");
+    return `// ${RAINCORD_LOADER_TAG} (generated)
+"use strict";
+try {
+    require(${JSON.stringify(safePath)});
+} catch (err) {
+    console.error("[RAINCORD] Patcher load failed, falling back to vanilla Discord:", err && err.message);
+    try {
+        const _path = require("path");
+        const _fs = require("fs");
+        const _fallback = _path.join(__dirname, "..", "_app.asar");
+        if (_fs.existsSync(_fallback)) {
+            require(_fallback);
+        } else {
+            throw err;
+        }
+    } catch (e2) {
+        console.error("[RAINCORD] Vanilla Discord fallback also failed:", e2 && e2.message);
+        throw err;
+    }
+}
+`;
+}
+
+function isInjectionHealthy(dir: string): boolean {
+    try {
+        const idx = join(dir, "index.js");
+        const pkg = join(dir, "package.json");
+        if (!fsExistsSync(idx) || !fsExistsSync(pkg)) return false;
+
+        const content = readFileSync(idx, "utf-8");
+
+        if (/require\([^)]*join[^)]*"app"[^)]*"dist"/.test(content)) return false;
+
+        const reqMatch = content.match(/require\(\s*["']([^"']+patcher\.js)["']\s*\)/);
+        if (reqMatch) {
+            const required = reqMatch[1].replace(/\//g, "\\");
+            if ((required.match(/^[A-Za-z]:/) || required.startsWith("/")) && !fsExistsSync(reqMatch[1])) {
+                return false;
+            }
+        }
+        return true;
+    } catch {
+        return false;
+    }
+}
 
 (function autoRepairOtherDiscordVersions() {
     try {
@@ -37,13 +87,29 @@ import { IS_VANILLA } from "./utils/constants";
         for (const ver of versions) {
             const resources = join(discordBase, ver, "resources");
             if (!fsExistsSync(resources)) continue;
+
             const appDir = join(resources, "app");
             const appAsar = join(resources, "app.asar");
             const backup = join(resources, "_app.asar");
 
-            if (fsExistsSync(appDir) && fsExistsSync(join(appDir, "package.json"))) continue;
+            try {
+                if (fsExistsSync(appAsar) && fsStatSync(appAsar).isDirectory()) {
+                    const stillBroken = !isInjectionHealthy(appAsar);
+                    if (stillBroken) {
+                        rmSync(appAsar, { recursive: true, force: true });
+                        console.log("[RAINCORD] Removed broken app.asar/ folder in", ver);
+                    }
+                }
+            } catch { }
 
-            if (fsExistsSync(appAsar) && !fsExistsSync(backup)) {
+            if (fsExistsSync(appDir) && fsExistsSync(join(appDir, "package.json"))) {
+                if (isInjectionHealthy(appDir)) {
+                    continue;
+                }
+                try { rmSync(appDir, { recursive: true, force: true }); } catch { continue; }
+            }
+
+            if (fsExistsSync(appAsar) && !fsStatSync(appAsar).isDirectory() && !fsExistsSync(backup)) {
                 try {
                     const size = fsStatSync(appAsar).size;
                     if (size > 1000000) {
@@ -56,12 +122,16 @@ import { IS_VANILLA } from "./utils/constants";
                 try {
                     mkdirSync(appDir, { recursive: true });
                     writeFileSync(join(appDir, "package.json"), '{"name":"raincord","main":"index.js"}');
-                    writeFileSync(join(appDir, "index.js"), `require("${patcherFullPath.replace(/\\/g, "/")}");\n`);
+                    writeFileSync(join(appDir, "index.js"), buildSafeLoader(patcherFullPath));
                     console.log("[RAINCORD] Auto-repaired", ver);
-                } catch { }
+                } catch (e) {
+                    console.error("[RAINCORD] Auto-repair failed for", ver, e);
+                }
             }
         }
-    } catch { }
+    } catch (e) {
+        console.error("[RAINCORD] autoRepairOtherDiscordVersions error:", e);
+    }
 })();
 
 console.log("[RAINCORD] Starting up...");

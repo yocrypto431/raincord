@@ -17,8 +17,10 @@
 */
 
 import { app } from "electron";
-import { existsSync, mkdirSync, readdirSync, renameSync, statSync, writeFileSync } from "original-fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "original-fs";
 import { basename, dirname, join } from "path";
+
+const LOADER_TAG = "RAINCORD auto-repatch loader";
 
 function isNewer($new: string, old: string) {
     const newParts = $new.slice(4).split(".").map(Number);
@@ -29,6 +31,57 @@ function isNewer($new: string, old: string) {
         if (newParts[i] < oldParts[i]) return false;
     }
     return false;
+}
+
+function buildLoaderIndex(patcherFullPath: string): string {
+    const safePath = patcherFullPath.replace(/\\/g, "/");
+    return `// ${LOADER_TAG} (generated)
+"use strict";
+try {
+    require(${JSON.stringify(safePath)});
+} catch (err) {
+    console.error("[RAINCORD] Patcher load failed, falling back to vanilla Discord:", err && err.message);
+    try {
+        const _path = require("path");
+        const _fs = require("fs");
+        const _fallback = _path.join(__dirname, "..", "_app.asar");
+        if (_fs.existsSync(_fallback)) {
+            require(_fallback);
+        } else {
+            throw err;
+        }
+    } catch (e2) {
+        console.error("[RAINCORD] Vanilla Discord fallback also failed:", e2 && e2.message);
+        throw err;
+    }
+}
+`;
+}
+
+function cleanupBrokenAsarFolder(appAsarPath: string, _backupPath: string): boolean {
+    try {
+        if (!existsSync(appAsarPath)) return false;
+        if (!statSync(appAsarPath).isDirectory()) return false;
+
+        const idxPath = join(appAsarPath, "index.js");
+        if (existsSync(idxPath)) {
+            const content = readFileSync(idxPath, "utf-8");
+            const looksBroken = /require\([^)]*join[^)]*"app"[^)]*"dist"/.test(content)
+                || !content.includes(LOADER_TAG);
+            if (looksBroken) {
+                console.info("[RAINCORD] Cleaning up broken app.asar/ folder at", appAsarPath);
+                rmSync(appAsarPath, { recursive: true, force: true });
+                return true;
+            }
+            return false;
+        }
+
+        rmSync(appAsarPath, { recursive: true, force: true });
+        return true;
+    } catch (e) {
+        console.error("[RAINCORD] cleanupBrokenAsarFolder failed:", e);
+        return false;
+    }
 }
 
 function patchLatest() {
@@ -44,26 +97,56 @@ function patchLatest() {
         if (latestVersion === currentVersion) return;
 
         const resources = join(discordPath, latestVersion, "resources");
-        const app = join(resources, "app.asar");
-        const _app = join(resources, "_app.asar");
+        const appAsarPath = join(resources, "app.asar");
+        const backupPath = join(resources, "_app.asar");
+        const appDirPath = join(resources, "app");
 
-        if (!existsSync(app) || statSync(app).isDirectory()) return;
+        if (existsSync(appDirPath) && existsSync(join(appDirPath, "package.json"))) {
+            try {
+                const pkg = JSON.parse(readFileSync(join(appDirPath, "package.json"), "utf-8"));
+                const name = String(pkg?.name || "").toLowerCase();
+                if (name === "raincord" || name === "discord") {
+                    const idxJs = join(appDirPath, "index.js");
+                    if (existsSync(idxJs)) {
+                        const content = readFileSync(idxJs, "utf-8");
+                        if (content.includes(LOADER_TAG)) return;
+                    }
+                    writeFileSync(idxJs, buildLoaderIndex(__filename));
+                    console.info("[RAINCORD] Updated loader on existing injection at", appDirPath);
+                    return;
+                }
+            } catch { }
+        }
 
-        console.info("[RAINCORD] Detected Host Update. Repatching...");
+        cleanupBrokenAsarFolder(appAsarPath, backupPath);
 
-        renameSync(app, _app);
-        mkdirSync(app);
-        writeFileSync(join(app, "package.json"), JSON.stringify({
-            name: "discord",
+        const hasAppAsarFile = existsSync(appAsarPath) && !statSync(appAsarPath).isDirectory();
+        const hasBackup = existsSync(backupPath) && !statSync(backupPath).isDirectory();
+        if (!hasAppAsarFile && !hasBackup) return;
+
+        console.info("[RAINCORD] Detected Host Update. Repatching", latestVersion);
+
+        if (hasAppAsarFile && !hasBackup) {
+            renameSync(appAsarPath, backupPath);
+        } else if (hasAppAsarFile && hasBackup) {
+            rmSync(appAsarPath, { force: true });
+        }
+
+        if (existsSync(appAsarPath)) {
+            try { rmSync(appAsarPath, { recursive: true, force: true }); } catch { }
+        }
+
+        mkdirSync(appDirPath, { recursive: true });
+        writeFileSync(join(appDirPath, "package.json"), JSON.stringify({
+            name: "raincord",
             main: "index.js"
         }));
-        // Chemin relatif pour la portabilité (fonctionne sur n'importe quelle machine)
-        writeFileSync(join(app, "index.js"), `// RAINCORD repatch\n"use strict";\nconst path = require("path");\nrequire(path.join(__dirname, "..", "app", "dist", "desktop", "patcher.js"));`);
+        writeFileSync(join(appDirPath, "index.js"), buildLoaderIndex(__filename));
+
+        console.info("[RAINCORD] Repatched", latestVersion, "→ patcher:", __filename);
     } catch (err) {
         console.error("[RAINCORD] Failed to repatch latest host update", err);
     }
 }
 
-// Try to patch latest on before-quit
-// Discord's Win32 updater will call app.quit() on restart and open new version on will-quit
 app.on("before-quit", patchLatest);
