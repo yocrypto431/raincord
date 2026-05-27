@@ -333,39 +333,77 @@ async function init() {
             await setLastSeenHash(gitHash);
             setTimeout(() => {
                 try {
-                    const { openModal } = require("@utils/modal");
+                    const { openModal, ModalRoot, ModalContent, ModalFooter, ModalSize, ModalCloseButton } = require("@utils/modal");
                     const { React } = require("@webpack/common");
-                    const { ModalRoot, ModalHeader, ModalContent, ModalFooter, ModalSize, ModalCloseButton } = require("@utils/modal");
-                    const { Button } = require("@components/Button");
-                    const { Forms } = require("@webpack/common");
+                    const { Button } = require("@webpack/common");
 
-                    openModal((props: any) => React.createElement(ModalRoot, { ...props, size: ModalSize.MEDIUM },
-                        React.createElement(ModalHeader, { separator: false },
-                            React.createElement("div", { style: { flex: 1, display: "flex", alignItems: "center", gap: 12 } },
-                                React.createElement("div", { style: { width: 40, height: 40, borderRadius: 10, background: "linear-gradient(135deg, #23a55a, #5865f2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 } }, "🎉"),
-                                React.createElement("div", null,
-                                    React.createElement(Forms.FormTitle, { tag: "h2", style: { margin: 0 } }, "RainCord Atualizado!"),
-                                    React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", marginTop: 2 } }, `Build: ${gitHash.slice(0, 7)}`)
-                                )
+                    openModal((props: any) => React.createElement(ModalRoot, { ...props, size: ModalSize.SMALL },
+                        React.createElement("div", { style: { padding: 0 } },
+                            React.createElement("div", {
+                                style: {
+                                    background: "linear-gradient(135deg, #5865f2 0%, #23a55a 100%)",
+                                    padding: "32px 24px",
+                                    textAlign: "center",
+                                    position: "relative",
+                                    borderRadius: "4px 4px 0 0",
+                                }
+                            },
+                                React.createElement("div", {
+                                    style: { position: "absolute", top: 12, right: 12 }
+                                }, React.createElement(ModalCloseButton, { onClick: props.onClose })),
+                                React.createElement("div", { style: { fontSize: 40, marginBottom: 8 } }, "🚀"),
+                                React.createElement("h1", {
+                                    style: { color: "white", fontSize: 24, fontWeight: 700, margin: 0 }
+                                }, "RainCord Atualizado!"),
+                                React.createElement("p", {
+                                    style: { color: "rgba(255,255,255,0.7)", fontSize: 13, margin: "6px 0 0" }
+                                }, `Build ${gitHash.slice(0, 7)}`)
                             ),
-                            React.createElement(ModalCloseButton, { onClick: props.onClose })
-                        ),
-                        React.createElement(ModalContent, { style: { padding: "16px 20px" } },
-                            React.createElement("div", { style: { fontSize: 14, color: "var(--text-normal)", lineHeight: "20px" } },
-                                "O RainCord foi atualizado com sucesso! ",
+                            React.createElement("div", { style: { padding: "20px 24px" } },
                                 newPlugins.length > 0
-                                    ? React.createElement("span", null,
-                                        React.createElement("strong", { style: { color: "#23a55a" } }, `${newPlugins.length} novo(s) plugin(s)`),
-                                        " disponível(is):",
-                                        React.createElement("ul", { style: { margin: "8px 0", paddingLeft: 20 } },
-                                            ...newPlugins.slice(0, 10).map(p => React.createElement("li", { key: p, style: { color: "var(--text-muted)", fontSize: 13 } }, p))
+                                    ? React.createElement("div", null,
+                                        React.createElement("p", {
+                                            style: { color: "var(--text-normal)", fontSize: 14, margin: "0 0 12px" }
+                                        }, "Novidades nesta atualização:"),
+                                        React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } },
+                                            ...newPlugins.slice(0, 8).map(p =>
+                                                React.createElement("div", {
+                                                    key: p,
+                                                    style: {
+                                                        display: "flex", alignItems: "center", gap: 8,
+                                                        padding: "8px 12px",
+                                                        background: "var(--background-secondary)",
+                                                        borderRadius: 8,
+                                                        fontSize: 13,
+                                                    }
+                                                },
+                                                    React.createElement("span", { style: { color: "#23a55a", fontWeight: 700 } }, "+"),
+                                                    React.createElement("span", { style: { color: "var(--text-normal)" } }, p)
+                                                )
+                                            )
                                         )
                                     )
-                                    : "Todas as melhorias e correções foram aplicadas."
+                                    : React.createElement("p", {
+                                        style: { color: "var(--text-muted)", fontSize: 14, textAlign: "center", margin: 0 }
+                                    }, "Todas as melhorias e correções foram aplicadas com sucesso.")
+                            ),
+                            React.createElement("div", {
+                                style: { padding: "0 24px 20px", display: "flex", justifyContent: "flex-end" }
+                            },
+                                React.createElement("button", {
+                                    onClick: props.onClose,
+                                    style: {
+                                        background: "#5865f2",
+                                        color: "white",
+                                        border: "none",
+                                        borderRadius: 4,
+                                        padding: "10px 24px",
+                                        fontSize: 14,
+                                        fontWeight: 600,
+                                        cursor: "pointer",
+                                    }
+                                }, "Entendido!")
                             )
-                        ),
-                        React.createElement(ModalFooter, null,
-                            React.createElement(Button, { onClick: props.onClose, color: Button.Colors?.BRAND ?? "brand" }, "Entendido!")
                         )
                     ));
                 } catch (e) {
