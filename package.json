@@ -1,1 +1,5 @@
-{"name":"RAINCORD","main":"patcher.js"}
+{
+    "name":  "RAINCORD",
+    "main":  "patcher.js",
+    "packageManager":  "pnpm@10.30.3"
+}
