@@ -48,6 +48,7 @@ import { relaunch } from "./utils/native";
 import { checkForUpdates, changes, isOutdated as getIsOutdated, rebuild, update, UpdateLogger } from "./utils/updater";
 import { onceReady } from "./webpack";
 import { patches } from "./webpack/patchWebpack";
+import gitHash from "~git-hash";
 
 if (IS_REPORTER) {
     require("./debug/runReporter");
@@ -323,8 +324,24 @@ async function init() {
     initTrayIpc();
 
     try {
-        const { initializeChangelog } = await import("@components/settings/tabs/changelog/changelogManager");
+        const { initializeChangelog, getLastSeenHash, setLastSeenHash, getNewPlugins, saveUpdateSession } = await import("@components/settings/tabs/changelog/changelogManager");
+        const lastHash = await getLastSeenHash();
         await initializeChangelog();
+        if (lastHash && lastHash !== gitHash) {
+            const newPlugins = await getNewPlugins();
+            await saveUpdateSession([], newPlugins, [], new Map());
+            await setLastSeenHash(gitHash);
+            setTimeout(() => {
+                try {
+                    const { showNotification } = require("@api/Notifications");
+                    showNotification({
+                        title: "RainCord Atualizado!",
+                        body: `Versão atualizada com sucesso.${newPlugins.length > 0 ? ` ${newPlugins.length} novo(s) plugin(s) disponível(is).` : ""} Veja o changelog nas configurações.`,
+                        noPersist: false,
+                    });
+                } catch { }
+            }, 5000);
+        }
     } catch { }
 
     if (!IS_WEB && !IS_UPDATER_DISABLED) {
