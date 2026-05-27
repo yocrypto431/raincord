@@ -29,41 +29,11 @@ import { showToast, Toasts } from "@webpack/common";
 import { React } from "@webpack/common";
 
 function BackupAndRestoreTab() {
-    const [importing, setImporting] = React.useState(false);
-
-    const handleImportPlugins = async (mode: "folder" | "files") => {
-        setImporting(true);
-        try {
-            const res = await VencordNative.RAINCORD.importPlugins(mode);
-            if (res.canceled) return;
-            if (!res.ok) {
-                showToast("Import failed", Toasts.Type.FAILURE);
-                return;
-            }
-            const count = res.imported.length;
-            const errCount = res.errors?.length ?? 0;
-            if (count > 0) {
-                const rebuildMsg = (res as any).rebuilt
-                    ? " — rebuilding RAINCORD, it will restart automatically"
-                    : " — reload Discord to apply";
-                showToast(
-                    `${count} plugin${count > 1 ? "s" : ""} imported${errCount > 0 ? ` (${errCount} errors)` : ""}${rebuildMsg}`,
-                    Toasts.Type.SUCCESS
-                );
-            } else if (errCount > 0) {
-                showToast(`Import failed: ${res.errors![0]}`, Toasts.Type.FAILURE);
-            }
-        } catch (e: any) {
-            showToast(`Error: ${e?.message ?? String(e)}`, Toasts.Type.FAILURE);
-        } finally {
-            setImporting(false);
-        }
-    };
     return (
         <SettingsTab>
             <Heading className={Margins.top16}>Backup & Restore</Heading>
             <Paragraph className={Margins.bottom20}>
-                Import and export your Equicord settings as a JSON file. This allows you to easily transfer your settings to another device, or recover them after reinstalling Equicord or Discord.
+                Import and export your RainCord settings as a JSON file. This allows you to easily transfer your settings to another device, or recover them after reinstalling RainCord or Discord.
             </Paragraph>
 
             <Notice.Warning className={Margins.bottom20}>
@@ -92,21 +62,6 @@ function BackupAndRestoreTab() {
                     variant="secondary"
                 >
                     Import All Settings
-                </Button>
-                <Button
-                    onClick={() => handleImportPlugins("folder")}
-                    size="small"
-                    disabled={importing}
-                >
-                    {importing ? "Importing..." : "Import Plugin Folder"}
-                </Button>
-                <Button
-                    onClick={() => handleImportPlugins("files")}
-                    size="small"
-                    variant="secondary"
-                    disabled={importing}
-                >
-                    {importing ? "Importing..." : "Import Plugin Files (.tsx / .js...)"}
                 </Button>
                 <Button
                     onClick={() => uploadSettingsBackup("css")}
