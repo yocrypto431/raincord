@@ -110,9 +110,51 @@ export async function exportSettings({ syncDataStore = true, type = "all", minif
     const quickCss = await VencordNative.quickCss.get();
     let dataStore: any;
 
+    const SENSITIVE_KEYS = [
+        "TokenImporter_accounts",
+        "RAINCORD-mi-token-cache",
+        "GhostClient_token",
+        "SoundCordPlayer_clientId",
+    ];
+
+    const SENSITIVE_PATTERNS = [/token/i, /secret/i, /password/i, /apikey/i, /api.key/i];
+
+    function isSensitiveKey(key: string): boolean {
+        if (SENSITIVE_KEYS.includes(key)) return true;
+        return SENSITIVE_PATTERNS.some(p => p.test(key));
+    }
+
+    function sanitizeValue(value: any): any {
+        if (value == null || typeof value !== "object") return value;
+        if (Array.isArray(value)) {
+            return value.map(item => {
+                if (item && typeof item === "object") {
+                    const cleaned = { ...item };
+                    for (const k of Object.keys(cleaned)) {
+                        if (SENSITIVE_PATTERNS.some(p => p.test(k))) {
+                            delete cleaned[k];
+                        }
+                    }
+                    return cleaned;
+                }
+                return item;
+            });
+        }
+        const cleaned = { ...value };
+        for (const k of Object.keys(cleaned)) {
+            if (SENSITIVE_PATTERNS.some(p => p.test(k))) {
+                delete cleaned[k];
+            }
+        }
+        return cleaned;
+    }
+
     if (syncDataStore) {
         try {
-            dataStore = await DataStore.entries();
+            const rawEntries = await DataStore.entries();
+            dataStore = rawEntries
+                .filter(([key]: [string, any]) => !isSensitiveKey(key))
+                .map(([key, value]: [string, any]) => [key, sanitizeValue(value)]);
         } catch (err) {
             logger.error("Failed to read DataStore entries:", err);
 
