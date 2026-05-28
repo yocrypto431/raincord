@@ -18,12 +18,14 @@
 
 import { Button, MediaEngineStore, useState } from "@webpack/common";
 
-import { settings, type VoiceRecorder } from "..";
+import type { VoiceRecorder } from ".";
+import { settings } from "./settings";
 
 export const VoiceRecorderWeb: VoiceRecorder = ({ setAudioBlob, onRecordingChange }) => {
     const [recording, setRecording] = useState(false);
     const [paused, setPaused] = useState(false);
     const [recorder, setRecorder] = useState<MediaRecorder>();
+    const [chunks, setChunks] = useState<Blob[]>([]);
 
     const changeRecording = (recording: boolean) => {
         setRecording(recording);
@@ -40,34 +42,28 @@ export const VoiceRecorderWeb: VoiceRecorder = ({ setAudioBlob, onRecordingChang
                     noiseSuppression: settings.store.noiseSuppression,
                     deviceId: MediaEngineStore.getInputDeviceId()
                 }
-            }).then(mediaStream => {
-                const chunks: Blob[] = [];
+            }).then(stream => {
+                const chunks = [] as Blob[];
+                setChunks(chunks);
 
-                const recorder = new MediaRecorder(mediaStream);
+                const recorder = new MediaRecorder(stream);
                 setRecorder(recorder);
-
-                const handleDataAvailable = (e: BlobEvent) => {
+                recorder.addEventListener("dataavailable", e => {
                     chunks.push(e.data);
-                };
-
-                const handleStop = () => {
-                    setAudioBlob(new Blob(chunks, { type: "audio/ogg; codecs=opus" }));
-                    changeRecording(false);
-
-                    recorder.removeEventListener("dataavailable", handleDataAvailable);
-                    recorder.removeEventListener("stop", handleStop);
-
-                    mediaStream.getTracks().forEach(track => track.stop());
-                };
-
-                recorder.addEventListener("dataavailable", handleDataAvailable);
-                recorder.addEventListener("stop", handleStop, { once: true });
+                });
                 recorder.start();
 
                 changeRecording(true);
             });
         } else {
-            recorder?.stop();
+            if (recorder) {
+                recorder.addEventListener("stop", () => {
+                    setAudioBlob(new Blob(chunks, { type: "audio/ogg; codecs=opus" }));
+
+                    changeRecording(false);
+                });
+                recorder.stop();
+            }
         }
     }
 

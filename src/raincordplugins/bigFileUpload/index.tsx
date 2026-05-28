@@ -469,15 +469,28 @@ function triggerFileUpload() {
     document.body.removeChild(fileInput);
 }
 
+function getOptionClasses(): { optionLabel: string; optionIcon: string; optionName: string; } {
+    try {
+        return {
+            optionLabel: OptionClasses?.optionLabel ?? "",
+            optionIcon: OptionClasses?.optionIcon ?? "",
+            optionName: OptionClasses?.optionName ?? "",
+        };
+    } catch {
+        return { optionLabel: "", optionIcon: "", optionName: "" };
+    }
+}
+
 const ctxMenuPatch: NavContextMenuPatchCallback = (children, props) => {
     if (props.channel.guild_id && !PermissionStore.can(PermissionsBits.SEND_MESSAGES, props.channel)) return;
+    const cls = getOptionClasses();
     children.splice(1, 0,
         <Menu.MenuItem
             id="upload-big-file"
             label={
-                <div className={OptionClasses.optionLabel}>
-                    <OpenExternalIcon className={OptionClasses.optionIcon} height={24} width={24} />
-                    <div className={OptionClasses.optionName}>Upload a Big File</div>
+                <div className={cls.optionLabel} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <OpenExternalIcon className={cls.optionIcon} height={24} width={24} />
+                    <div className={cls.optionName}>Upload a Big File</div>
                 </div>
             }
             action={triggerFileUpload}

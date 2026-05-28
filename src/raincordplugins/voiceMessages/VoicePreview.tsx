@@ -18,15 +18,7 @@
 
 import { useTimer } from "@utils/react";
 
-import { cl, VoiceMessage } from "..";
-
-const PREVIEW_IDLE_LABEL = "----";
-const PREVIEW_RECORDING_LABEL = "RECORDING";
-
-export interface VoiceMessageProps {
-    src: string;
-    waveform: string;
-}
+import { cl, VoiceMessage } from ".";
 
 export type VoicePreviewOptions = {
     src?: string;
@@ -53,7 +45,7 @@ export const VoicePreview = ({
         <div className={cl("preview", recording ? "preview-recording" : [])}>
             <div className={cl("preview-indicator")} />
             <div className={cl("preview-time")}>{durationDisplay}</div>
-            <div className={cl("preview-label")}>{recording ? PREVIEW_RECORDING_LABEL : PREVIEW_IDLE_LABEL}</div>
+            <div className={cl("preview-label")}>{recording ? "RECORDING" : "----"}</div>
         </div>
     );
 };

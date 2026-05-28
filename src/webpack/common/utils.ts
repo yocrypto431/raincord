@@ -17,7 +17,7 @@
 */
 
 import type * as t from "@vencord/discord-types";
-import { _resolveReady, filters, findByCodeLazy, findByPropsLazy, findLazy, mapMangledModuleLazy, waitFor } from "@webpack";
+import { _resolveReady, filters, findByCodeLazy, findByPropsLazy, findExportedComponentLazy, findLazy, mapMangledModuleLazy, waitFor } from "@webpack";
 import type * as TSPattern from "ts-pattern";
 
 export let FluxDispatcher: t.FluxDispatcher;
@@ -223,7 +223,11 @@ export const ChannelActions = findByPropsLazy("selectChannel", "preload");
 // ─── Re-exports for compatibility with Equicord/Vencord plugins ────────────────
 
 // Modal API (from @utils/modal)
-export { openModal, openModalLazy, closeModal, closeAllModals, ModalRoot as Modal, ModalRoot, ModalHeader, ModalContent, ModalFooter, ModalCloseButton } from "@utils/modal";
+// Modal API (from @utils/modal)
+export { openModal, openModalLazy, closeModal, closeAllModals, ModalRoot, ModalHeader, ModalContent, ModalFooter, ModalCloseButton } from "@utils/modal";
+
+// New high-level Discord Modal component (supports title + actions props).
+export const Modal = findExportedComponentLazy("Modal");
 
 // Actions
 export const VoiceActions = findByPropsLazy("toggleSelfMute", "setChannel");

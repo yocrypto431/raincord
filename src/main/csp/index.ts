@@ -77,6 +77,18 @@ export const CspPolicies: PolicyMap = {
     "*.sndcdn.com": CSPSrc,
     "soundcloud.com": CSPSrc,
     "*.soundcloud.com": CSPSrc,
+
+    // hCaptcha (used by Discord for login/signup/etc captchas)
+    "hcaptcha.com": [...CSPSrc, "script-src"],
+    "*.hcaptcha.com": [...CSPSrc, "script-src"],
+    "newassets.hcaptcha.com": [...CSPSrc, "script-src"],
+    "imgs.hcaptcha.com": ImageSrc,
+
+    // FunCaptcha / Arkose Labs (used by Discord on some flows)
+    "arkoselabs.com": [...CSPSrc, "script-src"],
+    "*.arkoselabs.com": [...CSPSrc, "script-src"],
+    "client-api.arkoselabs.com": [...ConnectSrc, "script-src", "frame-src"],
+    "*.funcaptcha.com": [...CSPSrc, "script-src"],
 };
 
 const findHeader = (headers: PolicyMap, headerName: Lowercase<string>) => {
