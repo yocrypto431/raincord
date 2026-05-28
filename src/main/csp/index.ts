@@ -79,9 +79,9 @@ export const CspPolicies: PolicyMap = {
     "*.soundcloud.com": CSPSrc,
 
     // hCaptcha (used by Discord for login/signup/etc captchas)
-    "hcaptcha.com": [...CSPSrc, "script-src", "script-src-elem", "frame-src"],
-    "*.hcaptcha.com": [...CSPSrc, "script-src", "script-src-elem", "frame-src"],
-    "newassets.hcaptcha.com": [...CSPSrc, "script-src", "script-src-elem"],
+    "hcaptcha.com": [...CSPSrc, "script-src"],
+    "*.hcaptcha.com": [...CSPSrc, "script-src"],
+    "newassets.hcaptcha.com": [...CSPSrc, "script-src"],
     "imgs.hcaptcha.com": ImageSrc,
 
     // FunCaptcha / Arkose Labs (used by Discord on some flows)
@@ -89,13 +89,6 @@ export const CspPolicies: PolicyMap = {
     "*.arkoselabs.com": [...CSPSrc, "script-src"],
     "client-api.arkoselabs.com": [...ConnectSrc, "script-src", "frame-src"],
     "*.funcaptcha.com": [...CSPSrc, "script-src"],
-
-    // BigFileUpload uploaders
-    "api.gofile.io": ConnectSrc,
-    "*.gofile.io": ConnectSrc,
-    "catbox.moe": ConnectSrc,
-    "*.catbox.moe": ConnectSrc,
-    "litterbox.catbox.moe": ConnectSrc,
 };
 
 const findHeader = (headers: PolicyMap, headerName: Lowercase<string>) => {
@@ -152,13 +145,10 @@ const patchCsp = (headers: PolicyMap) => {
         // HOWEVER, at the time of writing (24 Jan 2025), Discord is INSANE and also uses unsafe-inline
         // Once they stop using it, we also should
         pushDirective("script-src", "'unsafe-inline'", "'unsafe-eval'");
-        pushDirective("script-src", "https://*.hcaptcha.com", "https://newassets.hcaptcha.com", "https://hcaptcha.com");
-        pushDirective("script-src", "https://*.arkoselabs.com", "https://client-api.arkoselabs.com", "https://*.funcaptcha.com");
 
         for (const directive of ["style-src", "connect-src", "img-src", "font-src", "media-src", "worker-src"]) {
             pushDirective(directive, "blob:", "data:", "vencord:", "vesktop:", "equicord:", "equibop:", "https://*.githubusercontent.com", "https://*.amazonaws.com");
         }
-        pushDirective("frame-src", "https://*.hcaptcha.com", "https://hcaptcha.com", "https://*.arkoselabs.com", "https://*.funcaptcha.com");
 
         for (const [host, directives] of Object.entries(NativeSettings.store.customCspRules)) {
             for (const directive of directives) {

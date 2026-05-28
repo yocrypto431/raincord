@@ -115,6 +115,10 @@ export default definePlugin({
         }
     },
 
+    userAreaButton: {
+        render: FakeDeafenUserButton
+    },
+
     commands: [
         {
             inputType: ApplicationCommandInputType.BUILT_IN,
@@ -155,7 +159,10 @@ export default definePlugin({
 
     start() {
         const { addUserAreaButton } = Vencord.Api.UserArea;
-        addUserAreaButton("fake-voice-option", FakeDeafenUserButton);
+        addUserAreaButton("fake-voice-option", {
+            icon: FakeDeafenIcon,
+            render: FakeDeafenUserButton
+        });
     },
 
     stop() {

@@ -1,6 +1,6 @@
 {
   "name": "raincord-installer",
-  "version": "1.4.5",
+  "version": "1.4.4",
   "description": "RainCord Installer",
   "main": "main.js",
   "scripts": {
