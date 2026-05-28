@@ -136,7 +136,7 @@ import { SearchStatus, TUTORIAL_CACHE } from "./components/Common";
 // @ts-ignore
 window.TUTORIAL_CACHE = TUTORIAL_CACHE;
 
-// Fallback select natif si le composant Discord n'est pas trouv�
+// Fallback select nativo se o componente Discord não for encontrado
 function NativeSelect({ options, select, isSelected }: any) {
     const currentVal = options.find((o: any) => isSelected(o.value))?.value ?? options.find((o: any) => o.default)?.value ?? options[0]?.value;
     return (
@@ -237,7 +237,7 @@ export default function PluginSettings({ premiumOnly = false }: PluginSettingsPr
         setSearchValue(prev => ({ ...prev, status }));
     }, []);
 
-    // Rafra�chir quand un tuto est d�tect�
+    // Atualizar quando um tutorial é detectado
     React.useEffect(() => {
         const handler = () => setSearchValue(prev => ({ ...prev }));
         window.addEventListener("RAINCORD-tutorial-detected", handler);

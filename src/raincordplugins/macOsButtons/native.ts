@@ -7,7 +7,7 @@
 import { BrowserWindow } from "electron";
 
 function getWin(event: any) {
-    // On récupère la fenêtre qui a envoyé l'événement IPC
+    // Recuperamos a janela que enviou o evento IPC
     return BrowserWindow.fromWebContents(event.sender);
 }
 

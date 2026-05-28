@@ -49,7 +49,7 @@ export function reAddDeletedMessages(messages: LoggedMessageJSON[], deletedMessa
 
     allMessages.sort((a, b) => b.time - a.time);
 
-    // Modifier l'array d'origine en place pour éviter de casser les références Webpack
+    // Modificar o array original in-place para evitar quebrar as referências Webpack
     messages.length = 0;
     for (const entry of allMessages) {
         messages.push(entry.message!);

@@ -29,8 +29,8 @@ if (location.protocol !== "data:") {
     invoke(IpcEvents.INIT_FILE_WATCHERS);
 
     if (IS_DISCORD_DESKTOP) {
-        // Intercepte les AbortError non catchées (ex: video.play() interrompue au scroll)
-        // Ces erreurs uncaught peuvent crasher le renderer Electron au scroll rapide
+        // Intercepta os AbortError não capturados (ex: video.play() interrompida no scroll)
+        // Esses erros uncaught podem crashar o renderer Electron no scroll rápido
         webFrame.executeJavaScript(`
             window.addEventListener('unhandledrejection', function(event) {
                 const reason = event.reason;
@@ -48,16 +48,16 @@ if (location.protocol !== "data:") {
         // Not supported in sandboxed preload scripts but Discord doesn't support it either so who cares
         require(process.env.DISCORD_PRELOAD!);
 
-        // Remplace "Discord" par "RAINCORD" dans le titre de la fenêtre (document.title)
-        // Discord change le titre dynamiquement depuis le renderer — on intercepte ça ici
+        // Substitui "Discord" por "RAINCORD" no título da janela (document.title)
+        // Discord muda o título dinamicamente a partir do renderer — interceptamos isso aqui
         webFrame.executeJavaScript(`
             (function() {
                 function patchTitle(t) {
                     return t ? t.replace(/Discord/g, 'RAINCORD') : t;
                 }
-                // Patch initial
+                // Patch inicial
                 if (document.title) document.title = patchTitle(document.title);
-                // Observe les changements futurs
+                // Observa as mudanças futuras
                 const titleEl = document.querySelector('title');
                 if (titleEl) {
                     new MutationObserver(() => {
@@ -66,7 +66,7 @@ if (location.protocol !== "data:") {
                         if (cur !== patched) document.title = patched;
                     }).observe(titleEl, { childList: true });
                 } else {
-                    // Si <title> n'existe pas encore, attend le DOM
+                    // Se <title> ainda não existe, aguarda o DOM
                     new MutationObserver((_, obs) => {
                         const el = document.querySelector('title');
                         if (!el) return;

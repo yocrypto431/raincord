@@ -13,25 +13,24 @@ import { ModalCloseButton, ModalContent, ModalFooter, ModalHeader, ModalProps, M
 import { RestAPI, SearchableSelect, useEffect, useMemo, useRef, useState } from "@webpack/common";
 
 const DEFAULT_MESSAGES = [
-    "t'as pute d'yemma",
-    "ta chienne d'yemma sale suceuse de bite",
-    "mechante tchoupeuse que t'es w'Allah",
-    "t'es un geek un ptn de nerd",
+    "seu lixo",
+    "vai tomar no cu",
+    "cala a boca otário",
+    "ninguém te suporta",
     "hm ?",
-    "SUCEUSE DE BEUTEU",
-    "TU KIFF ?",
-    "AU FOND DTA GE-GOR",
-    "DE PTITE SUCEUSE",
-    "SALE CHINNE",
-    "GRANDE LANGUEUSE",
-    "TA SAINTE PUTE DE MERE",
-    "ENFANT DE CATIN",
-    "ENFANT DE VIOLE",
-    "TA PTITE SOEUR LA CATIN D'CHIENNE",
-    "sale ptite chienne t'as pute d'yemma qui se soumet a moi",
-    "je vais te hmak ta chienne d'yemma sale suceuse de bite",
-    "mechante tchoupeuse que t'es w'Allah tu sais rien faire",
-    "t'es un geek un ptn de nerd sale chienne t'es immonde",
+    "CALA A BOCA",
+    "GOSTOU ?",
+    "TOMA ESSA",
+    "SEU MERDA",
+    "LIXO HUMANO",
+    "GRANDE BOSTA",
+    "VAI SE FODER",
+    "FILHO DA PUTA",
+    "SEU VERME",
+    "vai chorar é?",
+    "ninguém te aguenta seu merda",
+    "cala essa boca imunda",
+    "tu é um lixo de pessoa",
 ];
 
 const DELAY_OPTIONS = [
@@ -86,7 +85,7 @@ export function FloodModal({ channel, rootProps, onRunningChange }: Props) {
         runningRef.current = true;
         indexRef.current = 0;
         setRunning(true);
-        setStatus("En cours...");
+        setStatus("Em andamento...");
         scheduleNext();
     }
 

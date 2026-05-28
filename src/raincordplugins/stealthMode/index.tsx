@@ -1,10 +1,10 @@
 /*
  * RAINCORD - StealthMode plugin
- * Cache tous les boutons de plugins (barre du haut, zone texte, zone utilisateur)
- * Toggle : Ctrl+Shift+H ou bouton dans RAINCORD Settings.
+ * Esconde todos os botões de plugins (barra superior, área de texto, área do usuário)
+ * Toggle : Ctrl+Shift+H ou botão nas Configurações RAINCORD.
  *
- * NOTE: La logique réelle (keydown, DOM hide, toggle) est dans src/api/HeaderBar.tsx
- * et s'exécute au chargement du module webpack, AVANT le démarrage des plugins.
+ * NOTA: A lógica real (keydown, DOM hide, toggle) está em src/api/HeaderBar.tsx
+ * e é executada no carregamento do módulo webpack, ANTES da inicialização dos plugins.
  */
 
 import { isStealthModeEnabled, syncStealthBodyClass, toggleStealthMode } from "@api/HeaderBar";

@@ -33,7 +33,7 @@ interface SharedUser {
     startTime: number;
     prefix: string;
     maxUses: number;
-    uses: number; // Toujours présent pour la compatibilité, mais on utilise usesMap
+    uses: number; // Sempre presente para compatibilidade, mas usamos usesMap
     usesMap?: Record<string, number>;
 }
 
@@ -550,7 +550,7 @@ export default definePlugin({
     start() {
         FluxDispatcher.subscribe("MESSAGE_CREATE", this.onMessage);
 
-        // Ajout du bouton dans la barre d'en-tête (HeaderBar)
+        // Adição do botão na barra de cabeçalho (HeaderBar)
         addHeaderBarButton("shareperms-manager", () => <SharePermsButton />, 6);
     },
 

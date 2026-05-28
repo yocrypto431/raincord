@@ -65,7 +65,7 @@ export const enum IpcEvents {
     SET_THUMBAR_BUTTONS = "SoundCordSetThumbarButtons",
     THUMBAR_BUTTON_CLICK = "SoundCordThumbarButtonClick",
 
-    // RAINCORD Updater — télécharge un exe depuis une URL et le lance
+    // RAINCORD Updater — baixa um exe de uma URL e o executa
     RAINCORD_DOWNLOAD_AND_RUN = "RAINCORDDownloadAndRun",
 
     // VB-Audio Virtual Cable (Windows only)
@@ -83,11 +83,11 @@ export const enum IpcEvents {
     WORLD_BOMB_PRESS_ENTER = "WorldBombPressEnter",
     WORLD_BOMB_PRESS_BACKSPACE = "WorldBombPressBackspace",
     WORLD_BOMB_CLICK = "WorldBombClick",
-    // Séquence complète en un seul appel système (clic + frappe + enter)
+    // Sequência completa em uma única chamada de sistema (clique + digitação + enter)
     WORLD_BOMB_SEQUENCE = "WorldBombSequence",
-    // Position actuelle du curseur souris (pour calibration)
+    // Posição atual do cursor do mouse (para calibração)
     WORLD_BOMB_GET_CURSOR_POS = "WorldBombGetCursorPos",
-    // Ouvre la fenêtre externe Stream Proof
+    // Abre a janela externa Stream Proof
     WORLD_BOMB_OPEN_WINDOW = "WorldBombOpenWindow",
 
     // Global Keyboard Hook for KeyboardSounds plugin

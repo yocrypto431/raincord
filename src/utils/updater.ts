@@ -1,6 +1,6 @@
 /*
  * RAINCORD — Updater utilities (renderer-side)
- * Wraps IPC calls vers le main process (http.ts)
+ * Wraps IPC calls para o main process (http.ts)
  */
 
 import { Logger } from "./Logger";
@@ -20,8 +20,8 @@ async function Unwrap<T>(p: Promise<IpcRes<T>>): Promise<T> {
 }
 
 /**
- * Demande au main process s'il y a une version plus récente.
- * Met à jour isOutdated et changes.
+ * Solicita ao main process se há uma versão mais recente.
+ * Atualiza isOutdated e changes.
  */
 export async function checkForUpdates(): Promise<boolean> {
     changes = await Unwrap(VencordNative.updater.getUpdates());
@@ -29,8 +29,8 @@ export async function checkForUpdates(): Promise<boolean> {
 }
 
 /**
- * Télécharge le Setup.exe (étape 1).
- * Retourne true si le téléchargement a réussi.
+ * Baixa o Setup.exe (etapa 1).
+ * Retorna true se o download foi bem-sucedido.
  */
 export async function update(): Promise<boolean> {
     if (!isOutdated) return true;
@@ -40,8 +40,8 @@ export async function update(): Promise<boolean> {
 }
 
 /**
- * Lance l'installeur téléchargé (étape 2).
- * L'app va se fermer et se relancer automatiquement après installation.
+ * Executa o instalador baixado (etapa 2).
+ * O app vai fechar e reiniciar automaticamente após a instalação.
  */
 export async function rebuild(): Promise<boolean> {
     return Unwrap(VencordNative.updater.rebuild());
@@ -50,7 +50,7 @@ export async function rebuild(): Promise<boolean> {
 export const getRepo = () => Unwrap(VencordNative.updater.getRepo());
 
 /**
- * Vérifie les mises à jour au démarrage et propose à l'utilisateur de mettre à jour.
+ * Verifica atualizações na inicialização e propõe ao usuário atualizar.
  */
 export async function maybePromptToUpdate(confirmMessage: string, checkForDev = false) {
     if (IS_WEB || IS_UPDATER_DISABLED) return;
@@ -59,12 +59,12 @@ export async function maybePromptToUpdate(confirmMessage: string, checkForDev = 
     try {
         const outdated = await checkForUpdates();
         if (outdated) {
-            // Mise à jour automatique sans confirmation
+            // Atualização automática sem confirmação
             const downloaded = await update();
             if (downloaded) await rebuild();
         }
     } catch (err) {
         UpdateLogger.error(err);
-        alert("La vérification des mises à jour a échoué. Vérifie ta connexion ou réinstalle RAINCORD.");
+        alert("A verificação de atualizações falhou. Verifique sua conexão ou reinstale o RAINCORD.");
     }
 }

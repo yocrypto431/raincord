@@ -32,7 +32,7 @@ const settings = definePluginSettings({
     }
 });
 
-/* ── Icônes ── */
+/* ── Ícones ── */
 function SearchIcon() {
     return (
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ opacity: 0.5, flexShrink: 0 }}>
@@ -56,7 +56,7 @@ function LeaveAllServersModal({ rootProps }: { rootProps: any; }) {
         return (Object.values(raw) as GuildEntry[]).sort((a, b) => a.name.localeCompare(b.name));
     }, []);
 
-    // Exclure les serveurs owned si safeMode
+    // Excluir os servidores owned se safeMode
     const availableGuilds = useMemo(() =>
         settings.store.safeMode ? allGuilds.filter(g => g.ownerId !== myId) : allGuilds,
         [allGuilds, myId]
@@ -68,7 +68,7 @@ function LeaveAllServersModal({ rootProps }: { rootProps: any; }) {
         return availableGuilds.filter(g => g.name.toLowerCase().includes(q));
     }, [availableGuilds, search]);
 
-    // Sélectionner tout par défaut
+    // Selecionar tudo por padrão
     useEffect(() => {
         setSelected(new Set(availableGuilds.map(g => g.id)));
     }, [availableGuilds]);
@@ -129,7 +129,7 @@ function LeaveAllServersModal({ rootProps }: { rootProps: any; }) {
 
             <ModalContent className="las-content">
 
-                {/* Barre de recherche */}
+                {/* Barra de pesquisa */}
                 <div className="las-search-bar">
                     <SearchIcon />
                     <input
@@ -145,7 +145,7 @@ function LeaveAllServersModal({ rootProps }: { rootProps: any; }) {
                     )}
                 </div>
 
-                {/* Header liste + boutons tout/rien */}
+                {/* Header lista + botões tudo/nenhum */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <Forms.FormTitle tag="h5" className="las-label">SELECT SERVERS</Forms.FormTitle>
                     <div style={{ display: "flex", gap: 6 }}>
@@ -154,7 +154,7 @@ function LeaveAllServersModal({ rootProps }: { rootProps: any; }) {
                     </div>
                 </div>
 
-                {/* Liste serveurs */}
+                {/* Lista servidores */}
                 <div className="las-guild-list">
                     {filtered.length === 0 && (
                         <div className="las-empty">
@@ -186,7 +186,7 @@ function LeaveAllServersModal({ rootProps }: { rootProps: any; }) {
                     <div className={`las-status las-status--${status}`}>{progress}</div>
                 )}
 
-                {/* Compteur */}
+                {/* Contador */}
                 <div className="las-footer-info">
                     <span>{selected.size} server{selected.size > 1 ? "s" : ""} selected</span>
                     {settings.store.safeMode && (
@@ -194,7 +194,7 @@ function LeaveAllServersModal({ rootProps }: { rootProps: any; }) {
                     )}
                 </div>
 
-                {/* Bouton principal */}
+                {/* Botão principal */}
                 <button
                     className="las-leave-btn"
                     onClick={handleLeave}

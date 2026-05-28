@@ -1,6 +1,6 @@
 /*
- * RAINCORD — Onglet Updater dans les Settings
- * Affiche la version actuelle, vérifie GitHub et permet de mettre à jour.
+ * RAINCORD — Aba Updater nas Configurações
+ * Exibe a versão atual, verifica GitHub e permite atualizar.
  */
 
 import { Divider } from "@components/Divider";
@@ -20,7 +20,7 @@ import { Toasts, Alerts } from "@webpack/common";
 
 import { relaunch } from "@utils/native";
 
-// Version locale depuis package.json (injectée au build)
+// Versão local do package.json (injetada no build)
 declare const VERSION: string;
 
 const REPO_URL = "https://github.com/yocrypto431/raincord"; // Update when you create your repo
@@ -45,7 +45,7 @@ function UpdaterTab() {
 
             if (!hasUpdate) {
                 Toasts.show({
-                    message: "Tu es déjà sur la dernière version !",
+                    message: "Você já está na versão mais recente!",
                     id: Toasts.genId(),
                     type: Toasts.Type.SUCCESS,
                     options: { position: Toasts.Position.BOTTOM }
@@ -59,7 +59,7 @@ function UpdaterTab() {
                 detail = detail.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
                 if (detail.length > 300) detail = detail.substring(0, 300) + "…";
             }
-            setError(`Impossible de vérifier les mises à jour.${detail ? ` (${detail})` : " Vérifie ta connexion."}`);
+            setError(`Impossível verificar atualizações.${detail ? ` (${detail})` : " Verifique sua conexão."}`);
         } finally {
             setChecking(false);
         }
@@ -126,7 +126,7 @@ function UpdaterTab() {
                 </Card>
             )}
 
-            {/* Résultat vérification */}
+            {/* Resultado da verificação */}
             {checked && !error && (
                 outdated ? (
                     <Card style={{ padding: "10px 16px", marginBottom: 12, borderLeft: "3px solid var(--status-warning)" }}>
@@ -141,7 +141,7 @@ function UpdaterTab() {
                 )
             )}
 
-            {/* Boutons */}
+            {/* Botões */}
             <Flex gap="8px" className={Margins.top8}>
                 <Button
                     size="small"

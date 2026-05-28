@@ -77,7 +77,7 @@ export const enum IpcEvents {
 
     GET_PLATFORM_SPOOF_INFO = "VCD_GET_PLATFORM_SPOOF_INFO",
 
-    // Relaunch depuis VencordNative.RAINCORD.relaunch() (boutons Restart plugins)
+    // Relaunch desde VencordNative.RAINCORD.relaunch() (botões Restart plugins)
     RELAUNCH_APP = "RAINCORDRelaunchApp"
 }
 

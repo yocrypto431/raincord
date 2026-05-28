@@ -51,7 +51,7 @@ function useTutorialExists(pluginName: string) {
                     const found = res.ok;
                     TUTORIAL_CACHE.set(pluginName, found);
                     setExists(found);
-                    // Force le rafraîchissement global pour le filtre
+                    // Força a atualização global para o filtro
                     window.dispatchEvent(new CustomEvent("RAINCORD-tutorial-detected", { detail: { pluginName, found } }));
                 }
             })

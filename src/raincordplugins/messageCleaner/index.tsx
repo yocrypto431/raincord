@@ -119,7 +119,7 @@ async function deleteMessage(channelId: string, messageId: string): Promise<bool
         return true;
     } catch (error: any) {
         const statusCode = error?.status || error?.statusCode || "N/A";
-        debugLog(`❌ Error suppression ${messageId}: status ${statusCode}`);
+        debugLog(`❌ Erro ao deletar ${messageId}: status ${statusCode}`);
         return false;
     }
 }
@@ -134,7 +134,7 @@ async function getChannelMessages(channelId: string, before?: string): Promise<M
         return Array.isArray(response.body) ? response.body : [];
     } catch (error: any) {
         const statusCode = error?.status || error?.statusCode || "N/A";
-        log(`❌ Error récupération messages: status ${statusCode}`, "error");
+        log(`❌ Erro ao recuperar mensagens: status ${statusCode}`, "error");
         return [];
     }
 }
@@ -147,8 +147,8 @@ async function cleanChannel(channelId: string) {
         const currentUserId = UserStore.getCurrentUser()?.id;
         if (!channel || !currentUserId) return;
 
-        const channelName = channel.name || "Canal privé";
-        log(`🧹 Début du nettoyage de "${channelName}"`);
+        const channelName = channel.name || "Canal privado";
+        log(`🧹 Início da limpeza de "${channelName}"`);
 
         isCleaningInProgress = true;
         shouldStopCleaning = false;
@@ -160,7 +160,7 @@ async function cleanChannel(channelId: string) {
         while (!shouldStopCleaning) {
             try {
                 const messages = await getChannelMessages(channelId, lastMessageId);
-                if (messages.length === 0) { log("Plus de messages à traiter"); break; }
+                if (messages.length === 0) { log("Sem mais mensagens para processar"); break; }
 
                 const validMessages = messages.filter(msg => canDeleteMessage(msg, currentUserId));
                 cleaningStats.total += validMessages.length;
@@ -173,7 +173,7 @@ async function cleanChannel(channelId: string) {
                 }
 
                 for (const message of validMessages) {
-                    if (shouldStopCleaning) { log("Arrêt demandé par l'utilisateur"); break; }
+                    if (shouldStopCleaning) { log("Parada solicitada pelo usuário"); break; }
 
                     const success = await deleteMessage(channelId, message.id);
                     if (success) cleaningStats.deleted++;
@@ -191,17 +191,17 @@ async function cleanChannel(channelId: string) {
 
             } catch (error: any) {
                 const statusCode = error?.status || error?.statusCode || "N/A";
-                log(`❌ Error dans la boucle: status ${statusCode}`, "error");
+                log(`❌ Erro no loop: status ${statusCode}`, "error");
                 cleaningStats.failed++;
 
                 if (statusCode === 429) {
-                    log("Rate limit atteint, pause 30s...", "warn");
+                    log("Rate limit atingido, pausa 30s...", "warn");
                     await new Promise(resolve => setTimeout(resolve, 30000));
                 } else {
                     await new Promise(resolve => setTimeout(resolve, 5000));
                 }
 
-                if (cleaningStats.failed > 15) { log("Trop d'errors, arrêt", "error"); break; }
+                if (cleaningStats.failed > 15) { log("Muitos erros, parando", "error"); break; }
             }
         }
 
@@ -209,18 +209,18 @@ async function cleanChannel(channelId: string) {
         const { deleted, failed, skipped } = cleaningStats;
         const totalTime = Date.now() - cleaningStats.startTime;
         const timeStr = totalTime < 60000 ? `${Math.round(totalTime / 1000)}s` : `${Math.round(totalTime / 60000)}min`;
-        log(`✅ Nettoyage terminé: ${deleted} supprimés, ${failed} échecs, ${skipped} ignorés — ${timeStr}`);
+        log(`✅ Limpeza concluída: ${deleted} deletados, ${failed} falhas, ${skipped} ignorados — ${timeStr}`);
 
     } catch (error) {
         isCleaningInProgress = false;
-        log(`❌ Error globale: ${error}`, "error");
+        log(`❌ Erro global: ${error}`, "error");
     }
 }
 
 function stopCleaning() {
     if (isCleaningInProgress) {
         shouldStopCleaning = true;
-        log("⏹️ Arrêt du nettoyage demandé");
+        log("⏹️ Parada da limpeza solicitada");
     }
 }
 
@@ -240,15 +240,15 @@ const ChannelContextMenuPatch: NavContextMenuPatchCallback = (children, ctx: { c
 
         menuItems.push(
             <Menu.MenuItem key="cleaning-status" id="vc-cleaning-status"
-                label={`Nettoyage en cours: ${percentage}% (${processed}/${total})`}
+                label={`Limpeza em andamento: ${percentage}% (${processed}/${total})`}
                 color="brand" disabled={true} />,
             <Menu.MenuItem key="stop-cleaning" id="vc-stop-cleaning"
-                label="Stop le nettoyage" color="danger" action={stopCleaning} />
+                label="Parar a limpeza" color="danger" action={stopCleaning} />
         );
     } else {
         menuItems.push(
             <Menu.MenuItem key="clean-messages" id="vc-clean-messages"
-                label="Nettoyer les messages" color="danger"
+                label="Limpar as mensagens" color="danger"
                 action={() => cleanChannel(channel.id)} />
         );
     }
@@ -270,11 +270,11 @@ export default definePlugin({
     },
 
     start() {
-        log("🚀 Plugin MessageCleaner démarré");
+        log("🚀 Plugin MessageCleaner iniciado");
     },
 
     stop() {
-        log("🛑 Plugin MessageCleaner arrêté");
+        log("🛑 Plugin MessageCleaner parado");
         if (isCleaningInProgress) shouldStopCleaning = true;
     }
 });

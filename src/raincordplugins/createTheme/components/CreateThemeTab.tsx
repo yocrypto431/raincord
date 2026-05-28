@@ -223,9 +223,9 @@ export function removeAll() {
 
 // ── Auto-apply on load if previously enabled ─────────────
 (function initOnLoad() {
-    // Toujours nettoyer les styles résiduels au démarrage
+    // Sempre limpar os estilos residuais na inicialização
     [ID_VARS, ID_OVERRIDES, ID_BG, ID_GLASS].forEach(id => document.getElementById(id)?.remove());
-    // Re-appliquer seulement si enabled
+    // Reaplicar somente se enabled
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return;
@@ -233,7 +233,7 @@ export function removeAll() {
         if (s.enabled) {
             applyColorVars(s.color);
             applyColorOverrides(s.color).catch(console.error);
-            // Ne pas appliquer glass/bg au démarrage pour éviter les artefacts visuels
+            // Não aplicar glass/bg na inicialização para evitar artefatos visuais
         }
     } catch { /* ignore */ }
 })();

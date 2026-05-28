@@ -107,7 +107,7 @@ function parseTracks(data: any): ScTrack[] {
         let streamUrl = "";
         const transcodings = item.media?.transcodings ?? [];
 
-        // Priorité 1 : progressive (MP3 direct)
+        // Prioridade 1 : progressive (MP3 direto)
         for (const tc of transcodings) {
             if (tc.format?.protocol === "progressive" && tc.url) {
                 streamUrl = tc.url;
@@ -115,7 +115,7 @@ function parseTracks(data: any): ScTrack[] {
             }
         }
 
-        // Priorité 2 : hls (m3u8 - mieux supporté par les navigateurs modernes)
+        // Prioridade 2 : hls (fallback)
         if (!streamUrl) {
             for (const tc of transcodings) {
                 if (tc.format?.protocol === "hls" && tc.url) {
@@ -152,7 +152,7 @@ async function searchTracks(query: string, clientId: string): Promise<ScTrack[]>
 async function getStreamUrl(streamUrl: string, clientId: string): Promise<string> {
     if (!streamUrl) throw new Error("Stream URL not found");
 
-    // Si c'est déjà une URL de stream finale ou HLS directe
+    // Se já é uma URL de stream final ou HLS direta
     if (streamUrl.includes("cf-hls-media") || streamUrl.includes("cf-media")) {
         return streamUrl;
     }
@@ -175,7 +175,7 @@ async function refreshTrackData(track: ScTrack, clientId: string): Promise<ScTra
         let streamUrl = "";
         const transcodings = data.media?.transcodings ?? [];
 
-        // Priorité 1 : progressive (MP3 direct) - le plus stable
+        // Prioridade 1 : progressive (MP3 direto)
         for (const tc of transcodings) {
             if (tc.format?.protocol === "progressive" && tc.url) {
                 streamUrl = tc.url;
@@ -183,7 +183,7 @@ async function refreshTrackData(track: ScTrack, clientId: string): Promise<ScTra
             }
         }
 
-        // Priorité 2 : hls (fallback)
+        // Prioridade 2 : hls (fallback)
         if (!streamUrl) {
             for (const tc of transcodings) {
                 if (tc.format?.protocol === "hls" && tc.url) {
@@ -221,7 +221,7 @@ function fmtDuration(ms: number): string {
     return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
-// ─── Player singleton (persiste après fermeture de la modal) ─────────────────
+// ─── Player singleton (persiste após fechar a modal) ─────────────────
 
 type PlayerListener = () => void;
 
@@ -254,7 +254,7 @@ async function initPlayer() {
         playerState.clientId = id;
         playerState.status = "Search for a title or an artist...";
     } else {
-        playerState.status = `❌ Impossible to obtain client_id. Check your connection.`;
+        playerState.status = `❌ Impossível obter client_id. Verifique sua conexão.`;
     }
     playerState.favorites = await loadFavorites();
     playerState.notify();
@@ -306,14 +306,14 @@ async function playerPlayTrack(track: ScTrack, fromFavIdx = -1) {
     s.notify();
 
     try {
-        // Rafraîchir les données de la piste pour éviter les 404 (liens expirés)
+        // Atualizar os dados da faixa para evitar 404 (links expirados)
         const freshTrack = await refreshTrackData(track, s.clientId);
         s.playing = freshTrack;
 
         const mp3Url = await getStreamUrl(freshTrack.streamUrl, s.clientId);
         const audio = new Audio();
 
-        // Nettoyage de l'ancienne instance
+        // Limpeza da instância anterior
         if (s.audio) {
             s.audio.pause();
             s.audio.src = "";
@@ -409,7 +409,7 @@ function usePlayerState() {
     return playerState;
 }
 
-// ─── Composant principal ──────────────────────────────────────────────────────
+// ─── Componente principal ──────────────────────────────────────────────────────
 
 // ── SVG Icons ─────────────────────────────────────────────────────────────────
 
@@ -449,7 +449,7 @@ function IconMusicNote() {
     return <svg width={16} height={16} viewBox="0 0 24 24" fill="currentColor"><path d="M9 18V5l12-2v13" /><circle cx={6} cy={18} r={3} /><circle cx={18} cy={16} r={3} /></svg>;
 }
 
-// ─── Composant principal ──────────────────────────────────────────────────────
+// ─── Componente principal ──────────────────────────────────────────────────────
 
 const SC_OUTPUT_KEY = "SoundCordPlayer_outputDevice";
 
@@ -468,16 +468,16 @@ function SoundCloudModal({ onClose }: { onClose: () => void; }) {
     useEffect(() => {
         const load = async () => {
             try {
-                // FIX: MediaEngineStore.getOutputDevices() retourne les IDs internes Discord,
-                // PAS les vrais deviceId WebAudio requis par setSinkId().
-                // On utilise navigator.mediaDevices.enumerateDevices() pour avoir les vrais deviceId.
+                // FIX: MediaEngineStore.getOutputDevices() retorna os IDs internos do Discord,
+                // NÃO os deviceId reais do WebAudio necessários para setSinkId().
+                // Usamos navigator.mediaDevices.enumerateDevices() para obter os deviceId reais.
                 let devices = await navigator.mediaDevices.enumerateDevices();
                 const outputs = devices.filter(d => d.kind === "audiooutput");
 
-                // Si les labels sont vides (permission pas encore accordée), on essaie de les obtenir
+                // Se os labels estão vazios (permissão ainda não concedida), tentamos obtê-los
                 if (outputs.some(d => !d.label)) {
                     try {
-                        // Demander accès micro déclenche la permission pour lister les outputs aussi
+                        // Solicitar acesso ao microfone aciona a permissão para listar os outputs também
                         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                         stream.getTracks().forEach(t => t.stop());
                         devices = await navigator.mediaDevices.enumerateDevices();
@@ -523,7 +523,7 @@ function SoundCloudModal({ onClose }: { onClose: () => void; }) {
                     p.clientId = newId; 
                     return doSearch(true);
                 }
-                else { p.status = "Connection impossible"; p.notify(); }
+                else { p.status = "Conexão impossível"; p.notify(); }
             } else { p.status = `Error : ${e.message}`; p.notify(); }
         }
     }
@@ -568,7 +568,7 @@ function SoundCloudModal({ onClose }: { onClose: () => void; }) {
                     SoundCord Player
                 </span>
                 <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    {/* Bouton settings */}
+                    {/* Botão settings */}
                     <button
                         className="sc-close-btn"
                         title="Audio output"
@@ -584,7 +584,7 @@ function SoundCloudModal({ onClose }: { onClose: () => void; }) {
                 </div>
             </div>
 
-            {/* Panneau settings sortie audio */}
+            {/* Painel de configurações de saída de áudio */}
             {showSettings && (
                 <div style={{
                     padding: "8px 12px",
@@ -756,7 +756,7 @@ function cleanupThumbar() {
     } catch { }
 }
 
-// ─── Bouton HeaderBar ─────────────────────────────────────────────────────────
+// ─── Botão HeaderBar ─────────────────────────────────────────────────────────
 
 function SCHeaderBarButton() {
     return (

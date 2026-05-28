@@ -1,7 +1,7 @@
 /*
- * RAINCORD — git updater désactivé
- * Le build standalone utilise http.ts à la place.
- * Ce fichier est un stub vide pour éviter toute erreur si chargé par erreur.
+ * RAINCORD — git updater desativado
+ * O build standalone usa http.ts no lugar.
+ * Este arquivo é um stub vazio para evitar qualquer erro se carregado por engano.
  */
 
-// Intentionnellement vide — RAINCORD ne supporte pas le mode git updater.
+// Intencionalmente vazio — RAINCORD não suporta o modo git updater.

@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-// UserAreaAPI est géré dans src/equicordplugins/_api/userArea.ts
-// Ce fichier est un stub vide requis par le build system
+// UserAreaAPI é gerenciado em src/equicordplugins/_api/userArea.ts
+// Este arquivo é um stub vazio necessário para o build system
 import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
 

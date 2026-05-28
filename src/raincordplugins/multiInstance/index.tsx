@@ -1,17 +1,17 @@
 /*
  * RAINCORD — MultiInstance plugin
  *
- * Clic gauche sur un account :
- *   → Si token disponible : choisit directement "New window" ou "Split" via le ctx menu
- *   → Si pas de token : switch rapide uniquement
+ * Clique esquerdo em uma conta:
+ *   → Se token disponível: escolhe diretamente "New window" ou "Split" via o ctx menu
+ *   → Se não tem token: switch rápido apenas
  *
- * Clic droit sur un account : context menu (New window | Split screen | Close)
+ * Clique direito em uma conta: context menu (New window | Split screen | Close)
  *
- * La logique est :
- *   - Clic GAUCHE avec token → ouvre le context menu (même que clic droit)
- *     (on ne fait PLUS location.reload sur clic gauche si le account a un token)
- *   - Clic GAUCHE sans token → switch rapide classique
- *   - Clic DROIT avec token → context menu
+ * A lógica é:
+ *   - Clique ESQUERDO com token → abre o context menu (mesmo que clique direito)
+ *     (não fazemos MAIS location.reload no clique esquerdo se a conta tem um token)
+ *   - Clique ESQUERDO sem token → switch rápido clássico
+ *   - Clique DIREITO com token → context menu
  */
 
 import { addHeaderBarButton, HeaderBarButton, removeHeaderBarButton } from "@api/HeaderBar";
@@ -28,7 +28,7 @@ const STORE_KEY = "TokenImporter_accounts";
 const MI_TOKEN_CACHE_KEY = "RAINCORD-mi-token-cache";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Token cache — capture les tokens des accounts natifs Discord
+// Token cache — captura os tokens das contas nativas do Discord
 // ─────────────────────────────────────────────────────────────────────────────
 
 let tokenCache: Record<string, string> = {};
@@ -69,7 +69,7 @@ function hookEncryptAndStoreTokens(): void {
         if (!tokenMod?.encryptAndStoreTokens) return;
         const orig = tokenMod.encryptAndStoreTokens.bind(tokenMod);
         tokenMod.encryptAndStoreTokens = async function (tokens: Record<string, string>) {
-            // Capture tous les tokens au passage
+            // Captura todos os tokens na passagem
             for (const [id, token] of Object.entries(tokens)) {
                 if (id && token) cacheToken(id, token);
             }
@@ -140,7 +140,7 @@ function getNativeAccounts(): SavedAccount[] {
     }
 }
 
-/** Quick switch — token direct */
+/** Quick switch — token direto */
 function switchToQuick(token: string) {
     try {
         window.localStorage.setItem("token", `"${token}"`);
@@ -155,7 +155,7 @@ function switchToQuick(token: string) {
     }
 }
 
-/** Switch pour accounts natifs sans token — utilise le mécanisme Discord natif */
+/** Switch para contas nativas sem token — usa o mecanismo nativo do Discord */
 function switchNativeAccount(userId: string) {
     try {
         const multiAuth = findByProps("switchAccount", "loginToken") ?? findByProps("switchAccount");
@@ -163,7 +163,7 @@ function switchNativeAccount(userId: string) {
             multiAuth.switchAccount(userId);
             return;
         }
-        // Fallback : dispatch le flux event comme Discord le fait nativement
+        // Fallback : dispatch o flux event como o Discord faz nativamente
         const Flux = findByProps("dispatch", "subscribe");
         if (Flux?.dispatch) {
             Flux.dispatch({ type: "MULTI_ACCOUNT_SWITCH_ATTEMPT", userId });
@@ -174,7 +174,7 @@ function switchNativeAccount(userId: string) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Context menu — monté dans document.body via portal pour éviter l'overflow
+// Context menu — montado no document.body via portal para evitar o overflow
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface CtxState {
@@ -197,7 +197,7 @@ function ContextMenuPortal(props: CtxMenuProps) {
     const ref = React.useRef<HTMLDivElement>(null);
     const [pos, setPos] = React.useState({ left: x, top: y });
 
-    // Crée le container portal une seule fois
+    // Cria o container portal uma única vez
     const [container] = React.useState(() => {
         const el = document.getElementById("RAINCORD-mi-ctx-root") ?? document.createElement("div");
         el.id = "RAINCORD-mi-ctx-root";
@@ -205,14 +205,14 @@ function ContextMenuPortal(props: CtxMenuProps) {
         return el;
     });
 
-    // Nettoie le container à l'unmount
+    // Limpa o container no unmount
     React.useEffect(() => {
         return () => {
             try { container.remove(); } catch { }
         };
     }, [container]);
 
-    // Ferme si clic en dehors ou Escape
+    // Fecha se clicar fora ou Escape
     React.useEffect(() => {
         const onDown = (e: MouseEvent) => {
             if (ref.current && !ref.current.contains(e.target as Node)) onClose();
@@ -226,7 +226,7 @@ function ContextMenuPortal(props: CtxMenuProps) {
         };
     }, [onClose]);
 
-    // Ajuste la position pour rester dans le viewport
+    // Ajusta a posição para ficar dentro do viewport
     React.useLayoutEffect(() => {
         if (!ref.current) return;
         const rect = ref.current.getBoundingClientRect();
@@ -269,8 +269,8 @@ function ContextMenuPortal(props: CtxMenuProps) {
         </div>
     );
 
-    // createPortal monte le menu dans document.body — hors du DOM du modal
-    // ce qui contourne le z-index et l'overflow du ModalRoot
+    // createPortal monta o menu no document.body — fora do DOM do modal
+    // o que contorna o z-index e o overflow do ModalRoot
     return ReactDOM.createPortal(menu, container) as any;
 }
 
@@ -321,7 +321,7 @@ function MultiInstanceModal({ rootProps }: { rootProps: any; }) {
         if (!acc.hasToken) return;
         setCtx(null);
         setStatus(t("Opening window…"));
-        // @ts-ignore - Passage du pseudo
+        // @ts-ignore - Passagem do pseudo
         const res = await Native.openInstanceWindow(acc.token, acc.id, false, acc.username).catch(() => ({ ok: false, error: "error" }));
         if ((res as any).ok) {
             setStatus(t("Window opened ✓"));
@@ -336,7 +336,7 @@ function MultiInstanceModal({ rootProps }: { rootProps: any; }) {
         if (!acc.hasToken) return;
         setCtx(null);
         setStatus(t("Opening detached instance…"));
-        // @ts-ignore - Argument 'detached' et pseudo ajoutés
+        // @ts-ignore - Argumento 'detached' e pseudo adicionados
         const res = await Native.openInstanceWindow(acc.token, acc.id, true, acc.username).catch(() => ({ ok: false, error: "error" }));
         if ((res as any).ok) {
             setStatus(t("Instance opened ✓"));
@@ -382,7 +382,7 @@ function MultiInstanceModal({ rootProps }: { rootProps: any; }) {
                     <strong>{t("Left click")}</strong> {t("or")} <strong>{t("right click")}</strong> → {t("options menu")}
                 </p>
 
-                {/* Active account */}
+                {/* Conta ativa */}
                 {currentUser && (
                     <div className="mi-list">
                         <div className="mi-section-label">{t("ACTIVE ACCOUNT")}</div>
@@ -402,7 +402,7 @@ function MultiInstanceModal({ rootProps }: { rootProps: any; }) {
                     </div>
                 )}
 
-                {/* Autres accounts */}
+                {/* Outras contas */}
                 <div className="mi-list">
                     <div className="mi-section-label">
                         {allAccounts.length} {t(allAccounts.length !== 1 ? "OTHER ACCOUNTS" : "OTHER ACCOUNT")}
@@ -470,7 +470,7 @@ function MultiInstanceModal({ rootProps }: { rootProps: any; }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Sous-composants
+// Subcomponentes
 // ─────────────────────────────────────────────────────────────────────────────
 
 function AccountAvatar({ url, name }: { url: string; name: string; }) {
@@ -480,7 +480,7 @@ function AccountAvatar({ url, name }: { url: string; name: string; }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Icônes
+// Ícones
 // ─────────────────────────────────────────────────────────────────────────────
 
 function DiscordIcon() {
@@ -544,7 +544,7 @@ function MultiInstanceIcon({ width = 20, height = 20 }: { width?: number; height
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Bouton header bar
+// Botão header bar
 // ─────────────────────────────────────────────────────────────────────────────
 
 function MultiInstanceButton() {

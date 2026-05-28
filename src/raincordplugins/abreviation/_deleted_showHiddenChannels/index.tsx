@@ -1,3 +1,3 @@
-// Plugin disabled — supprimé intentionnellement
-// Ne pas restaurer : cause des salons invisibles en interférant avec VIEW_CHANNEL
+// Plugin disabled — removido intencionalmente
+// Não restaurar: causa canais invisíveis interferindo com VIEW_CHANNEL
 export default null;

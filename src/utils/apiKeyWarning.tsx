@@ -1,5 +1,5 @@
 /*
- * RAINCORD — Utilitaire pop-up clé API manquante
+ * RAINCORD — Utilitário pop-up chave API ausente
  */
 
 import { openPluginModal } from "@components/settings/tabs/plugins/PluginModal";
@@ -17,12 +17,12 @@ function ApiKeyWarningModal({ pluginName, onClose }: { pluginName: string; onClo
                         <path fill="var(--status-warning)" d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2Zm1 15h-2v-2h2v2Zm0-4h-2V7h2v6Z" />
                     </svg>
                     <div style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>
-                        Clé API requise
+                        Chave API necessária
                     </div>
                     <div style={{ fontSize: 14, color: "#fff", lineHeight: 1.5 }}>
-                        <strong style={{ color: "#fff" }}>{pluginName}</strong> nécessite une clé API Groq pour fonctionner.
+                        <strong style={{ color: "#fff" }}>{pluginName}</strong> necessita de uma chave API Groq para funcionar.
                         <br /><br />
-                        Configure-la une seule fois dans les paramètres de <strong style={{ color: "#fff" }}>RAINCORDAI</strong>.
+                        Configure-a uma única vez nas configurações do <strong style={{ color: "#fff" }}>RAINCORDAI</strong>.
                     </div>
                 </div>
             </ModalContent>
@@ -44,7 +44,7 @@ function ApiKeyWarningModal({ pluginName, onClose }: { pluginName: string; onClo
                         if (plugin) openPluginModal(plugin);
                     }}
                 >
-                    Configurer RAINCORDAI
+                    Configurar RAINCORDAI
                 </button>
                 <button
                     style={{
@@ -58,7 +58,7 @@ function ApiKeyWarningModal({ pluginName, onClose }: { pluginName: string; onClo
                     }}
                     onClick={onClose}
                 >
-                    Annuler
+                    Cancelar
                 </button>
             </ModalFooter>
         </ModalRoot>

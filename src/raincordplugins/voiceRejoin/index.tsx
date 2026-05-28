@@ -64,20 +64,20 @@ export default definePlugin({
             if (!myState) return;
 
             if (myState.channelId) {
-                // On vient de rejoindre un salon vocal — on sauvegarde
+                // Acabamos de entrar em um canal de voz — salvamos
                 const channel = ChannelStore.getChannel(myState.channelId);
                 const isDM = channel && (channel.isDM?.() || channel.isGroupDM?.() || channel.isMultiUserDM?.());
 
-                // FIX rappel automatique en MP :
-                // Si c'est un DM et que personne d'autre n'est dans le canal,
-                // c'est un appel sortant (on sonne l'autre). On NE sauvegarde PAS
-                // ce canal comme cible de rejoin — sinon quand l'appel expire
-                // sans réponse et que Discord nous déco, le plugin rappellerait.
+                // FIX chamada automática em DM:
+                // Se é um DM e ninguém mais está no canal,
+                // é uma chamada de saída (estamos chamando o outro). NÃO salvamos
+                // este canal como alvo de rejoin — senão quando a chamada expira
+                // sem resposta e o Discord nos desconecta, o plugin ligaria de novo.
                 if (isDM) {
                     const connectedUsers = VoiceStateStore.getVoiceStatesForChannel(myState.channelId) as Record<string, VoiceState>;
                     const othersInCall = Object.values(connectedUsers).filter(vs => vs.userId !== myUserId);
                     if (othersInCall.length === 0) {
-                        // Appel sortant sans réponse — ne pas sauvegarder
+                        // Chamada de saída sem resposta — não salvar
                         void DataStore.set(DATASTORE_SESSION_KEY, false)
                             .catch(err => logger.error("Failed to clear session for unanswered call", err));
                         return;
@@ -94,7 +94,7 @@ export default definePlugin({
                     DataStore.set(DATASTORE_SESSION_KEY, true)
                 ]).catch(err => logger.error("Failed to persist last voice channel", err));
             } else {
-                // On vient de quitter un salon — effacer la session
+                // Acabamos de sair de um canal — limpar a sessão
                 void DataStore.set(DATASTORE_SESSION_KEY, false)
                     .catch(err => logger.error("Failed to persist voice session state", err));
             }

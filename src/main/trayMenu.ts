@@ -124,5 +124,5 @@ function createRAINCORDMenuItems(): MenuItemConstructorOptions[] {
 }
 
 export function patchTrayMenu(): void {
-    // On ne patch plus le menu tray — RAINCORD gère son propre tray dans patcher.ts
+    // Não fazemos mais patch no menu tray — RAINCORD gerencia seu próprio tray em patcher.ts
 }

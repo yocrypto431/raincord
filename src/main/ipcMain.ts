@@ -67,7 +67,7 @@ ipcMain.handle(IpcEvents.WORLD_BOMB_TYPE, async (event, text: string, delay: num
     const { tmpdir } = require("os");
 
     if (!/^[\x20-\x7E]*$/.test(text)) {
-        throw new Error("WorldBombType: caract�res non autoris�s");
+        throw new Error("WorldBombType: caracteres não autorizados");
     }
     const safeDelay = Math.max(0, Math.min(10000, delay));
 
@@ -171,7 +171,7 @@ ipcMain.handle(IpcEvents.WORLD_BOMB_SEQUENCE, async (
     const { tmpdir } = require("os");
 
     if (!/^[\x20-\x7E]+$/.test(word)) {
-        throw new Error("WorldBombSequence: caract�res non autoris�s");
+        throw new Error("WorldBombSequence: caracteres não autorizados");
     }
     const safeLps = Math.max(1, Math.min(100, lps));
     const safeHumanChance = Math.max(0, Math.min(100, humanChance));
@@ -412,12 +412,12 @@ body { margin: 0; padding: 16px; background: transparent; overflow: hidden; font
     <div class="nc-wb-content">
         <div id="alphabet"></div>
         <div style="display: flex; gap: 8px;">
-            <input type="text" id="syllable" placeholder="Syllabe..." autofocus autocomplete="off" spellcheck="false" />
-            <button id="btn-find">TROUVER</button>
+            <input type="text" id="syllable" placeholder="Sílaba..." autofocus autocomplete="off" spellcheck="false" />
+            <button id="btn-find">ENCONTRAR</button>
         </div>
-        <div id="status">Chargement...</div>
+        <div id="status">Carregando...</div>
         <div id="definition-container" style="display: none; margin-top: 10px; font-size: 11px; color: #d1d5db; font-style: italic; background: #374151; padding: 8px; border-radius: 8px; max-height: 80px; overflow-y: auto;">
-            <strong style="color: #60a5fa">D�finition:</strong> <span id="definition-text"></span>
+            <strong style="color: #60a5fa">Definição:</strong> <span id="definition-text"></span>
         </div>
     </div>
 </div>
@@ -452,7 +452,7 @@ body { margin: 0; padding: 16px; background: transparent; overflow: hidden; font
             const allWords = results.flat();
             dictionary = Array.from(new Set(allWords.map(w => w.toLowerCase())))
                 .filter(w => /^[a-z�����������������]+$/i.test(w));
-            document.getElementById('status').innerText = "Pr�t (" + dictionary.length + " mots)";
+            document.getElementById('status').innerText = "Pronto (" + dictionary.length + " palavras)";
         }).catch(err => {
             document.getElementById('status').innerText = "Erro de rede";
             document.getElementById('status').style.color = "#ef4444";
@@ -480,7 +480,7 @@ body { margin: 0; padding: 16px; background: transparent; overflow: hidden; font
                         });
                         if (themeWords.size > 0) {
                             const st = document.getElementById('status');
-                            st.innerText = st.innerText + " (+ Th�me)";
+                            st.innerText = st.innerText + " (+ Tema)";
                         }
                     }
                 }
@@ -546,7 +546,7 @@ body { margin: 0; padding: 16px; background: transparent; overflow: hidden; font
             return true;
         });
         if (validWords.length === 0) {
-            document.getElementById('status').innerText = "Aucun mot trouv� !";
+            document.getElementById('status').innerText = "Nenhuma palavra encontrada!";
             document.getElementById('status').style.color = "#ef4444";
             return;
         }
@@ -571,7 +571,7 @@ body { margin: 0; padding: 16px; background: transparent; overflow: hidden; font
             const defContainer = document.getElementById('definition-container');
             const defText = document.getElementById('definition-text');
             defContainer.style.display = 'block';
-            defText.innerText = 'G�n�ration de la d�finition par IA...';
+            defText.innerText = 'Gerando definição por IA...';
             
             if (!groqKey) {
                 defText.innerText = "Erro: Chave API Groq não encontrada.";
@@ -588,7 +588,7 @@ body { margin: 0; padding: 16px; background: transparent; overflow: hidden; font
                         max_tokens: 150,
                         messages: [{
                             role: "user",
-                            content: 'Donne une d�finition tr�s courte (1 seule phrase simple) pour le mot suivant, en expliquant ce que c\\'est concr�tement, sans donner sa nature grammaticale. Mot : "' + bestWord + '"'
+                            content: 'Dê uma definição muito curta (1 única frase simples) para a seguinte palavra, explicando o que é concretamente, sem dar sua classe gramatical. Palavra: "' + bestWord + '"'
                         }]
                     }),
                 })
@@ -598,7 +598,7 @@ body { margin: 0; padding: 16px; background: transparent; overflow: hidden; font
                     if (ans) {
                         defText.innerText = ans.trim();
                     } else {
-                        defText.innerText = "L'IA n'a pas pu d�finir ce mot.";
+                        defText.innerText = "A IA não conseguiu definir esta palavra.";
                     }
                 })
                 .catch(() => defText.innerText = "Erro de rede.");
@@ -608,7 +608,7 @@ body { margin: 0; padding: 16px; background: transparent; overflow: hidden; font
 
         window.worldBombAPI.sequence(bestWord, lps, humanChance)
             .then(() => {
-                document.getElementById('status').innerText = "Pr�t !";
+                document.getElementById('status').innerText = "Pronto!";
             })
             .catch(err => {
                 document.getElementById('status').innerText = "Erro de digitação";
@@ -896,7 +896,7 @@ const OFFICIAL_UPDATE_URL = ""; // RainCord: no remote update URL configured
 
 ipcMain.handle(IpcEvents.RAINCORD_DOWNLOAD_AND_RUN, async (_, url: string) => {
     if (url !== OFFICIAL_UPDATE_URL) {
-        throw new Error("URL de mise � jour non autoris�e");
+        throw new Error("URL de atualização não autorizada");
     }
 
     const https = require("https");
@@ -927,11 +927,11 @@ ipcMain.handle(IpcEvents.RAINCORD_DOWNLOAD_AND_RUN, async (_, url: string) => {
 
     const { response } = await dialog.showMessageBox({
         type: "info",
-        buttons: ["Installer la mise � jour", "Annuler"],
+        buttons: ["Instalar a atualização", "Cancelar"],
         defaultId: 0,
-        title: "Mise � jour RAINCORD",
-        message: "Une mise � jour de RAINCORD est disponible.",
-        detail: "Voulez-vous installer la mise � jour maintenant ?"
+        title: "Atualização RAINCORD",
+        message: "Uma atualização do RAINCORD está disponível.",
+        detail: "Deseja instalar a atualização agora?"
     });
     if (response === 1) return false;
 
@@ -991,13 +991,13 @@ ipcMain.handle(IpcEvents.INSTALL_VB_CABLE, async () => {
 
         const { response } = await dialog.showMessageBox({
             type: "info",
-            buttons: ["Installer VB-Cable", "Annuler"],
+            buttons: ["Instalar VB-Cable", "Cancelar"],
             defaultId: 0,
-            title: "Installation VB-Cable",
-            message: "VB-Cable doit �tre install� avec les droits administrateur.",
-            detail: "Une fen�tre UAC va s'ouvrir pour confirmer l'installation."
+            title: "Instalação VB-Cable",
+            message: "VB-Cable precisa ser instalado com permissões de administrador.",
+            detail: "Uma janela UAC será aberta para confirmar a instalação."
         });
-        if (response === 1) return { success: false, error: "Annul� par l'utilisateur" };
+        if (response === 1) return { success: false, error: "Cancelado pelo usuário" };
 
         await new Promise<void>((resolve, reject) => {
             const child = spawn("powershell", [

@@ -84,7 +84,7 @@ export default function PluginModal({ plugin, onRestartNeeded, onClose, transiti
     function renderSettings() {
         const { settings } = plugin;
         if (!hasSettings || !settings)
-            return <Paragraph>Aucun paramètre disponible pour ce plugin.</Paragraph>;
+            return <Paragraph>Nenhuma configuração disponível para este plugin.</Paragraph>;
 
         const options = Object.entries(settings.def).map(([key, option]) => {
             if (option.type === OptionType.CUSTOM || option.hidden) return null;
@@ -152,7 +152,7 @@ export default function PluginModal({ plugin, onRestartNeeded, onClose, transiti
                 <Flex flexDirection="column" style={{ width: "100%" }}>
                     <Flex style={{ justifyContent: "space-between", alignItems: "center" }}>
                         {hasSettings ? (
-                            <Tooltip text="Reset les paramètres par défaut" shouldShow={!isObjectEmpty(pluginSettings)}>
+                            <Tooltip text="Resetar configurações para o padrão" shouldShow={!isObjectEmpty(pluginSettings)}>
                                 {({ onMouseEnter, onMouseLeave }) => (
                                     <Button
                                         className={cl("disable-warning")}
@@ -220,7 +220,7 @@ function resetSettings(plugin: Plugin, onRestartNeeded?: (pluginName: string) =>
     }
 
     Toasts.show({
-        message: `Settings de ${pluginName} réinitialisés.`,
+        message: `Configurações de ${pluginName} resetadas.`,
         id: Toasts.genId(),
         type: Toasts.Type.SUCCESS,
         options: {
@@ -254,7 +254,7 @@ export function openWarningModal(plugin?: Plugin | null, onRestartNeeded?: (plug
             </Paragraph>
             <div className={classes(Margins.top16, cl("warning"))}>
                 <WarningIcon color="var(--text-feedback-critical)" />
-                <span>Cette action est irréversible.</span>
+                <span>Esta ação é irreversível.</span>
             </div>
         </ConfirmModal>
     ));

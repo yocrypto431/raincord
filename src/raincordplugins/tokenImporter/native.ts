@@ -14,7 +14,7 @@ import * as crypto from "crypto";
 const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) discord/1.0.9175 Chrome/128.0.6613.186 Electron/32.2.7 Safari/537.36";
 const X_SUPER_PROPERTIES = "eyJvcyI6IldpbmRvd3MiLCJicm93c2VyIjoiRGlzY29yZCBDbGllbnQiLCJyZWxlYXNlX2NoYW5uZWwiOiJzdGFibGUiLCJjbGllbnRfdmVyc2lvbiI6IjEuMC45MTc1IiwiaGFzX2NsaWVudF9tb2RzIjpmYWxzZX0=";
 
-// Verification token
+// Verificação de token
 export async function checkToken(_: any, token: string): Promise<{ valid: boolean; user?: any; error?: string; }> {
     return new Promise(resolve => {
         const req = request({
@@ -41,10 +41,10 @@ export async function checkToken(_: any, token: string): Promise<{ valid: boolea
                     try { resolve({ valid: true, user: JSON.parse(data) }); }
                     catch { resolve({ valid: false, error: "parse_error" }); }
                 } else if (res.statusCode === 401 || res.statusCode === 403) {
-                    // Token vraiment invalid/révoqué
+                    // Token realmente inválido/revogado
                     resolve({ valid: false, error: "unauthorized" });
                 } else if (res.statusCode === 429) {
-                    // Rate limited — pas invalid, juste throttlé
+                    // Rate limited — não é inválido, apenas throttled
                     resolve({ valid: false, error: "rate_limited" });
                 } else {
                     resolve({ valid: false, error: `http_${res.statusCode}` });
@@ -64,7 +64,7 @@ export async function checkToken(_: any, token: string): Promise<{ valid: boolea
     });
 }
 
-// Encryption du token (appele depuis le renderer)
+// Criptografia do token (chamado a partir do renderer)
 export async function encryptToken(_: any, token: string): Promise<string | null> {
     try {
         if (!safeStorage.isEncryptionAvailable()) return null;
@@ -123,7 +123,7 @@ export async function findLocalTokens(): Promise<string[]> {
         try {
             const appPath = join(process.env.APPDATA || "", app);
 
-            // Dossiers à scanner pour cette application
+            // Pastas para escanear para esta aplicação
             const scanDirs = [
                 join(appPath, "Local Storage", "leveldb"),
                 join(appPath, "Session Storage")

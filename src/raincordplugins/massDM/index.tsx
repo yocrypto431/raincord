@@ -1,5 +1,5 @@
 /*
- * RAINCORD – Mass DM plugin
+ * RAINCORD ï¿½ Mass DM plugin
  * Sends a message to all your friends with anti-rate-limit delay.
  * Top bar button + /massdm command.
  */
@@ -79,13 +79,13 @@ async function startSending(message: string, excludedIds: Set<string> = new Set(
         const user = UserStore?.getUser?.(id);
         const name = user ? (user.globalName || user.username) : id;
 
-        // Remplacement dynamique de @user par la mention réelle
+        // SubstituiÃ§Ã£o dinÃ¢mica de @user pela menÃ§Ã£o real
         const personalizedMessage = message.replace(/@user/g, `<@${id}>`);
 
         try {
             const dmRes = await RestAPI.post({ url: "/users/@me/channels", body: { recipient_id: id } });
             if (!dmRes?.body?.id) {
-                state.log.push(`? ${name} — channel not found`);
+                state.log.push(`? ${name} ï¿½ channel not found`);
                 state.notify();
                 continue;
             }
@@ -93,7 +93,7 @@ async function startSending(message: string, excludedIds: Set<string> = new Set(
             state.done++;
             state.log.push(`? ${name}`);
         } catch (e: any) {
-            state.log.push(`? ${name} — ${e?.message ?? "error"}`);
+            state.log.push(`? ${name} ï¿½ ${e?.message ?? "error"}`);
         }
         state.notify();
         if (!state.aborted) await sleep(state.delayMs);
@@ -134,7 +134,7 @@ function MassDMModal({ rootProps }: { rootProps: any; }) {
     const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
     const [showMentionHint, setShowMentionHint] = useState(false);
 
-    // Pour le multi-sélecteur premium
+    // Para o multi-seletor premium
     const [isSelectOpen, setIsSelectOpen] = useState(false);
     const logRef = useRef<any>(null);
     const delayInputRef = useRef<HTMLInputElement>(null);
@@ -145,7 +145,7 @@ function MassDMModal({ rootProps }: { rootProps: any; }) {
 
     const handleMsgChange = (val: string) => {
         setMsg(val);
-        // Affiche l'aide si l'utilisateur tape @
+        // Exibe a ajuda se o usuÃ¡rio digitar @
         if (val.endsWith("@")) {
             setShowMentionHint(true);
         } else {
@@ -154,7 +154,7 @@ function MassDMModal({ rootProps }: { rootProps: any; }) {
     };
 
     const insertMention = () => {
-        // Remplace le @ final par @user
+        // Substitui o @ final por @user
         setMsg(prev => prev.slice(0, -1) + "@user ");
         setShowMentionHint(false);
     };
@@ -243,7 +243,7 @@ function MassDMModal({ rootProps }: { rootProps: any; }) {
                                 {showMentionHint && (
                                     <div className="mdm-mention-hint" onClick={insertMention}>
                                         <div className="mdm-mention-hint-item">
-                                            <strong>@user</strong> — Mentionner le destinataire
+                                            <strong>@user</strong> â€” Mencionar o destinatÃ¡rio
                                         </div>
                                     </div>
                                 )}
@@ -253,7 +253,7 @@ function MassDMModal({ rootProps }: { rootProps: any; }) {
                 )}
                 {idle && (
                     <p className={`mdm-warn ${Margins.top16}`}>
-                        ?? Will be sent to <strong>{friends.length - excludedIds.size} friends</strong> —{" "}
+                        ?? Will be sent to <strong>{friends.length - excludedIds.size} friends</strong> ï¿½{" "}
                         {editingDelay ? (
                             <input
                                 ref={delayInputRef}
@@ -299,7 +299,7 @@ function MassDMModal({ rootProps }: { rootProps: any; }) {
                             <div className="mdm-bar-fill" style={{ width: `${pct}%` }} />
                         </div>
                         {s.finished && (
-                            <p className="mdm-done">? Finished — {s.done} message{s.done > 1 ? "s" : ""} sent.</p>
+                            <p className="mdm-done">? Finished ï¿½ {s.done} message{s.done > 1 ? "s" : ""} sent.</p>
                         )}
                         <ScrollerThin className="mdm-log" ref={logRef}>
                             {s.log.map((line, i) => <div key={i} className="mdm-log-line">{line}</div>)}

@@ -34,7 +34,7 @@ function GhostContextMenu() {
     const [, forceUpdate] = React.useReducer((x: number) => x + 1, 0);
     return (
         <Menu.Menu navId="fake-voice-menu" aria-label="Configuration Fake Voice">
-            <Menu.MenuGroup label="Options du Fantôme">
+            <Menu.MenuGroup label="Opções do Fantasma">
                 <Menu.MenuCheckboxItem
                     id="opt-both"
                     label="Fake Mute & Deafen"
@@ -128,7 +128,7 @@ export default definePlugin({
                 configFakeMute = !configFakeMute;
                 isGhostActive = configFakeMute;
                 syncState();
-                sendBotMessage(ctx.channel.id, { content: `👻 **Fake Mute** est ${isGhostActive ? "activé" : "désactivé"}.` });
+                sendBotMessage(ctx.channel.id, { content: `👻 **Fake Mute** está ${isGhostActive ? "ativado" : "desativado"}.` });
             },
         },
         {
@@ -139,20 +139,20 @@ export default definePlugin({
                 configFakeDeafen = !configFakeDeafen;
                 isGhostActive = configFakeDeafen;
                 syncState();
-                sendBotMessage(ctx.channel.id, { content: `👻 **Fake Deafen** est ${isGhostActive ? "activé" : "désactivé"}.` });
+                sendBotMessage(ctx.channel.id, { content: `👻 **Fake Deafen** está ${isGhostActive ? "ativado" : "desativado"}.` });
             },
         },
         {
             inputType: ApplicationCommandInputType.BUILT_IN,
             name: "fakedeafen_mute",
-            description: "Toggle Fake Deafen & Mute simultanément",
+            description: "Toggle Fake Deafen & Mute simultaneamente",
             execute: async (_, ctx) => {
                 const next = !(configFakeMute && configFakeDeafen);
                 configFakeMute = next;
                 configFakeDeafen = next;
                 isGhostActive = next;
                 syncState();
-                sendBotMessage(ctx.channel.id, { content: `👻 **Fake Deafen & Mute** sont ${isGhostActive ? "activés" : "désactivés"}.` });
+                sendBotMessage(ctx.channel.id, { content: `👻 **Fake Deafen & Mute** estão ${isGhostActive ? "ativados" : "desativados"}.` });
             },
         },
     ],

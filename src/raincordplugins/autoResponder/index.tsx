@@ -95,7 +95,7 @@ async function handleMessage(message: any) {
     const currentUser = UserStore.getCurrentUser();
     if (!currentUser || message.author.id === currentUser.id) return;
 
-    // Vérification de la blacklist utilisateurs
+    // Verificação da blacklist de usuários
     const blacklistedUsers = settings.store.blacklistedUsers?.split(",").map((id: string) => id.trim()) || [];
     if (blacklistedUsers.includes(message.author.id)) {
         console.log(`[AutoResponder] Skipping blacklisted user: ${message.author.username} (${message.author.id})`);
@@ -105,7 +105,7 @@ async function handleMessage(message: any) {
     if (message.id === lastMessageId) return;
 
     const channel = ChannelStore.getChannel(message.channel_id);
-    // RESTRICTION STRICTE : Uniquement les DMs (Type 1)
+    // RESTRIÇÃO ESTRITA: Somente DMs (Tipo 1)
     if (!channel || channel.type !== 1) return;
 
     lastMessageId = message.id;
@@ -122,7 +122,7 @@ async function handleMessage(message: any) {
                     cancelText: "Cancel",
                     onConfirm: () => {
                         const { openModal } = findByPropsLazy("openModal");
-                        // Logique pour ouvrir les settings raincordAI si possible
+                        // Lógica para abrir as settings raincordAI se possível
                     }
                 });
             } catch (e) {
@@ -131,44 +131,44 @@ async function handleMessage(message: any) {
             return;
         }
 
-        // Récupération de l'historique récent pour la cohérence
+        // Recuperação do histórico recente para coerência
         let localHistory = "";
         try {
             const msgs = MessageStore.getMessages(message.channel_id).toArray().slice(-15);
             localHistory = msgs.map((m: any) => {
-                const author = m.author.id === currentUser.id ? "MOI" : "L'AMI";
+                const author = m.author.id === currentUser.id ? "EU" : "O AMIGO";
                 return `${author}: ${m.content}`;
             }).join("\n");
         } catch { }
 
-        const prompt = `Tu es l'utilisateur (MOI). Réponds au dernier message de L'AMI.
+        const prompt = `Você é o usuário (EU). Responda à última mensagem do AMIGO.
         
-MES INFOS PERSONNELLES :
+MINHAS INFORMAÇÕES PESSOAIS:
 ${settings.store.personalInfo}
 
-MES INSTRUCTIONS :
+MINHAS INSTRUÇÕES:
 ${settings.store.customInstructions}
 
-LISTE NOIRE :
+LISTA NEGRA:
 ${settings.store.blacklistedWords}
 
-HISTORIQUE :
+HISTÓRICO:
 ${localHistory}
 
 LATEST MESSAGE : "${message.content}"
 
-RÈGLES DE COMPORTEMENT (CRUCIAL) :
-1. RÉPONSES COURTES : Fais des réponses concises (1 ou 2 phrases max). Ne fais pas de longs paragraphes.
-2. DISCRÉTION DES INFOS : N'utilise mes infos personnelles (ex: Paris) que si c'est pertinent. Ne ramène pas tout à Paris à chaque message.
-3. STYLE ÉCRIT NATUREL : À l'écrit, on ne dit pas "heu..." ou "attends" quand on calcule. On donne juste le résultat ou on continue la phrase. Supprime toute trace d'hésitation orale.
-4. HUMAIN : Parle comme un pote sur Discord (langage SMS léger autorisé si mon style le permet).
+REGRAS DE COMPORTAMENTO (CRUCIAL):
+1. RESPOSTAS CURTAS: Faça respostas concisas (1 ou 2 frases no máximo). Não faça parágrafos longos.
+2. DISCRIÇÃO DAS INFOS: Use minhas informações pessoais (ex: São Paulo) apenas se for pertinente. Não traga tudo de volta a cada mensagem.
+3. ESTILO ESCRITO NATURAL: Na escrita, não se diz "hum..." ou "espera" quando se calcula. Apenas dê o resultado ou continue a frase. Remova qualquer traço de hesitação oral.
+4. HUMANO: Fale como um amigo no Discord (linguagem informal leve permitida se meu estilo permitir).
 
-MISSION :
-Réponds de manière naturelle. NE RENVOIE QUE LE TEXTE DE TA RÉPONSE.`;
+MISSÃO:
+Responda de maneira natural. RETORNE APENAS O TEXTO DA SUA RESPOSTA.`;
 
         const reply = await groqChat({
             messages: [
-                { role: "system", content: "Tu es un AutoResponder ultra-personnalisable pour Discord." },
+                { role: "system", content: "Você é um AutoResponder ultra-personalizável para Discord." },
                 { role: "user", content: prompt }
             ],
             temperature: 0.7,
@@ -176,7 +176,7 @@ Réponds de manière naturelle. NE RENVOIE QUE LE TEXTE DE TA RÉPONSE.`;
         });
 
         if (reply && !reply.startsWith("❌")) {
-            // Délai réaliste : base fixe + temps proportionnel à la longueur du message
+            // Atraso realista: base fixa + tempo proporcional ao comprimento da mensagem
             const baseDelay = Math.floor(Math.random() * (settings.store.delayMax - settings.store.delayMin + 1) + settings.store.delayMin);
             const extraDelay = reply.length > 100 ? 2 : 0; // +2s si message long
             const totalDelay = (baseDelay + extraDelay) * 1000;

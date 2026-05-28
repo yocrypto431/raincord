@@ -215,11 +215,11 @@ export const SettingsStore = new SettingsStoreClass(settings, {
                 return target[key] = { enabled: shouldBeEnabled };
             }
 
-            // Si le plugin doit être actif par défaut et qu'il est désactivé, on le force à actif
+            // Se o plugin deve estar ativo por padrão e está desativado, forçamos ativo
             if (shouldBeEnabled && target[key].enabled === false) {
                 target[key].enabled = true;
             }
-            // Si le plugin doit être désactivé de force, on le force à inactif
+            // Se o plugin deve ser desativado à força, forçamos inativo
             if (forceOff) {
                 target[key].enabled = false;
             }
