@@ -28,7 +28,7 @@ export const FloodPanelButton: ChatBarButtonFactory = ({ isMainChat, channel }) 
 
     return (
         <ChatBarButton
-            tooltip={isRunning ? "Flood em andamento..." : "Flood Panel"}
+            tooltip={isRunning ? "Flood en cours..." : "Flood Panel"}
             onClick={handleClick}
             buttonProps={{ "aria-haspopup": "dialog" }}
         >

@@ -6,8 +6,8 @@ const DICT_URLS = [
     "https://raw.githubusercontent.com/raincord/dicofr/refs/heads/main/dico.txt"
 ];
 
-// Algumas palavras de reserva caso o carregamento falhe
-const FALLBACK_WORDS = ["casa", "gato", "cachorro", "sol", "maçã", "banana", "computador", "teclado", "mouse", "tela", "mesa", "cadeira", "janela", "porta", "carro", "avião", "barco", "trem", "bicicleta", "moto"];
+// Quelques mots de secours au cas où le chargement échoue
+const FALLBACK_WORDS = ["maison", "chat", "chien", "soleil", "pomme", "banane", "ordinateur", "clavier", "souris", "ecran", "table", "chaise", "fenetre", "porte", "voiture", "avion", "bateau", "train", "velo", "moto"];
 
 let overlayRoot: any = null;
 let overlayContainer: HTMLDivElement | null = null;
@@ -71,7 +71,7 @@ export function WordBombOverlay() {
     const dragOffset = useRef({ x: 0, y: 0 });
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // Calibração removida — o clique é sempre no centro dinâmico da janela Discord
+    // Calibrage supprimé — le clic est toujours au centre dynamique de la fenêtre Discord
     const [lps, setLps] = useState(() => parseFloat(getSetting("wb_lps", "50")));
     const [humanChance, setHumanChance] = useState(() => parseInt(getSetting("wb_humanChance", "0")));
     const [safeMode, setSafeMode] = useState(() => getSetting("wb_safeMode", "true") === "true");
@@ -95,17 +95,17 @@ export function WordBombOverlay() {
                 const allWords = results.flat() as string[];
                 const uniqueWords = Array.from(new Set(allWords))
                     .filter(w => {
-                        // 1. Filtragem por comprimento (palavras muito longas geralmente são lugares ou termos técnicos)
+                        // 1. Filtrage par longueur (les mots trop longs sont souvent des lieux ou techniques)
                         if (w.length < 3 || w.length > 15) return false;
                         
-                        // 2. Filtragem de Nomes Próprios: se a palavra começa com Maiúscula na fonte
-                        // é quase sempre um nome de lugar, pessoa ou marca.
+                        // 2. Filtrage des Noms Propres : si le mot commence par une Majuscule dans la source
+                        // c'est presque toujours un nom de lieu, de personne ou une marque.
                         if (w[0] === w[0].toUpperCase()) return false;
                         
-                        // 3. Filtragem de abreviações (tudo em maiúscula)
+                        // 3. Filtrage des abréviations (tout en majuscule)
                         if (w === w.toUpperCase() && w.length > 1) return false; 
 
-                        // 4. Caracteres franceses apenas
+                        // 4. Caractères français uniquement
                         return /^[a-zœæéèêëàâäîïôöùûüç]+$/i.test(w);
                     })
                     .map(w => w.toLowerCase());
@@ -170,13 +170,13 @@ export function WordBombOverlay() {
         const handleMouseMove = (e: MouseEvent) => {
             if (!isDragging) return;
             
-            // Usamos requestAnimationFrame para suavizar o movimento
+            // On utilise requestAnimationFrame pour lisser le mouvement
             if (rafId) cancelAnimationFrame(rafId);
             rafId = requestAnimationFrame(() => {
                 const newX = e.clientX - dragOffset.current.x;
                 const newY = e.clientY - dragOffset.current.y;
                 
-                // Atualizamos a posição
+                // On met à jour la position
                 setPos({ x: newX, y: newY });
             });
         };
@@ -199,7 +199,7 @@ export function WordBombOverlay() {
 
     const startCalibrate = async () => {
         setIsCalibrating(true);
-        setStatus("Coloque o mouse na zona de texto do jogo, depois pressione Espaço...");
+        setStatus("Place ta souris sur la zone de texte du jeu, puis appuie sur Espace...");
 
         const onKeyDown = async (e: KeyboardEvent) => {
             if (e.code !== "Space") return;
@@ -208,8 +208,8 @@ export function WordBombOverlay() {
             window.removeEventListener("keydown", onKeyDown, true);
 
             try {
-                // VencordNative é exposto via contextBridge com o nome "VencordNative"
-                // No renderer Electron empacotado, é preciso passar por window
+                // VencordNative est exposé via contextBridge sous le nom "VencordNative"
+                // Dans le renderer Electron packagé, il faut passer par window
                 const nc = (window as any).VencordNative ?? (globalThis as any).VencordNative;
                 const cursorPos = await nc?.wordBomb?.getCursorPos?.() || await nc?.worldBomb?.getCursorPos?.();
                 if (cursorPos && typeof cursorPos.x === "number" && typeof cursorPos.y === "number") {
@@ -217,7 +217,7 @@ export function WordBombOverlay() {
                     setSetting("wb_calibPos", JSON.stringify(cursorPos));
                     setStatus(`✅ Calibré: (${cursorPos.x}, ${cursorPos.y})`);
                 } else {
-                    // Fallback: tentar via ipcRenderer diretamente
+                    // Fallback: essayer via ipcRenderer directement
                     const { ipcRenderer } = (window as any).require?.("electron") ?? {};
                     if (ipcRenderer) {
                         const pos = await ipcRenderer.invoke("WorldBombGetCursorPos");
@@ -249,7 +249,7 @@ export function WordBombOverlay() {
         if (!query || dictionary.length === 0) return;
 
         const sylLower = query.toLowerCase();
-        // Filtrar as palavras que contêm a sílaba e não estão nas "bad words"
+        // Filtrer les mots qui contiennent la syllabe et ne sont pas dans les "bad words"
         let matches = dictionary.filter(w => {
             const low = w.toLowerCase();
             if (!low.includes(sylLower)) return false;
@@ -270,7 +270,7 @@ export function WordBombOverlay() {
             return;
         }
 
-        // Priorização: palavras que contêm letras do alfabeto restante
+        // Priorisation : mots qui contiennent des lettres de l'alphabet restant
         const rareLetters = "zyxwvkq".split("");
         const sortedRemaining = [...alphabet].sort((a, b) => {
             const aIsRare = rareLetters.includes(a);
@@ -363,7 +363,7 @@ export function WordBombOverlay() {
                         max_tokens: 150,
                         messages: [{
                             role: "user",
-                            content: `Dê uma definição muito curta (1 frase simples) para a seguinte palavra, explicando o que é concretamente, sem dar sua natureza gramatical. Faça obrigatoriamente em português. Palavra: "${word}"`
+                            content: `Donne une très courte définition (1 phrase simple) pour le mot suivant, en expliquant ce que c'est concrètement, sans donner sa nature grammaticale. Fais-le obligatoirement en français. Mot: "${word}"`
                         }]
                     }),
                 })
@@ -385,10 +385,10 @@ export function WordBombOverlay() {
 
         try {
             if (wbNative?.sequence) {
-                // Sempre -1,-1: o main process calcula o centro da janela dinamicamente
+                // Toujours -1,-1 : le main process calcule le centre de la fenêtre dynamiquement
                 await wbNative.sequence(word, lps, humanChance, -1, -1);
             } else {
-                // Fallback : modo chat Discord clássico (não em jogo)
+                // Fallback : mode chat Discord classique (pas en jeu)
                 if (document.activeElement instanceof HTMLElement) {
                     document.activeElement.blur();
                 }
@@ -401,7 +401,7 @@ export function WordBombOverlay() {
                 }
                 ComponentDispatch.dispatchToLastSubscribed("SUBMIT");
             }
-            setStatus("Pronto !");
+            setStatus("Prêt !");
         } catch (e) {
             console.error("[WordBomb] Erro de digitação:", e);
             setStatus("Erro de digitação");

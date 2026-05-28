@@ -1,6 +1,6 @@
 /*
  * RAINCORD — Auto-updater (HTTP / GitHub Releases via ASAR)
- * Verifica as releases no GitHub, baixa o desktop.asar e substitui o antigo.
+ * Vérifie les releases sur GitHub, télécharge le desktop.asar et remplace l'ancien.
  */
 
 import { fetchBuffer, fetchJson } from "@main/utils/http";
@@ -125,10 +125,10 @@ async function applyUpdates(): Promise<boolean> {
 }
 
 // ─── Auto-update on quit ─────────────────────────────────────────────────────
-// Se uma atualização está pendente quando o Discord fecha, instalamos
-// silenciosamente antes de sair (timeout de segurança 45s).
+// Si une mise à jour est en attente quand Discord se ferme, on l'installe
+// silencieusement avant de quitter (timeout de sécurité 45s).
 app.on("before-quit", (event) => {
-    // Só tentar o update se uma URL está pendente E não estamos já aplicando
+    // Ne tenter l'update que si une URL est en attente ET qu'on n'est pas déjà en train
     if (!pendingDownloadUrl || isApplying) return;
 
     event.preventDefault();
@@ -136,7 +136,7 @@ app.on("before-quit", (event) => {
 
     const safetyTimeout = setTimeout(() => {
         console.error("[RAINCORD] Update on quit timed out — forcing exit.");
-        // Limpar para evitar loop infinito na próxima inicialização
+        // Nettoyer pour éviter la boucle infinie au prochain démarrage
         pendingDownloadUrl = null;
         pendingVersion = null;
         app.exit(0);
@@ -149,7 +149,7 @@ app.on("before-quit", (event) => {
         })
         .catch(err => {
             console.error("[RAINCORD] Update on quit failed:", err);
-            // Em caso de falha, limpar para evitar loop infinito
+            // En cas d'échec, nettoyer pour éviter la boucle infinie
             pendingDownloadUrl = null;
             pendingVersion = null;
         })

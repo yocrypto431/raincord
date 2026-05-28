@@ -55,7 +55,7 @@ async function startBomb(guildId: string, roleId: string | "all", message: strin
         members = members.filter(m => m.roles.includes(roleId));
     }
 
-    // Filtra os bots e você mesmo
+    // Filtre les bots et toi-même
     const meId = UserStore.getCurrentUser()?.id;
     members = members.filter(m => {
         const u = UserStore.getUser(m.userId);

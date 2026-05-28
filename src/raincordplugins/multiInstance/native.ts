@@ -1,11 +1,11 @@
 /*
  * RAINCORD — MultiInstance native.ts
  *
- * Injeção do token: método robusto via setPreloads da session.
- * Criamos um script de pré-carregamento TEMPORÁRIO em um arquivo que
- * passamos para ses.setPreloads([...]) — este script é executado no
- * main world ANTES de qualquer JS da página, garantindo que
- * localStorage.token esteja definido antes que o Discord o leia.
+ * Injection du token : méthode robuste via setPreloads de la session.
+ * On crée un script de préchargement TEMPORAIRE dans un fichier que
+ * l'on passe à ses.setPreloads([...]) — ce script s'exécute dans
+ * le main world AVANT tout JS de la page, garantissant que
+ * localStorage.token est défini avant que Discord le lise.
  */
 
 import { BrowserWindow, screen, session, nativeImage, app, ipcMain } from "electron";
@@ -16,29 +16,29 @@ import { registerMediaPermissionsForSession } from "../../raincord/main/mediaPer
 const openWindows = new Map<string, BrowserWindow>();
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Intercepta os IPC de controle de janela para uma instância multi.
+// Intercepte les IPC de contrôle de fenêtre pour une instance multi.
 //
-// O Discord nativo usa ipcMain.handle("DISCORD_WINDOW_CLOSE" | "DISCORD_WINDOW_MINIMIZE" | ...)
-// Esses handlers são registrados GLOBALMENTE pelo Discord no ipcMain, então eles
-// capturam todos os eventos de todas as janelas e chamam injectedGetWindow(key)
-// que sempre retorna a janela principal.
+// Discord natif utilise ipcMain.handle("DISCORD_WINDOW_CLOSE" | "DISCORD_WINDOW_MINIMIZE" | ...)
+// Ces handlers sont enregistrés GLOBALEMENT par Discord sur ipcMain, donc ils
+// attrapent tous les événements de toutes les fenêtres et appellent injectedGetWindow(key)
+// qui retourne toujours la fenêtre principale.
 //
-// Para contornar isso, usamos webContents.ipc.handle no webContents
-// de cada janela multi-instance — esses handlers são LOCAIS a esse webContents
-// e têm prioridade sobre os handlers globais ipcMain para esse sender.
+// Pour contourner ça, on utilise webContents.ipc.handle sur le webContents
+// de chaque fenêtre multi-instance — ces handlers sont LOCAUX à ce webContents
+// et ont priorité sur les handlers globaux ipcMain pour ce sender.
 // ─────────────────────────────────────────────────────────────────────────────
 
 function registerWindowControlIpc(win: BrowserWindow): () => void {
-    const wc = win.webContents as any; // webContents.ipc existe desde o Electron 20
+    const wc = win.webContents as any; // webContents.ipc existe depuis Electron 20
 
-    // Canais Discord nativo (descobertos em _core_extracted/bundle.js)
+    // Canaux Discord natif (découverts dans _core_extracted/bundle.js)
     const CLOSE     = "DISCORD_WINDOW_CLOSE";
     const MINIMIZE  = "DISCORD_WINDOW_MINIMIZE";
     const MAXIMIZE  = "DISCORD_WINDOW_MAXIMIZE";
     const RESTORE   = "DISCORD_WINDOW_RESTORE";
     const FULLSCREEN = "DISCORD_WINDOW_TOGGLE_FULLSCREEN";
 
-    // webContents.ipc.handle é prioritário sobre ipcMain.handle para esse sender
+    // webContents.ipc.handle est prioritaire sur ipcMain.handle pour ce sender
     const handleClose     = () => { if (!win.isDestroyed()) win.close(); };
     const handleMinimize  = () => { if (!win.isDestroyed()) win.minimize(); };
     const handleMaximize  = () => {
@@ -56,22 +56,22 @@ function registerWindowControlIpc(win: BrowserWindow): () => void {
         wc.ipc.handle(RESTORE,    handleRestore);
         wc.ipc.handle(FULLSCREEN, handleFullscreen);
     } catch {
-        // Fallback : ipcMain.handle global com filtro no sender
-        // (menos limpo mas funciona no Electron < 20)
+        // Fallback : ipcMain.handle global avec filtre sur sender
+        // (moins propre mais fonctionne sur Electron < 20)
         //
-        // IMPORTANTE: DISCORD_WINDOW_TOGGLE_FULLSCREEN já está registrado globalmente
-        // pelo patcher principal. Não re-registramos aqui para evitar
-        // "Attempted to register a second handler" que crasha o Discord na inicialização.
+        // IMPORTANT: DISCORD_WINDOW_TOGGLE_FULLSCREEN est deja enregistre globalement
+        // par le patcher principal. On ne le re-enregistre PAS ici pour eviter
+        // "Attempted to register a second handler" qui crashe Discord au demarrage.
         const guardedHandle = (fn: () => void) => (event: Electron.IpcMainInvokeEvent) => {
             if (BrowserWindow.fromWebContents(event.sender) !== win) return;
             fn();
         };
-        // removeHandler primeiro para evitar o crash em caso de chamada dupla
+        // removeHandler d'abord pour eviter le crash en cas de double appel
         ipcMain.removeHandler(CLOSE);
         ipcMain.removeHandler(MINIMIZE);
         ipcMain.removeHandler(MAXIMIZE);
         ipcMain.removeHandler(RESTORE);
-        // NÃO registrar FULLSCREEN - gerenciado globalmente pelo patcher
+        // NE PAS enregistrer FULLSCREEN - gere globalement par le patcher
         ipcMain.handle(CLOSE,     guardedHandle(handleClose));
         ipcMain.handle(MINIMIZE,  guardedHandle(handleMinimize));
         ipcMain.handle(MAXIMIZE,  guardedHandle(handleMaximize));
@@ -84,7 +84,7 @@ function registerWindowControlIpc(win: BrowserWindow): () => void {
         };
     }
 
-    // Retorna a limpeza para webContents.ipc
+    // Retourne le nettoyage pour webContents.ipc
     return () => {
         try {
             wc.ipc.removeHandler(CLOSE);
@@ -97,26 +97,26 @@ function registerWindowControlIpc(win: BrowserWindow): () => void {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Cria o script de pré-carregamento que injeta o token
+// Crée le script de préchargement qui injecte le token
 // ─────────────────────────────────────────────────────────────────────────────
 
 function createTokenPreload(token: string): string {
-    // Diretório temporário em userData
+    // Dossier temporaire dans userData
     const dir = join(app.getPath("userData"), "RAINCORD-mi-preloads");
     mkdirSync(dir, { recursive: true });
 
-    const safeToken = JSON.stringify(token); // escapa corretamente o token
+    const safeToken = JSON.stringify(token); // échappe proprement le token
 
     const script = `
 // RAINCORD MultiInstance — token preload
-// Executado no main world ANTES do Discord
+// S'exécute dans le main world AVANT Discord
 (function() {
     const TOKEN = ${safeToken};
     try {
-        // Define o token no localStorage
+        // Définit le token dans localStorage
         Object.defineProperty(window, '__RAINCORD_token', { value: TOKEN, writable: false });
 
-        // Patch localStorage.getItem para sempre retornar o token se solicitado
+        // Patch localStorage.getItem pour toujours retourner le token si demandé
         const _origGetItem = Storage.prototype.getItem;
         const _origSetItem = Storage.prototype.setItem;
 
@@ -127,7 +127,7 @@ function createTokenPreload(token: string): string {
             return _origGetItem.call(this, key);
         };
 
-        // Pré-preenche também
+        // Pré-remplit aussi
         try { localStorage.setItem("token", JSON.stringify(TOKEN)); } catch(_) {}
 
         console.log("[RAINCORDMI] Token preload active ✓");
@@ -143,16 +143,16 @@ function createTokenPreload(token: string): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Abre uma nova janela Discord isolada
+// Ouvre une nouvelle fenêtre Discord isolée
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Contador de ícones detached: rotaciona de 1 a 5
+// Compteur d'icones detached : tourne de 1 a 5
 let iconCounter = 1;
 
-// Caminho para o diretório de ícones detached (multi-instance-icons/ no dist)
+// Chemin vers le dossier d'icones detached (multi-instance-icons/ dans le dist)
 function getDetachedIconDir(): string {
-    // Em produção: {app_dir}/multi-instance-icons/
-    // Em dev: Desktop/lolll/
+    // En production : {app_dir}/multi-instance-icons/
+    // En dev : Desktop/lolll/
     const exeDir = join(process.execPath, "..")
     const prodDir = join(exeDir, "multi-instance-icons");
     if (existsSync(prodDir)) return prodDir;
@@ -170,7 +170,7 @@ export async function openInstanceWindow(
     username = ""
 ): Promise<{ ok: boolean; error?: string; }> {
     try {
-        // Janela já aberta -> focus
+        // Fenetre deja ouverte -> focus
         const existing = openWindows.get(userId);
         if (existing && !existing.isDestroyed()) {
             existing.show();
@@ -178,18 +178,18 @@ export async function openInstanceWindow(
             return { ok: true };
         }
 
-        // ID único por instância - Windows agrupa as janelas por AppUserModelId
-        // Dando um ID diferente a cada janela, elas não se agrupam
+        // ID unique par instance - Windows groupe les fenetres par AppUserModelId
+        // En donnant un ID different a chaque fenetre, elles ne se regroupent pas
         const uniqueAppId = `RAINCORD.instance.${userId}.${Date.now()}`;
 
-        // Ícone: rotação 1→2→3→4→5→1→... de multi-instance-icons/
+        // Icone : rotation 1→2→3→4→5→1→... depuis multi-instance-icons/
         let currentIconPath = "";
         const iconDir = getDetachedIconDir();
         currentIconPath = join(iconDir, `${iconCounter}.ico`);
         if (!existsSync(currentIconPath)) currentIconPath = "";
         iconCounter = iconCounter >= 5 ? 1 : iconCounter + 1;
 
-        // Session Electron isolada por userId
+        // Session Electron isolee par userId
         const partition = `persist:RAINCORD-mi-${userId}`;
         const ses = session.fromPartition(partition, { cache: true });
 
@@ -234,9 +234,9 @@ export async function openInstanceWindow(
             },
         });
 
-        // CRÍTICO: setAppDetails DEVE ser chamado imediatamente após new BrowserWindow,
-        // antes que a janela seja exibida. É isso que impede o Windows de agrupar
-        // as janelas juntas na barra de tarefas.
+        // CRITIQUE : setAppDetails DOIT etre appele immediatement apres new BrowserWindow,
+        // avant que la fenetre soit affichee. C'est ce qui empeche Windows de grouper
+        // les fenetres ensemble dans la barre des taches.
         if (process.platform === "win32") {
             try {
                 win.setAppDetails({
@@ -258,8 +258,8 @@ export async function openInstanceWindow(
             win.setFullScreen(false);
         });
 
-        // Antes de fechar: desregistra os service workers e corta o gateway
-        // para parar todas as notificações push
+        // Avant fermeture : désinscrit les service workers et coupe le gateway
+        // pour stopper toutes les notifications push
         win.on("close", () => {
             wc.executeJavaScript(`
                 (async () => {
@@ -268,7 +268,7 @@ export async function openInstanceWindow(
                         for (const r of regs) await r.unregister();
                     } catch(e) {}
                     try {
-                        // Corta a conexão gateway do Discord
+                        // Coupe la connexion gateway Discord
                         const ws = window.__RAINCORD_GW_WS__;
                         if (ws && ws.readyState <= 1) ws.close(4000, 'window_close');
                     } catch(e) {}
@@ -276,19 +276,19 @@ export async function openInstanceWindow(
             `).catch(() => {});
         });
 
-        // Registra os handlers IPC de controle de janela (DISCORD_WINDOW_*) neste webContents
-        // Deve ser feito ANTES que o Discord carregue seu JS (dom-ready)
+        // Enregistre les handlers IPC de contrôle de fenêtre (DISCORD_WINDOW_*) sur ce webContents
+        // Doit être fait AVANT que Discord charge son JS (dom-ready)
         const wc = win.webContents;
         const cleanupIpc = registerWindowControlIpc(win);
 
         win.once("closed", () => {
             cleanupIpc();
             openWindows.delete(userId);
-            // Limpa os service workers da sessão para cortar definitivamente as notificações
+            // Nettoie les service workers de la session pour couper définitivement les notifs
             ses.clearStorageData({ storages: ["serviceworkers"] }).catch(() => {});
         });
 
-        // Flash quando há notificações
+        // Flash quand il y a des notifs
         wc.on("page-title-updated", (e, title) => {
             if (process.platform === "win32") {
                 if (/^\(\d+\)/.test(title)) win.flashFrame(true);
@@ -296,14 +296,14 @@ export async function openInstanceWindow(
             }
         });
 
-        // Injeção do token
+        // Injection du token
         const safeToken = JSON.stringify(token);
         const injectJs = `(function(){ try { localStorage.setItem("token", ${safeToken}); } catch(e) {} })();`;
         wc.on("dom-ready", () => wc.executeJavaScript(injectJs).catch(() => { }));
         wc.on("did-finish-load", () => wc.executeJavaScript(injectJs).catch(() => { }));
         wc.on("did-navigate", () => wc.executeJavaScript(injectJs).catch(() => { }));
 
-        // Título da janela
+        // Titre de la fenetre
         wc.on("page-title-updated", (e, title) => {
             const cleanTitle = title.replace(/^\(\d+\)\s*/, "").replace(/\s*\[.*\]$/, "");
             win.setTitle(`${cleanTitle} [${username || userId}]`);
@@ -327,9 +327,9 @@ export async function openInstanceWindow(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Janelas « agrupadas » — mesmo grupo que RAINCORD na barra de tarefas
-// Princípio: não tocamos em setAppDetails => a janela herda o AppId
-// do processo principal (com.RAINCORD.app), o Windows a agrupa automaticamente
+// Fenetres « groupées » — meme groupe que RAINCORD dans la barre des taches
+// Principe : on ne touche PAS a setAppDetails => la fenetre herite de l'AppId
+// du processus principal (com.RAINCORD.app), Windows la groupe automatiquement
 // ─────────────────────────────────────────────────────────────────────────────
 
 const openGroupedWindows = new Map<string, BrowserWindow>();
@@ -341,7 +341,7 @@ export async function openInstanceWindowGrouped(
     username = ""
 ): Promise<{ ok: boolean; error?: string; }> {
     try {
-        // Focus se já aberta
+        // Focus si deja ouverte
         const existing = openGroupedWindows.get(userId);
         if (existing && !existing.isDestroyed()) {
             existing.show();
@@ -349,7 +349,7 @@ export async function openInstanceWindowGrouped(
             return { ok: true };
         }
 
-        // Sessão isolada por userId
+        // Session isolee par userId
         const partition = `persist:RAINCORD-mi-${userId}`;
         const ses = session.fromPartition(partition, { cache: true });
 
@@ -402,7 +402,7 @@ export async function openInstanceWindowGrouped(
             win.setFullScreen(false);
         });
 
-        // Antes de fechar: desregistra os service workers e corta o gateway
+        // Avant fermeture : désinscrit les service workers et coupe le gateway
         win.on("close", () => {
             wc.executeJavaScript(`
                 (async () => {
@@ -418,7 +418,7 @@ export async function openInstanceWindowGrouped(
             `).catch(() => {});
         });
 
-        // Registra os handlers IPC de controle de janela para esta instância agrupada
+        // Enregistre les handlers IPC de contrôle de fenêtre pour cette instance groupée
         const wc = win.webContents;
         const cleanupIpc = registerWindowControlIpc(win);
 
@@ -464,7 +464,7 @@ export async function openInstanceWindowGrouped(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Split screen: posiciona as duas janelas lado a lado
+// Split screen : positionne les deux fenêtres côte à côte
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function arrangeSplit(_: any, userId: string): Promise<void> {
@@ -490,7 +490,7 @@ export async function arrangeSplit(_: any, userId: string): Promise<void> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Lista / fecha as instâncias
+// Liste / ferme les instances
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function getOpenInstances(_: any): Promise<string[]> {

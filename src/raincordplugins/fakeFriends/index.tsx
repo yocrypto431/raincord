@@ -423,7 +423,7 @@ async function doFakeFriendRequest(userId: string) {
     await addPendingRequest(user);
 }
 
-// ── Modal React para inserir um número ─────────────────────────────────────────────
+// ── Modal React pour saisir un nombre ─────────────────────────────────────────────
 function askCount(title: string, max: number): Promise<number | null> {
     return new Promise(resolve => {
         const resolveRef = { current: resolve, done: false };
@@ -459,7 +459,7 @@ function askCount(title: string, max: number): Promise<number | null> {
                     <Modals.ModalContent style={{ padding: "16px 20px" }}>
                         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                             <label style={{ fontSize: 12, fontWeight: 600, color: "#fff", textTransform: "uppercase", letterSpacing: ".04em" }}>
-                                Quantidade (max {max})
+                                Nombre (max {max})
                             </label>
                             <input
                                 autoFocus
@@ -517,7 +517,7 @@ function askCount(title: string, max: number): Promise<number | null> {
     });
 }
 
-// ── Candidatos de um servidor ────────────────────────────────────────────────────
+// ── Candidats d'un serveur ────────────────────────────────────────────────────
 async function fetchAllGuildMembers(guildId: string): Promise<void> {
     const queries = [
         ..."abcdefghijklmnopqrstuvwxyz0123456789".split(""),
@@ -561,12 +561,12 @@ function getGuildCandidates(guildId: string): string[] {
 
 // ── Fake Friend Request avec saisie du nombre ─────────────────────────────────
 async function floodGuild(guildId: string) {
-    Toasts.show({ message: "Carregando membros...", type: Toasts.Type.MESSAGE, id: "ff-loading" });
+    Toasts.show({ message: "Chargement des membres...", type: Toasts.Type.MESSAGE, id: "ff-loading" });
     await fetchAllGuildMembers(guildId);
 
     const candidates = getGuildCandidates(guildId);
     if (!candidates.length) {
-        Toasts.show({ message: "Nenhum candidato disponível", type: Toasts.Type.FAILURE, id: Toasts.genId() });
+        Toasts.show({ message: "Aucun candidat disponible", type: Toasts.Type.FAILURE, id: Toasts.genId() });
         return;
     }
 
@@ -888,10 +888,10 @@ export default definePlugin({
         addContextMenuPatch("user-context", userContextPatch);
         addContextMenuPatch("guild-context", guildContextPatch);
 
-        // Carregar o estado persistente e reaplicar os dispatches
+        // Charger l'état persistant puis réappliquer les dispatches
         await loadState();
         if (fakeState.size > 0) {
-            // Delay para deixar o Discord carregar completamente
+            // Délai pour laisser Discord se charger complètement
             setTimeout(() => reapplyFakeStates(), 3000);
         }
     },
@@ -900,8 +900,8 @@ export default definePlugin({
         removeContextMenuPatch("user-context", userContextPatch);
         removeContextMenuPatch("guild-context", guildContextPatch);
         unpatchAcceptFriend();
-        // Não limpar fakeState no stop — persistente intencionalmente
-        // Para resetar: clique Reset no plugin ou "Remove fake friend requests"
+        // On ne clear pas fakeState au stop — persistant intentionnellement
+        // Pour reset : clic Reset dans le plugin ou "Remove fake friend requests"
         unpatchStore();
         unpatchChannelStore();
     },

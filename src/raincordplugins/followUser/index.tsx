@@ -69,13 +69,13 @@ function joinChannel(channelId: string) {
     } catch { }
 }
 
-// ── Timer de inatividade: unfollow automático após 30min sem uso ───────────
+// ── Timer d'inactivite : unfollow auto apres 30min sans utilisation ───────────
 function resetInactivityTimer() {
     if (inactivityTimer) clearTimeout(inactivityTimer);
     lastActivity = Date.now();
     inactivityTimer = setTimeout(() => {
         if (followedId) {
-            Toasts.show({ message: `Follow inativo 30min — parando de seguir ${followedName}`, type: Toasts.Type.FAILURE, id: Toasts.genId() });
+            Toasts.show({ message: `Follow inactif 30min — arret du suivi de ${followedName}`, type: Toasts.Type.FAILURE, id: Toasts.genId() });
             unfollow();
         }
     }, INACTIVITY_MS);
@@ -85,7 +85,7 @@ function clearInactivityTimer() {
     if (inactivityTimer) { clearTimeout(inactivityTimer); inactivityTimer = null; }
 }
 
-// ── Listener de voz ─────────────────────────────────────────────────────────────
+// ── Listener voix ─────────────────────────────────────────────────────────────
 function onVoiceStateUpdates(data: any) {
     if (!followedId) return;
     const states: any[] = Array.isArray(data?.voiceStates) ? data.voiceStates
@@ -96,9 +96,9 @@ function onVoiceStateUpdates(data: any) {
         if (newCh !== followedChannel) {
             followedChannel = newCh;
             if (newCh) {
-                resetInactivityTimer(); // atividade detectada, reinicia 30min
+                resetInactivityTimer(); // activite detectee, on repart pour 30min
                 joinChannel(newCh);
-                Toasts.show({ message: `Seguindo ${followedName} → vocal`, type: Toasts.Type.MESSAGE, id: Toasts.genId() });
+                Toasts.show({ message: `Suivi ${followedName} → vocal`, type: Toasts.Type.MESSAGE, id: Toasts.genId() });
             }
         }
     }
@@ -116,7 +116,7 @@ async function follow(userId: string) {
     const user = UserStore?.getUser?.(userId);
     const name = user?.globalName ?? user?.username ?? userId;
 
-    // Se já estava seguindo outra pessoa, unfollow silencioso
+    // Si on followait deja quelqu'un d'autre, unfollow silencieux
     if (followedId && followedId !== userId) {
         stopFlux();
         clearInactivityTimer();
@@ -131,12 +131,12 @@ async function follow(userId: string) {
     resetInactivityTimer();
     notifyAll();
 
-    // Entrar imediatamente no vocal se já está em um canal
+    // Rejoindre immediatement son vocal si il est deja dans un channel
     if (followedChannel) {
         joinChannel(followedChannel);
-        Toasts.show({ message: `Seguindo ${name} ✓ — entrou no vocal`, type: Toasts.Type.SUCCESS, id: Toasts.genId() });
+        Toasts.show({ message: `Suivi ${name} ✓ — rejoint son vocal`, type: Toasts.Type.SUCCESS, id: Toasts.genId() });
     } else {
-        Toasts.show({ message: `Seguindo ${name} ✓ — aguardando vocal`, type: Toasts.Type.SUCCESS, id: Toasts.genId() });
+        Toasts.show({ message: `Suivi ${name} ✓ — en attente d'un vocal`, type: Toasts.Type.SUCCESS, id: Toasts.genId() });
     }
 }
 
@@ -147,19 +147,19 @@ async function unfollow() {
     clearInactivityTimer();
     await persist();
     notifyAll();
-    if (name) Toasts.show({ message: `Parou de seguir ${name}`, type: Toasts.Type.MESSAGE, id: Toasts.genId() });
+    if (name) Toasts.show({ message: `Arrete de suivre ${name}`, type: Toasts.Type.MESSAGE, id: Toasts.genId() });
 }
 
 function joinFollowed() {
     if (!followedChannel) {
-        Toasts.show({ message: `${followedName} não está em vocal`, type: Toasts.Type.FAILURE, id: Toasts.genId() });
+        Toasts.show({ message: `${followedName} n'est pas en vocal`, type: Toasts.Type.FAILURE, id: Toasts.genId() });
         return;
     }
     joinChannel(followedChannel);
     resetInactivityTimer();
 }
 
-// ── Ícone coração ───────────────────────────────────────────────────────────────
+// ── Icone coeur ───────────────────────────────────────────────────────────────
 function HeartIcon({ filled = false }: { filled?: boolean; }) {
     return (
         <svg width="18" height="18" viewBox="0 0 24 24">
@@ -172,9 +172,9 @@ function HeartIcon({ filled = false }: { filled?: boolean; }) {
     );
 }
 
-// ── Botão HeaderBar ──────────────────────────────────────────────────────────
-// Clique esquerdo = entrar no vocal
-// Clique direito  = unfollow
+// ── Bouton HeaderBar ──────────────────────────────────────────────────────────
+// Clic gauche = rejoindre son vocal
+// Clic droit  = unfollow
 function FollowHeaderButton() {
     const fid = useFollowId();
     if (!fid) return null;
@@ -182,10 +182,10 @@ function FollowHeaderButton() {
     const handleClick = (e: React.MouseEvent) => {
         e.preventDefault();
         if (e.button === 2) {
-            // Clique direito
+            // Clic droit
             unfollow();
         } else {
-            // Clique esquerdo
+            // Clic gauche
             joinFollowed();
         }
     };
@@ -193,7 +193,7 @@ function FollowHeaderButton() {
     return (
         <HeaderBarButton
             icon={() => <HeartIcon filled={true} />}
-            tooltip={`${followedName} — Clique: entrar vocal | Clique direito: unfollow`}
+            tooltip={`${followedName} — Clic: rejoindre vocal | Clic droit: unfollow`}
             onClick={handleClick}
             onContextMenu={handleClick}
         />
@@ -218,7 +218,7 @@ const ctxPatch: NavContextMenuPatchCallback = (children, props) => {
 // ── Plugin ────────────────────────────────────────────────────────────────────
 export default definePlugin({
     name: "FollowUser",
-    description: "Segue um usuário no vocal. Clique direito → Follow User. Coração branco = seguindo (clique esquerdo = entrar, clique direito = unfollow). Auto-unfollow após 30min de inatividade.",
+    description: "Suit un user en vocal. Clic droit → Follow User. Coeur blanc = suivi actif (clic gauche = rejoindre, clic droit = unfollow). Auto-unfollow apres 30min d'inactivite.",
     authors: [{ name: "RAINCORD", id: 0n }],
 
     headerBarButton: {

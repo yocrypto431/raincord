@@ -37,17 +37,17 @@ function isMultiAccountStore(mod: any): boolean {
         if (typeof mod.getUsers !== "function") return false;
         if (typeof mod.getValidUsers !== "function" && typeof mod.getHasLoggedInAccounts !== "function") return false;
 
-        // getUsers() deve retornar um Array (não um objeto, não null)
+        // getUsers() doit retourner un Array (pas un objet, pas null)
         const users = mod.getUsers();
         if (!Array.isArray(users)) return false;
 
-        // Se users estão presentes, devem ter uma estrutura de account Discord
-        // (id string + tokenStatus number) — característica exclusiva do MultiAccountStore
+        // Si des users sont présents, ils doivent avoir une structure de account Discord
+        // (id string + tokenStatus number) — caractéristique exclusive du MultiAccountStore
         if (users.length > 0) {
             const first = users[0];
             if (typeof first !== "object" || first === null) return false;
-            // EmojiStore também tem getUsers mas contém objetos complexos
-            // MultiAccountStore contém objetos simples com id/username/avatar/tokenStatus
+            // EmojiStore a aussi getUsers mais il contient des objets complexes
+            // MultiAccountStore contient des objets simples avec id/username/avatar/tokenStatus
             if (typeof first.id !== "string") return false;
             // tokenStatus is exclusive to MultiAccountStore (0 = invalid, 1 = valid, 2 = fake)
             // Other stores may have objects with id but not tokenStatus
@@ -58,7 +58,7 @@ function isMultiAccountStore(mod: any): boolean {
             }
         }
 
-        // Verificação final anti-EmojiStore: EmojiStore frequentemente tem "getFrequentlyUsedEmojis"
+        // Vérification finale anti-EmojiStore : EmojiStore a souvent "getFrequentlyUsedEmojis"
         if (typeof mod.getFrequentlyUsedEmojis === "function") return false;
 
         return true;

@@ -13,7 +13,7 @@ export default definePlugin({
     authors: [Devs.Ven],
 
     patches: [
-        // Patch 1 : barra de título (header bar) - método Equicord Abril 2026
+        // Patch 1 : barre de titre (header bar) - méthode Equicord Avril 2026
         {
             find: '?"BACK_FORWARD_NAVIGATION":',
             replacement: {

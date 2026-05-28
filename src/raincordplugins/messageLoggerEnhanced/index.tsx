@@ -386,7 +386,7 @@ export default definePlugin({
     async start() {
         this.oldGetMessage = oldGetMessage = MessageStore.getMessage;
 
-        // Cache para evitar recriar as classes de mensagens a cada chamada (muito frequente no scroll)
+        // Cache pour éviter de recréer les classes de messages à chaque appel (très fréquent au scroll)
         const combinedMessageCache = new Map<string, any>();
         
         MessageStore.getMessage = (channelId: string, messageId: string) => {
@@ -394,7 +394,7 @@ export default definePlugin({
             if (!MLMessage)
                 return this.oldGetMessage(channelId, messageId);
 
-            // Se já temos essa mensagem combinada em cache, retornamos
+            // Si on a déjà ce message combiné en cache, on le retourne
             if (combinedMessageCache.has(messageId)) {
                 return combinedMessageCache.get(messageId);
             }
@@ -414,10 +414,10 @@ export default definePlugin({
                 }
             });
             
-            // Só colocamos em cache se tivermos um resultado estável
+            // On ne met en cache que si on a un résultat stable
             combinedMessageCache.set(messageId, combined);
             
-            // Limpeza periódica do cache para evitar vazamentos de memória
+            // Nettoyage périodique du cache pour éviter les fuites mémoire
             if (combinedMessageCache.size > 1000) {
                 const firstKey = combinedMessageCache.keys().next().value;
                 combinedMessageCache.delete(firstKey);

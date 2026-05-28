@@ -17,7 +17,7 @@ const settings = definePluginSettings({
     },
     showNotifications: {
         type: OptionType.BOOLEAN,
-        description: "Exibir notificações ao sair automaticamente",
+        description: "Afficher les notifications lors de la sortie automatique",
         default: true
     },
     verboseLogs: {
@@ -39,7 +39,7 @@ const settings = definePluginSettings({
     },
     autoReply: {
         type: OptionType.BOOLEAN,
-        description: "Enviar uma mensagem automática antes de sair",
+        description: "Envoyer un message automatique avant de quitter",
         default: true
     },
     replyMessage: {
@@ -66,7 +66,7 @@ function verboseLog(message: string) {
 async function leaveGroupDM(channelId: string) {
     try {
         const channel = ChannelStore.getChannel(channelId);
-        const channelName = channel?.name || "Grupo sem nome";
+        const channelName = channel?.name || "Groupe sans nom";
 
 
         if (settings.store.autoReply && settings.store.replyMessage.trim()) {
@@ -77,7 +77,7 @@ async function leaveGroupDM(channelId: string) {
                 });
                 await new Promise(resolve => setTimeout(resolve, 500));
             } catch (msgError) {
-                log(`❌ Erro ao enviar a mensagem automática: ${msgError}`, "error");
+                log(`❌ Error lors de l'envoi du message automatique: ${msgError}`, "error");
             }
         }
 
@@ -86,18 +86,18 @@ async function leaveGroupDM(channelId: string) {
         if (settings.store.showNotifications) {
             showNotification({
                 title: "🛡️ AntiGroup - Group left",
-                body: `Você saiu automaticamente do grupo "${channelName}"`,
+                body: `Vous avez automatiquement quitté le groupe "${channelName}"`,
                 icon: undefined
             });
         }
     } catch (error) {
         const channel = ChannelStore.getChannel(channelId);
-        const channelName = channel?.name || "Grupo desconhecido";
-        log(`❌ ERRO ao sair do grupo "${channelName}" (${channelId}): ${error}`, "error");
+        const channelName = channel?.name || "Groupe inconnu";
+        log(`❌ ERREUR lors de la sortie du groupe "${channelName}" (${channelId}): ${error}`, "error");
         if (settings.store.showNotifications) {
             showNotification({
                 title: "❌ AntiGroup - Error",
-                body: `Impossível sair automaticamente do grupo "${channelName}"`,
+                body: `Impossible de quitter automatiquement le groupe "${channelName}"`,
                 icon: undefined
             });
         }
@@ -143,8 +143,8 @@ export default definePlugin({
 
             if (settings.store.showNotifications) {
                 showNotification({
-                    title: "🚨 AntiGroup - Grupo detectado",
-                    body: `Adicionado ao grupo "${channel.name || "Sem nome"}" - Saída automática em ${settings.store.delay / 1000}s`,
+                    title: "🚨 AntiGroup - Groupe detected",
+                    body: `Ajouté au groupe "${channel.name || "Sans nom"}" - Sortie automatique dans ${settings.store.delay / 1000}s`,
                     icon: undefined
                 });
             }
@@ -154,10 +154,10 @@ export default definePlugin({
     },
 
     start() {
-        log(`[AntiGroup] Plugin iniciado`);
+        log(`[AntiGroup] Plugin démarré`);
     },
 
     stop() {
-        log(`[AntiGroup] Plugin parado`);
+        log(`[AntiGroup] Plugin arrêté`);
     }
 });

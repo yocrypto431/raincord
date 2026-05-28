@@ -35,7 +35,7 @@ const FLAG = {
 
 const BADGES = [
     { label: t("Staff Discord"), flag: FLAG.STAFF, icon: "https://cdn.discordapp.com/badge-icons/5e74e9b61934fc1f67c65515d1f7e60d.png" },
-    { label: t("Parceiro"), flag: FLAG.PARTNER, icon: "https://cdn.discordapp.com/badge-icons/3f9748e53446a137a052f3454e2de41e.png" },
+    { label: t("Partenaire"), flag: FLAG.PARTNER, icon: "https://cdn.discordapp.com/badge-icons/3f9748e53446a137a052f3454e2de41e.png" },
     { label: t("HypeSquad Events"), flag: FLAG.HYPESQUAD, icon: "https://cdn.discordapp.com/badge-icons/bf01d1073931f921909045f3a39fd264.png" },
     { label: t("Bug Hunter Lvl 1"), flag: FLAG.BUG_HUNTER_1, icon: "https://cdn.discordapp.com/badge-icons/2717692c7dca7289b35297368a940dd0.png" },
     { label: t("HypeSquad Bravery"), flag: FLAG.BRAVERY, icon: "https://cdn.discordapp.com/badge-icons/8a88d63823d8a71cd5e390baa45efa02.png" },
@@ -51,20 +51,20 @@ const BADGES = [
 const OLD_NAME_BADGE_ICON = "https://cdn.discordapp.com/badge-icons/6de6d34650760ba5551a79732e98ed60.png";
 
 const NITRO_LEVELS = [
-    { label: t("Nitro (0 meses)"), icon: "https://cdn.discordapp.com/badge-icons/2ba85e8026a8614b640c2837bcdfe21b.png" },
-    { label: t("Bronze (1 meses)"), icon: "https://cdn.discordapp.com/badge-icons/4f33c4a9c64ce221936bd256c356f91f.png" },
-    { label: t("Prata (2 meses)"), icon: "https://cdn.discordapp.com/badge-icons/4514fab914bdbfb4ad2fa23df76121a6.png" },
-    { label: t("Ouro (3 meses)"), icon: "https://cdn.discordapp.com/badge-icons/2895086c18d5531d499862e41d1155a6.png" },
-    { label: t("Platina (6 meses)"), icon: "https://cdn.discordapp.com/badge-icons/0334688279c8359120922938dcb1d6f8.png" },
-    { label: t("Diamante (12 meses)"), icon: "https://cdn.discordapp.com/badge-icons/0d61871f72bb9a33a7ae568c1fb4f20a.png" },
-    { label: t("Esmeralda (24 meses)"), icon: "https://cdn.discordapp.com/badge-icons/11e2d339068b55d3a506cff34d3780f3.png" },
-    { label: t("Rubi (36 meses)"), icon: "https://cdn.discordapp.com/badge-icons/cd5e2cfd9d7f27a8cdcd3e8a8d5dc9f4.png" },
-    { label: t("Opala (72 meses)"), icon: "https://cdn.discordapp.com/badge-icons/5b154df19c53dce2af92c9b61e6be5e2.png" },
+    { label: t("Nitro (0 mois)"), icon: "https://cdn.discordapp.com/badge-icons/2ba85e8026a8614b640c2837bcdfe21b.png" },
+    { label: t("Bronze (1 mois)"), icon: "https://cdn.discordapp.com/badge-icons/4f33c4a9c64ce221936bd256c356f91f.png" },
+    { label: t("Argent (2 mois)"), icon: "https://cdn.discordapp.com/badge-icons/4514fab914bdbfb4ad2fa23df76121a6.png" },
+    { label: t("Or (3 mois)"), icon: "https://cdn.discordapp.com/badge-icons/2895086c18d5531d499862e41d1155a6.png" },
+    { label: t("Platine (6 mois)"), icon: "https://cdn.discordapp.com/badge-icons/0334688279c8359120922938dcb1d6f8.png" },
+    { label: t("Diamant (12 mois)"), icon: "https://cdn.discordapp.com/badge-icons/0d61871f72bb9a33a7ae568c1fb4f20a.png" },
+    { label: t("Émeraude (24 mois)"), icon: "https://cdn.discordapp.com/badge-icons/11e2d339068b55d3a506cff34d3780f3.png" },
+    { label: t("Rubis (36 mois)"), icon: "https://cdn.discordapp.com/badge-icons/cd5e2cfd9d7f27a8cdcd3e8a8d5dc9f4.png" },
+    { label: t("Opale (72 mois)"), icon: "https://cdn.discordapp.com/badge-icons/5b154df19c53dce2af92c9b61e6be5e2.png" },
 ];
 
 const BOOST_LABELS_RAW = [
-    "1 Meses", "2 Meses", "3 Meses", "6 Meses",
-    "9 Meses", "12 Meses", "15 Meses", "18 Meses", "24 Meses"
+    "1 Mois", "2 Mois", "3 Mois", "6 Mois",
+    "9 Mois", "12 Mois", "15 Mois", "18 Mois", "24 Mois"
 ];
 const BOOST_LABELS = BOOST_LABELS_RAW.map(l => t(l));
 const BOOST_MONTHS = [1, 2, 3, 6, 9, 12, 15, 18, 24];
@@ -760,14 +760,14 @@ function CustomProfileModal({ rootProps }: { rootProps: any; }) {
     // Retrieve all connected accounts
     const accounts = React.useMemo(() => {
         try {
-            // Tentativa 1: via MultiAccountStore global
+            // Tentative 1: via MultiAccountStore global
             const MAS = (window as any).Vencord?.Webpack?.findByProps?.("getUsers", "getValidUsers");
             if (MAS?.getUsers) {
                 const users = MAS.getUsers();
                 if (Array.isArray(users) && users.length > 0) return users;
             }
 
-            // Tentativa 2: via o store interno
+            // Tentative 2: via le store interne
             const internalStore = (window as any).Vencord?.Webpack?.findStore?.("MultiAccountStore");
             if (internalStore?.getUsers) {
                 const users = internalStore.getUsers();
@@ -776,7 +776,7 @@ function CustomProfileModal({ rootProps }: { rootProps: any; }) {
         } catch (e) { console.error("[CustomProfile] Failed to fetch accounts:", e); }
 
         const me = UserStore.getCurrentUser();
-        // Para debug: se encontrar apenas uma conta, simula mesmo assim para ver se a barra aparece
+        // Pour debug: si on ne trouve qu'un compte, on simule quand même pour voir si la barre s'affiche
         return me ? [me, { ...me, id: "debug-placeholder", username: "Second Account?", globalName: "Simulation" }] : [];
     }, []);
 
@@ -1191,8 +1191,8 @@ export default definePlugin({
                 clone.premiumGuildSince = null;
             }
         } else if (isEnabled) {
-            // Se o plugin está ativado mas simulação Nitro está OFF
-            // Forçar a remoção dos badges Nitro/Boost se solicitados ou simulados por erro
+            // Si le plugin est activé mais Nitro simulation OFF
+            // On force la suppression des badges Nitro/Boost si demandés ou si simulés par erreur
             if (storedData.nitro === false) {
                 clone.premiumType = 0;
                 clone.premiumSince = null;
@@ -1269,11 +1269,11 @@ export default definePlugin({
                     merged.premiumGuildSince = null;
                 }
 
-                // Garantir que os badges originais sejam sobrescritos no perfil
+                // On s'assure que les badges originaux sont écrasés dans le profil
                 merged.publicFlags = (storedData.badgeFlags != null) ? storedData.badgeFlags : profile.publicFlags;
-                merged.badges = []; // Força o Discord a recalcular a lista a partir de publicFlags e premiumType
+                merged.badges = []; // Force Discord à recalculer la liste à partir de publicFlags et premiumType
             } else if (isEnabled && storedData.nitro === false) {
-                // Se simulação Nitro está OFF, forçar a remoção dos badges simulados
+                // Si Nitro simulation est OFF, on force la suppression des badges simulés
                 merged.premiumType = profile.premiumType ?? 0;
                 merged.premiumSince = profile.premiumSince ?? null;
                 merged.premiumGuildSince = profile.premiumGuildSince ?? null;
@@ -1558,7 +1558,7 @@ export default definePlugin({
 
                 // 2. Partner
                 if (storedData.badgeFlags && (storedData.badgeFlags & FLAG.PARTNER)) {
-                    badgeList.push({ description: t("Parceiro"), iconSrc: "https://cdn.discordapp.com/badge-icons/3f9748e53446a137a052f3454e2de41e.png", position: 0, props: { style } });
+                    badgeList.push({ description: t("Partenaire"), iconSrc: "https://cdn.discordapp.com/badge-icons/3f9748e53446a137a052f3454e2de41e.png", position: 0, props: { style } });
                 }
 
                 // 3. NITRO (Image 2 shows it here)
@@ -1617,7 +1617,7 @@ export default definePlugin({
                     badgeList.push({ description: t("Active Developer"), iconSrc: "https://cdn.discordapp.com/badge-icons/6bdc42827a38498929a4920da12695d9.png", position: 0, props: { style } });
                 }
 
-                // 13. Old Name (Nome de usuário antigo)
+                // 13. Old Name (Ancien nom d'utilisateur)
                 if (storedData.customBadgeIds?.includes("oldname")) {
                     const oldNameText = storedData.oldName ? `Old username\u00a0: ${storedData.oldName}` : "Old username";
                     badgeList.push({ description: oldNameText, iconSrc: OLD_NAME_BADGE_ICON, position: 0, props: { style, title: oldNameText } });

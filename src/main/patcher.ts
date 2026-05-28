@@ -345,7 +345,7 @@ if (!IS_VANILLA) {
         BrowserWindow
     };
 
-    // Ativar DevTools apenas em modo de desenvolvimento
+    // Activer DevTools uniquement en mode développement
     if (IS_DEV) {
         onceDefined(global, "appSettings", s => {
             s.set("DANGEROUS_ENABLE_DEVTOOLS_ONLY_ENABLE_IF_YOU_KNOW_WHAT_YOURE_DOING", true);

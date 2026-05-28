@@ -125,13 +125,13 @@ export default {
         type: (text: string, delay: number) => invoke(IpcEvents.WORLD_BOMB_TYPE, text, delay),
         pressEnter: () => invoke(IpcEvents.WORLD_BOMB_PRESS_ENTER),
         pressBackspace: () => invoke(IpcEvents.WORLD_BOMB_PRESS_BACKSPACE),
-        // Sequência completa em um único processo PowerShell (clique auto no centro + digitação + enter)
-        // targetX/targetY : posição calibrada do clique (-1 = centro da janela por padrão)
+        // Séquence complète en un seul processus PowerShell (clic auto au centre + frappe + enter)
+        // targetX/targetY : position calibrée du clic (-1 = centre de la fenêtre par défaut)
         sequence: (word: string, lps: number, humanChance: number, targetX: number = -1, targetY: number = -1) =>
             invoke(IpcEvents.WORLD_BOMB_SEQUENCE, word, lps, humanChance, targetX, targetY),
-        // Abre a janela externa Stream Proof
+        // Ouvre la fenêtre externe Stream Proof
         openWindow: (lps: number, humanChance: number, safeMode: boolean, theme: string, playMode: string, noSpace: boolean, groqKey: string) => invoke(IpcEvents.WORLD_BOMB_OPEN_WINDOW, lps, humanChance, safeMode, theme, playMode, noSpace, groqKey),
-        // Retorna a posição atual do cursor (não mais usado mas mantido por precaução)
+        // Retourne la position actuelle du curseur (plus utilisé mais gardé au cas où)
         getCursorPos: (): Promise<{ x: number; y: number; }> => invoke(IpcEvents.WORLD_BOMB_GET_CURSOR_POS),
     },
 

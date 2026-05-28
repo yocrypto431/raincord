@@ -1,5 +1,5 @@
 /*
- * RAINCORD — Injeção CSS global para ocultar os botões nativos do Discord
+ * RAINCORD — Injection CSS globale pour masquer les boutons natifs Discord
  */
 
 import { Devs } from "@utils/constants";
@@ -8,7 +8,7 @@ import definePlugin from "@utils/types";
 const STYLE_ID = "RAINCORD-hide-native-buttons";
 
 const CSS = `
-/* ── RAINCORD : remoção de botões nativos do Discord indesejados ── */
+/* ── RAINCORD : suppression boutons natifs Discord non désirés ── */
 [aria-label="Open Logs"],
 [aria-label="Help"],
 [aria-label="Aide"],

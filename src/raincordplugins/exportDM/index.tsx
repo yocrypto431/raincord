@@ -116,7 +116,7 @@ async function fetchAllMessages(channelId: string, token: string, onProgress: (n
                 reactions: (m.reactions ?? []).map((r: any) => ({ emoji: r.emoji.name ?? r.emoji.id, count: r.count })),
                 referencedMessage: m.referenced_message ? {
                     id: m.referenced_message.id,
-                    authorName: m.referenced_message.author?.username ?? "Desconhecido",
+                    authorName: m.referenced_message.author?.username ?? "Inconnu",
                     content: m.referenced_message.content?.slice(0, 100) ?? "",
                 } : undefined,
                 pinned: m.pinned ?? false,
@@ -145,7 +145,7 @@ async function fetchAllMessages(channelId: string, token: string, onProgress: (n
                         timestamp: m.timestamp instanceof Date ? m.timestamp.toISOString() : (m.timestamp || new Date().toISOString()),
                         editedAt: m.editedTimestamp instanceof Date ? m.editedTimestamp.toISOString() : (m.editedTimestamp || m.edited_timestamp),
                         authorId: m.author?.id,
-                        authorName: m.author?.globalName ?? m.author?.username ?? "Desconhecido",
+                        authorName: m.author?.globalName ?? m.author?.username ?? "Inconnu",
                         authorAvatar: m.author?.avatar ?? null,
                         content: m.content ?? "",
                         attachments: (m.attachments ?? []).map((a: any) => ({
@@ -160,7 +160,7 @@ async function fetchAllMessages(channelId: string, token: string, onProgress: (n
                         reactions: (m.reactions ?? []).map((r: any) => ({ emoji: r.emoji?.name ?? r.emoji?.id, count: r.count })),
                         referencedMessage: m.messageReference ? {
                             id: m.messageReference.message_id || m.messageReference.id || "0",
-                            authorName: "Desconhecido",
+                            authorName: "Inconnu",
                             content: ""
                         } : undefined,
                         pinned: m.pinned ?? false,
@@ -187,7 +187,7 @@ async function fetchAllMessages(channelId: string, token: string, onProgress: (n
                 timestamp: m.timestamp ?? new Date().toISOString(),
                 editedAt: m.edited_timestamp ?? undefined,
                 authorId: m.author?.id ?? "0",
-                authorName: m.author?.global_name ?? m.author?.globalName ?? m.author?.username ?? "Desconhecido",
+                authorName: m.author?.global_name ?? m.author?.globalName ?? m.author?.username ?? "Inconnu",
                 authorAvatar: m.author?.avatar ?? null,
                 content: m.content ?? "",
                 attachments: (m.attachments ?? []).map((a: any) => ({
@@ -202,7 +202,7 @@ async function fetchAllMessages(channelId: string, token: string, onProgress: (n
                 reactions: (m.reactions ?? []).map((r: any) => ({ emoji: r.emoji?.name ?? r.emoji?.id, count: r.count })),
                 referencedMessage: m.referenced_message ? {
                     id: m.referenced_message.id ?? m.referenced_message.message_id ?? "0",
-                    authorName: m.referenced_message.author?.username ?? "Desconhecido",
+                    authorName: m.referenced_message.author?.username ?? "Inconnu",
                     content: (m.referenced_message.content ?? "").slice(0, 100),
                 } : undefined,
                 pinned: m.pinned ?? false,
@@ -324,7 +324,7 @@ function downloadFile(content: string, filename: string, mime: string) {
     URL.revokeObjectURL(url);
 }
 
-// ── Ícone SVG para a pesquisa ───────────────────────────────────────────────
+// ── Icône SVG pour la recherche ───────────────────────────────────────────────
 function SearchIcon() {
     return (
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ opacity: 0.5, flexShrink: 0 }}>
@@ -424,7 +424,7 @@ function ExportDMModal({ rootProps }: { rootProps: any; }) {
         return null;
     }
 
-    // Filtra a lista conforme a pesquisa
+    // Filtre la liste selon la recherche
     const filtered = search.trim()
         ? channels.filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
         : channels;
@@ -439,7 +439,7 @@ function ExportDMModal({ rootProps }: { rootProps: any; }) {
             </ModalHeader>
             <ModalContent className="edm-content">
 
-                {/* Barra de pesquisa */}
+                {/* Barre de recherche */}
                 <div className="edm-search-bar">
                     <SearchIcon />
                     <input
@@ -455,7 +455,7 @@ function ExportDMModal({ rootProps }: { rootProps: any; }) {
                     )}
                 </div>
 
-                {/* Lista conversas */}
+                {/* Liste conversations */}
                 <Forms.FormTitle tag="h5" className="edm-label">{t("CHOOSE A CONVERSATION")}</Forms.FormTitle>
                 <div className="edm-channel-list">
                     {filtered.length === 0 && (
@@ -481,7 +481,7 @@ function ExportDMModal({ rootProps }: { rootProps: any; }) {
                     })}
                 </div>
 
-                {/* Opções — sem emojis Google, com labels texto */}
+                {/* Options — sans emojis Google, avec labels texte */}
                 <div className="edm-options-row">
                     <label className="edm-option">
                         <input type="checkbox" checked={includeMedia} onChange={e => setIncludeMedia(e.target.checked)} />

@@ -69,8 +69,8 @@ async function scan(): Promise<VoiceChannel[]> {
                         ? `https://cdn.discordapp.com/icons/${guildId}/${guild.icon}.webp?size=32`
                         : null;
 
-                    // Usa getChannels() que retorna TODOS os canais do servidor
-                    // (incluindo os sem permissão) — exatamente como o Gateway Discord
+                    // Utilise getChannels() qui retourne TOUS les canaux du serveur
+                    // (y compris ceux sans permission) — exactement comme le Gateway Discord
                     const allChannels = GuildChannelStore.getChannels?.(guildId) ?? {};
                     // Iterate through all categories: VOCAL, GUILD_STAGE_VOICE, and raw arrays
                     const voiceItems: any[] = [
@@ -172,7 +172,7 @@ function VoiceSearchModal({ rootProps, channels }: { rootProps: any; channels: V
         setJoiningId(ch.channelId);
         try {
             ChannelActions.selectVoiceChannel(ch.channelId);
-            // Pequeno atraso para o efeito visual antes de fechar
+            // Petit délai pour l'effet visuel avant de fermer
             await new Promise(r => setTimeout(r, 400));
         } catch { }
         setJoiningId(null);

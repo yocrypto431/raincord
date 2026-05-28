@@ -200,7 +200,7 @@ function showGreenUpdateBanner() {
         }
     }
 
-    // Contagem regressiva — auto-install após 10s
+    // Compte à rebours — auto-install après 10s
     countdownTimer = setInterval(() => {
         countdown--;
         if (countdown <= 0) {
@@ -234,7 +234,7 @@ function showGreenUpdateBanner() {
         fontWeight: "700",
         fontFamily: "inherit",
     });
-    updateBtn.textContent = "⬇ Instalar agora";
+    updateBtn.textContent = "⬇ Installer maintenant";
     updateBtn.addEventListener("click", doInstall);
 
     const closeBtn = document.createElement("button");
@@ -249,9 +249,9 @@ function showGreenUpdateBanner() {
         lineHeight: "1",
     });
     closeBtn.textContent = "✕";
-    closeBtn.title = "Ignorar (a atualização será instalada ao fechar o Discord)";
+    closeBtn.title = "Ignorer (la mise à jour sera installée à la fermeture de Discord)";
     closeBtn.addEventListener("click", () => {
-        if (installing) return; // não fechar se instalação em andamento
+        if (installing) return; // ne pas fermer si installation en cours
         if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
         banner.remove();
         UpdateLogger.info("Update banner dismissed — will auto-apply on Discord quit.");
@@ -277,7 +277,7 @@ async function runUpdateCheck() {
         if (notifiedForUpdatesThisSession) return;
         notifiedForUpdatesThisSession = true;
 
-        // Exibe o banner verde com auto-install (contagem regressiva 10s)
+        // Affiche la bannière verte avec auto-install (compte à rebours 10s)
         setTimeout(() => showGreenUpdateBanner(), 8_000);
     } catch (err) {
         UpdateLogger.error("Failed to check for updates", err);

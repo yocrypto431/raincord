@@ -1,7 +1,7 @@
 /*
  * RAINCORD — SelfDestruct Plugin
- * Envia mensagens que se deletam automaticamente após um atraso configurável.
- * Timer vermelho visível apenas pelo usuário.
+ * Envoie des messages qui se suppriment automatiquement après un délai configurable.
+ * Timer rouge visible uniquement par l'utilisateur.
  */
 
 import { ChatBarButton, ChatBarButtonFactory } from "@api/ChatButtons";
@@ -165,7 +165,7 @@ function SelfDestructIcon({ active, width = 20, height = 20 }: { active?: boolea
             viewBox="0 0 24 24"
             style={{ color: active ? "#ed4245" : "currentColor" }}
         >
-            {/* Ícone bomba / timer */}
+            {/* Bombe / timer icon */}
             <circle cx="12" cy="13" r="8" stroke="currentColor" strokeWidth="2" fill="none" />
             <path d="M12 9v4l3 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             <path d="M12 5V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -241,7 +241,7 @@ export default definePlugin({
     },
 
     start() {
-        // Reset ao iniciar — sem timers persistentes
+        // Reset au démarrage — pas de timers persistants
     },
 
     stop() {

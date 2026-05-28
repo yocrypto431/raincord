@@ -3,7 +3,7 @@ import { FluxDispatcher, React, UserStore } from "@webpack/common";
 import { UserAreaButton } from "@api/UserArea";
 import { findByProps, findByPropsLazy } from "@webpack";
 
-// Módulos Webpack
+// Modules Webpack
 const ChannelActions = findByPropsLazy("selectVoiceChannel", "disconnect");
 const SelectedChannelStore = findByPropsLazy("getVoiceChannelId", "getChannelId");
 
@@ -17,16 +17,16 @@ function onVoiceStateUpdate({ voiceStates }: { voiceStates: any[]; }) {
     if (!currentUser) return;
     const myId = currentUser.id;
 
-    // Verificar se meu estado mudou neste update
+    // Chercher si mon état a changé dans cet update
     const myState = voiceStates.find(s => s.userId === myId);
 
-    // Se temos um update me envolvendo
+    // Si on a un update me concernant
     if (myState) {
-        // Se o novo channelId é diferente do que estamos protegendo (ou null se desconectado)
+        // Si le nouveau channelId est différent de celui qu'on protège (ou null si déco)
         if (myState.channelId !== targetChannelId) {
             console.log(`[AntiMoveDeco] Movement or disconnect detected! Returning to channel ${targetChannelId}...`);
 
-            // Pequeno atraso para deixar o Discord finalizar a desconexão antes de reconectar
+            // Petit délai pour laisser Discord finir sa déconnexion propre avant de reco
             setTimeout(() => {
                 if (enabled && targetChannelId) {
                     try {
@@ -41,7 +41,7 @@ function onVoiceStateUpdate({ voiceStates }: { voiceStates: any[]; }) {
 }
 
 function AntiMoveDecoIcon({ enabled }: { enabled: boolean; }) {
-    const color = enabled ? "#39FF14" : "currentColor"; // Verde neon se ativado
+    const color = enabled ? "#39FF14" : "currentColor"; // Vert fluo si activé
     return (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2.5" />
@@ -57,7 +57,7 @@ function AntiMoveDecoButton() {
         if (!enabled) {
             const channelId = SelectedChannelStore?.getVoiceChannelId?.();
             if (!channelId) {
-                // Não está em canal de voz, não é possível ativar
+                // Pas en vocal, on ne peut pas activer
                 return;
             }
             targetChannelId = channelId;

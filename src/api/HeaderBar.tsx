@@ -213,10 +213,10 @@ export function removeChannelToolbarButton(id: string) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-// STEALTH MODE — variável em memória como fonte de verdade
+// STEALTH MODE — variable mémoire comme source de vérité
 // ══════════════════════════════════════════════════════════════════
 
-// Variável em memória — NÃO localStorage como fonte de verdade
+// Variable mémoire — PAS localStorage comme source de vérité
 let _stealthActive = false;
 try { _stealthActive = localStorage.getItem("RAINCORD_stealthMode") === "1"; } catch { }
 
@@ -228,8 +228,8 @@ function persistStealth(v: boolean) {
     try { v ? localStorage.setItem("RAINCORD_stealthMode", "1") : localStorage.removeItem("RAINCORD_stealthMode"); } catch { }
 }
 
-// Elementos NÃO-React apenas (titlebar, RAINCORDAI nav)
-// NÃO esconder as entradas da sidebar de settings — o usuário deve poder acessar as configurações
+// Éléments NON-React uniquement (titlebar, RAINCORDAI nav)
+// NE PAS cacher les entrées settings sidebar — l'utilisateur doit pouvoir accéder aux paramètres
 const NON_REACT_SELECTORS = [
     "#RAINCORD-titlebar-btn",
     "#RAINCORD-titlebar-link-style",

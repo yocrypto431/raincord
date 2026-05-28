@@ -46,9 +46,9 @@ const settings = definePluginSettings({
 // ── Correction via groqManager ────────────────────────────────────────────────
 
 const LANG_PROMPTS: Record<string, string> = {
-    fr: "Você é um corretor ortográfico. Corrija SOMENTE os erros de ortografia e gramática. Retorne o texto corrigido sem explicação nem aspas. PROIBIDO: adicionar palavras, mudar o sentido, reformular. Se o texto estiver correto, retorne-o idêntico.",
+    fr: "Tu es un correcteur orthographique. Corrige UNIQUEMENT les fautes d'orthographe et de grammaire. Retourne le texte corrigé sans explication ni guillemets. INTERDIT: ajouter des mots, changer le sens, reformuler. Si le texte est correct, retourne-le identique.",
     en: "You are a spell-checker. Fix ONLY spelling and grammar mistakes. Return the corrected text without explanation or quotes. FORBIDDEN: adding words, changing meaning, rephrasing. If already correct, return as-is.",
-    es: "Eres un corrector ortográfico. Corrige SOLO errores ortográficos y gramaticales. Devuelve el texto corregido sin explicación. PROHIBIDO: añadir palabras, cambiar el sentido.",
+    es: "Eres un corrector ortográfico. Corrige SOLO errores ortográficos y gramaticales. Devuelve el texte corrigé sans explication. PROHIBIDO: añadir palabras, cambiar el sentido.",
     de: "Du bist ein Rechtschreibprüfer. Korrigiere NUR Rechtschreib- und Grammatikfehler. Gib den korrigierten Text ohne Erklärung zurück. VERBOTEN: Wörter hinzufügen, Bedeutung ändern.",
     it: "Sei un correttore ortografico. Correggi SOLO errori ortografici e grammaticali. Restituisci il testo corretto senza spiegazioni. VIETATO: aggiungere parole, cambiare il significato.",
     pt: "Você é um corretor ortográfico. Corrija SOMENTE erros ortográficos e gramaticais. Retorne o texto corrigido sem explicação. PROIBIDO: adicionar palavras, mudar o sentido.",
@@ -75,32 +75,32 @@ async function correctText(text: string): Promise<string> {
             ],
             temperature: 0,
             maxTokens: 512,
-            // Forçar um modelo leve para a correção — economiza a cota do 70B para a IA
+            // Forcer un modèle léger pour la correction — économise le quota du 70B pour l'IA
             forceModel: "llama-3.1-8b-instant",
         });
 
         if (!corrected || corrected.trim() === "" || corrected === text) return text;
 
-        // Segurança contra repetições infinitas ou alucinações
+        // Sécurité contre les répétitions infinies ou les hallucinations
         if (corrected.toLowerCase().includes("correction:") || corrected.toLowerCase().includes("text:")) return text;
 
-        // Segurança: resposta muito diferente → não aplicamos
+        // Sécurité : réponse trop différente → on n'applique pas
         if (corrected.length > text.length * 1.5 || corrected.length < text.length * 0.4) return text;
 
-        // No modo low: verificação mais estrita do número de palavras
+        // En mode low : vérification plus stricte du nombre de mots
         if (aggr === "low") {
             const srcWords = text.trim().split(/\s+/).filter(w => w.length > 0).length;
             const corrWords = corrected.trim().split(/\s+/).filter(w => w.length > 0).length;
-            // Modo soft não deve adicionar/remover mais de uma palavra em frases curtas
+            // Mode soft ne doit pas ajouter/enlever plus d'un mot sur des phrases courtes
             if (Math.abs(corrWords - srcWords) > Math.max(1, Math.floor(srcWords * 0.15))) {
                 console.log("[AutoCorrect] Soft mode rejected: word count changed too much", { srcWords, corrWords });
                 return text;
             }
         }
-        return corrected.replace(/^"(.*)"$/, '$1').trim(); // Limpa as aspas eventuais
+        return corrected.replace(/^"(.*)"$/, '$1').trim(); // Nettoie les guillemets éventuels
     } catch (e: any) {
         console.warn("[AutoCorrect] Error correction:", e.message);
-        return text; // Em caso de erro, enviar o texto original
+        return text; // En cas d'error, envoyer le texte original
     }
 }
 
@@ -133,7 +133,7 @@ const AutoCorrectChatBarButton: ChatBarButtonFactory = ({ type }) => {
 
     const toggle = async () => {
         if (!enabled) {
-            // Verifica que a chave API está configurada antes de ativar
+            // Vérifie que la clé API est configurée avant d'activer
             const key = await getGroqKey();
             if (!key) {
                 showApiKeyWarning("AutoCorrect");

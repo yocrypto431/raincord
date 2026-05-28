@@ -24,8 +24,8 @@ import gitRemote from "~git-remote";
 import { serializeErrors } from "./common";
 
 if (!IS_UPDATER_DISABLED) {
-    // RAINCORD utiliza sempre o modo HTTP (GitHub Releases)
-    // IS_STANDALONE é false quando injetado no Discord, mas queremos http.ts mesmo assim
+    // RAINCORD utilise toujours le mode HTTP (GitHub Releases)
+    // IS_STANDALONE est false quand injecté dans Discord, mais on veut quand même http.ts
     require("./http");
 } else {
     ipcMain.handle(IpcEvents.GET_REPO, serializeErrors(() => `https://github.com/${gitRemote}`));
