@@ -2,8 +2,7 @@ import { React, useState, useEffect, useRef, ReactDOM, createRoot, MessageAction
 import { getGroqKey } from "../../raincordAI/groqManager";
 
 const DICT_URLS = [
-    "https://raw.githubusercontent.com/fserb/pt-br/master/palavras.txt",
-    "https://raw.githubusercontent.com/pythonprobr/palavras/master/palavras.txt"
+    "https://raw.githubusercontent.com/fserb/pt-br/master/palavras.txt"
 ];
 
 // Palavras de reserva caso o carregamento falhe
@@ -95,18 +94,25 @@ export function WordBombOverlay() {
                 const allWords = results.flat() as string[];
                 const uniqueWords = Array.from(new Set(allWords))
                     .filter(w => {
-                        // 1. Filtragem por comprimento (palavras muito longas geralmente são lugares ou termos técnicos)
+                        // 1. Filtragem por comprimento
                         if (w.length < 3 || w.length > 15) return false;
                         
-                        // 2. Filtragem de Nomes Próprios: se a palavra começa com maiúscula na fonte
-                        // quase sempre é um nome de lugar, pessoa ou marca.
+                        // 2. Filtragem de Nomes Próprios
                         if (w[0] === w[0].toUpperCase()) return false;
                         
                         // 3. Filtragem de abreviações (tudo em maiúsculo)
                         if (w === w.toUpperCase() && w.length > 1) return false; 
 
-                        // 4. Caracteres portugueses apenas
-                        return /^[a-zàáâãéêíóôõúüç]+$/i.test(w);
+                        // 4. Apenas letras portuguesas (sem k, w, y que indicam palavras estrangeiras)
+                        if (/[kwySñ]/i.test(w)) return false;
+
+                        // 5. Rejeitar padrões não-portugueses (latim, inglês, etc.)
+                        if (/^(ae|oe|ph|th|rh|sch|sh|ch[^a-z])/i.test(w)) return false;
+                        if (w.endsWith("tion") || w.endsWith("sion") || w.endsWith("ght")) return false;
+                        if (w.endsWith("ium") || w.endsWith("ius") || w.endsWith("pti")) return false;
+
+                        // 6. Caracteres portugueses apenas
+                        return /^[a-záàâãéêíóôõúüç]+$/.test(w);
                     })
                     .map(w => w.toLowerCase());
                 
