@@ -23,7 +23,7 @@ import { relaunch } from "@utils/native";
 // Version locale depuis package.json (injectée au build)
 declare const VERSION: string;
 
-const REPO_URL = "https://github.com/yocrypto431/raincord"; // Update when you create your repo
+const REPO_URL = "https://github.com/yocrypto431/raincord";
 
 function UpdaterTab() {
     const [checking, setChecking] = useState(false);
