@@ -2,7 +2,7 @@ import { React, useState, useEffect, useRef, ReactDOM, createRoot, MessageAction
 import { getGroqKey } from "../../raincordAI/groqManager";
 
 const DICT_URLS = [
-    "https://raw.githubusercontent.com/fserb/pt-br/master/palavras.txt"
+    "https://raw.githubusercontent.com/pythonprobr/palavras/master/palavras.txt"
 ];
 
 // Palavras de reserva caso o carregamento falhe
@@ -103,16 +103,14 @@ export function WordBombOverlay() {
                         // 3. Filtragem de abreviações (tudo em maiúsculo)
                         if (w === w.toUpperCase() && w.length > 1) return false; 
 
-                        // 4. Apenas letras portuguesas (sem k, w, y que indicam palavras estrangeiras)
-                        if (/[kwySñ]/i.test(w)) return false;
+                        // 4. Caracteres portugueses apenas (permitir todas as letras comuns)
+                        if (!/^[a-záàâãéêíóôõúüç]+$/.test(w)) return false;
 
-                        // 5. Rejeitar padrões não-portugueses (latim, inglês, etc.)
-                        if (/^(ae|oe|ph|th|rh|sch|sh|ch[^a-z])/i.test(w)) return false;
+                        // 5. Rejeitar sufixos claramente não-portugueses
                         if (w.endsWith("tion") || w.endsWith("sion") || w.endsWith("ght")) return false;
-                        if (w.endsWith("ium") || w.endsWith("ius") || w.endsWith("pti")) return false;
+                        if (w.endsWith("ium") || w.endsWith("ius")) return false;
 
-                        // 6. Caracteres portugueses apenas
-                        return /^[a-záàâãéêíóôõúüç]+$/.test(w);
+                        return true;
                     })
                     .map(w => w.toLowerCase());
                 
