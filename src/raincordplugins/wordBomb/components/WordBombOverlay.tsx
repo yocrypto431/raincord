@@ -2,11 +2,12 @@ import { React, useState, useEffect, useRef, ReactDOM, createRoot, MessageAction
 import { getGroqKey } from "../../raincordAI/groqManager";
 
 const DICT_URLS = [
-    "https://raw.githubusercontent.com/pythonprobr/palavras/master/palavras.txt"
+    "https://raw.githubusercontent.com/pythonprobr/palavras/master/palavras.txt",
+    "https://cdn.jsdelivr.net/gh/pythonprobr/palavras@master/palavras.txt"
 ];
 
-// Palavras de reserva caso o carregamento falhe
-const FALLBACK_WORDS = ["casa", "gato", "cachorro", "sol", "mesa", "cadeira", "janela", "porta", "carro", "aviao", "barco", "trem", "bicicleta", "computador", "teclado", "mouse", "tela", "banana", "laranja", "escola"];
+// Palavras de reserva caso o carregamento falhe (lista grande para evitar repetições)
+const FALLBACK_WORDS = ["casa","gato","cachorro","sol","mesa","cadeira","janela","porta","carro","barco","trem","computador","teclado","tela","banana","laranja","escola","livro","papel","caneta","cidade","campo","praia","montanha","floresta","rio","lago","mar","terra","fogo","vento","chuva","neve","nuvem","estrela","lua","mundo","vida","tempo","amor","amigo","festa","musica","danca","comida","fruta","carne","peixe","arroz","feijao","leite","cafe","agua","suco","bolo","prato","copo","faca","colher","garfo","toalha","sabao","roupa","camisa","calca","sapato","meia","chapeu","bolsa","chave","relogio","telefone","carta","jornal","revista","filme","novela","jogo","bola","gol","time","campo","quadra","piscina","parque","jardim","rua","ponte","predio","igreja","hospital","mercado","padaria","banco","correio","escola","faculdade","trabalho","empresa","loja","restaurante","hotel","cinema","teatro","museu","biblioteca","farmacia","delegacia","bombeiro","medico","dentista","advogado","professor","aluno","diretor","gerente","vendedor","motorista","piloto","cozinheiro","garcom","pedreiro","pintor","eletricista","encanador","marceneiro","costureira","barbeiro","carteiro","lixeiro","porteiro","seguranca","policial","soldado","capitao","general","presidente","ministro","governador","prefeito","vereador","deputado","senador","juiz","promotor","delegado","detetive","espiao","ladrao","bandido","heroi","vilao","principe","princesa","rainha","cavaleiro","dragao","gigante","anao","bruxa","fada","duende","vampiro","fantasma","monstro","robô","alienigena","astronauta","cientista","inventor","explorador","aventureiro","guerreiro","samurai","ninja","pirata","cowboy","indio","farao","gladiador","viking","cavaleiro","arqueiro","mago","elfo","orc","troll","goblin","demonio","anjo","santo","deus","diabo"];
 
 let overlayRoot: any = null;
 let overlayContainer: HTMLDivElement | null = null;
@@ -65,6 +66,7 @@ export function WordBombOverlay() {
     const [isDragging, setIsDragging] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [badWords, setBadWords] = useState<Set<string>>(new Set());
+    const [usedWords, setUsedWords] = useState<Set<string>>(new Set());
     const [definition, setDefinition] = useState("");
     const [pos, setPos] = useState({ x: 100, y: 100 });
     const dragOffset = useRef({ x: 0, y: 0 });
@@ -258,6 +260,7 @@ export function WordBombOverlay() {
             const low = w.toLowerCase();
             if (!low.includes(sylLower)) return false;
             if (badWords.has(low)) return false;
+            if (usedWords.has(low)) return false;
             if (noSpace && (low.includes(' ') || low.includes('-'))) return false;
             if (playMode === "Pro" && low.length < 13) return false;
             if (playMode === "Noob" && low.length > 7) return false;
@@ -310,15 +313,18 @@ export function WordBombOverlay() {
 
         let targetWord = "";
         let bestScore = -Infinity;
+        const topCandidates: { word: string; score: number; }[] = [];
 
         for (let i = 0; i < matches.length; i++) {
             const w = matches[i];
             const s = computeScore(w, alphabet, i);
-            if (s > bestScore) {
-                bestScore = s;
-                targetWord = w;
-            }
+            topCandidates.push({ word: w, score: s });
         }
+
+        // Ordenar por score e pegar entre os top 10 aleatoriamente
+        topCandidates.sort((a, b) => b.score - a.score);
+        const topN = topCandidates.slice(0, Math.min(10, topCandidates.length));
+        targetWord = topN[Math.floor(Math.random() * topN.length)].word;
 
 
         if (!isReroll) {
@@ -327,7 +333,9 @@ export function WordBombOverlay() {
 
         const newAlphabet = alphabet.filter(l => !targetWord.toLowerCase().includes(l));
         setAlphabet(newAlphabet.length === 0 ? "abcdefghijklmnopqrstuvwxyz".split("") : newAlphabet);
+        if (newAlphabet.length === 0) setUsedWords(new Set()); // Reset palavras usadas quando alfabeto reseta
 
+        setUsedWords(prev => new Set(prev).add(targetWord.toLowerCase()));
         sendWord(targetWord);
         if (!isReroll) setSyllable("");
     };
