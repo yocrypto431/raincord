@@ -89,6 +89,13 @@ export const CspPolicies: PolicyMap = {
     "*.arkoselabs.com": [...CSPSrc, "script-src"],
     "client-api.arkoselabs.com": [...ConnectSrc, "script-src", "frame-src"],
     "*.funcaptcha.com": [...CSPSrc, "script-src"],
+
+    // BigFileUpload uploaders
+    "api.gofile.io": ConnectSrc,
+    "*.gofile.io": ConnectSrc,
+    "catbox.moe": ConnectSrc,
+    "*.catbox.moe": ConnectSrc,
+    "litterbox.catbox.moe": ConnectSrc,
 };
 
 const findHeader = (headers: PolicyMap, headerName: Lowercase<string>) => {

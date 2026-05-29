@@ -19,7 +19,6 @@ import { Button, DraftType, Forms, Menu, PermissionsBits, PermissionStore, React
 const Native = VencordNative.pluginHelpers.BigFileUpload as PluginNative<typeof import("./native")>;
 
 const UploadStore = findByPropsLazy("getUploads");
-const OptionClasses = findByPropsLazy("optionName", "optionIcon", "optionLabel");
 
 function createCloneableStore(initialState: any) {
     const store = { ...initialState };
@@ -469,30 +468,17 @@ function triggerFileUpload() {
     document.body.removeChild(fileInput);
 }
 
-function getOptionClasses(): { optionLabel: string; optionIcon: string; optionName: string; } {
-    try {
-        return {
-            optionLabel: OptionClasses?.optionLabel ?? "",
-            optionIcon: OptionClasses?.optionIcon ?? "",
-            optionName: OptionClasses?.optionName ?? "",
-        };
-    } catch {
-        return { optionLabel: "", optionIcon: "", optionName: "" };
-    }
-}
-
 const ctxMenuPatch: NavContextMenuPatchCallback = (children, props) => {
     if (props.channel.guild_id && !PermissionStore.can(PermissionsBits.SEND_MESSAGES, props.channel)) return;
-    const cls = getOptionClasses();
     children.splice(1, 0,
         <Menu.MenuItem
             id="upload-big-file"
-            label={
-                <div className={cls.optionLabel} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <OpenExternalIcon className={cls.optionIcon} height={24} width={24} />
-                    <div className={cls.optionName}>Upload a Big File</div>
-                </div>
-            }
+            iconLeft={OpenExternalIcon}
+            leadingAccessory={{
+                type: "icon",
+                icon: OpenExternalIcon
+            }}
+            label="Upload a Big File"
             action={triggerFileUpload}
         />
     );
