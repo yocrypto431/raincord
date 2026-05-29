@@ -1,45 +1,45 @@
 {
-  "name": "raincord-installer",
-  "version": "1.4.4",
-  "description": "RainCord Installer",
-  "main": "main.js",
-  "scripts": {
-    "start": "electron .",
-    "build": "electron-builder --win portable"
-  },
-  "devDependencies": {
-    "electron": "^30.5.1",
-    "electron-builder": "^24.13.3"
-  },
-  "build": {
-    "appId": "com.raincord.installer",
-    "productName": "RainCord Installer",
-    "win": {
-      "target": "portable",
-      "signAndEditExecutable": false
+    "name": "raincord-installer",
+    "version": "1.4.6",
+    "description": "RainCord Installer",
+    "main": "main.js",
+    "scripts": {
+        "start": "electron .",
+        "build": "electron-builder --win portable"
     },
-    "forceCodeSigning": false,
-    "portable": {
-      "artifactName": "RainCord-Installer.exe"
+    "devDependencies": {
+        "electron": "^30.5.1",
+        "electron-builder": "^24.13.3"
     },
-    "files": [
-      "main.js",
-      "index.html",
-      "icon.ico"
-    ],
-    "extraResources": [
-      {
-        "from": "../dist/desktop",
-        "to": "dist/desktop",
-        "filter": [
-          "**/*"
+    "build": {
+        "appId": "com.raincord.installer",
+        "productName": "RainCord Installer",
+        "win": {
+            "target": "portable",
+            "signAndEditExecutable": false
+        },
+        "forceCodeSigning": false,
+        "portable": {
+            "artifactName": "RainCord-Installer.exe"
+        },
+        "files": [
+            "main.js",
+            "index.html",
+            "icon.ico"
+        ],
+        "extraResources": [
+            {
+                "from": "../dist/desktop",
+                "to": "dist/desktop",
+                "filter": [
+                    "**/*"
+                ]
+            },
+            {
+                "from": "../dist/Installer/EquilotlCli.exe",
+                "to": "EquilotlCli.exe"
+            }
         ]
-      },
-      {
-        "from": "../dist/Installer/EquilotlCli.exe",
-        "to": "EquilotlCli.exe"
-      }
-    ]
-  },
-  "dependencies": {}
+    },
+    "dependencies": {}
 }
