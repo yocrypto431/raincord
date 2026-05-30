@@ -5,7 +5,7 @@ import { ChannelStore, FluxDispatcher, React, SelectedChannelStore, useEffect, U
 const REMOTE_VERSION_URL = "https://api.github.com/repos/yocrypto431/raincord/releases/latest";
 const REJOIN_KEY = "__RAINCORD_pendingUpdate_voiceRejoin";
 const REJOIN_MAX_AGE_MS = 5 * 60 * 1000;
-const REJOIN_DELAY_MS = 2000;
+const REJOIN_DELAY_MS = 750;
 
 declare const VERSION: string;
 
@@ -206,17 +206,12 @@ function UpdateBanner() {
             }
 
             setStatus(voiceInfo
-                ? `✓ Atualização aplicada — voltando pra ${voiceInfo.channelName} em 2s...`
-                : "✓ Atualização aplicada — reiniciando em 2s...");
+                ? `✓ Atualização aplicada — recarregando sem sair de ${voiceInfo.channelName}...`
+                : "✓ Atualização aplicada — recarregando...");
 
             setTimeout(() => {
-                try {
-                    VencordNative.RAINCORD?.relaunch?.();
-                } catch {
-                    (window as any).DiscordNative?.app?.relaunch?.();
-                    window.location.reload();
-                }
-            }, 2000);
+                window.location.reload();
+            }, 700);
         } catch (e: any) {
             console.error("[RAINCORDUpdater] Erro ao atualizar:", e);
             const msg = e?.message ? e.message.substring(0, 120) : "Erro desconhecido";
