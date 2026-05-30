@@ -1,6 +1,6 @@
 import definePlugin, { OptionType } from "@utils/types";
 import { definePluginSettings } from "@api/Settings";
-import { UserStore, ChannelStore, RestAPI, FluxDispatcher, React } from "@webpack/common";
+import { UserStore, ChannelStore, RestAPI, FluxDispatcher, React, Alerts } from "@webpack/common";
 import { DataStore } from "@api/index";
 import { groqChat, getGroqKey } from "../raincordAI/groqManager";
 import { ChatBarButton } from "@api/ChatButtons";
@@ -114,16 +114,10 @@ async function handleMessage(message: any) {
         const apiKey = await getGroqKey();
         if (!apiKey) {
             try {
-                const { openConfirmationModal } = findByPropsLazy("openConfirmationModal");
-                openConfirmationModal({
-                    header: "API Key Required",
-                    content: "AutoResponder requires a Groq API Key to function. Please configure it once in the raincordAI settings.",
-                    confirmText: "Configure raincordAI",
-                    cancelText: "Cancel",
-                    onConfirm: () => {
-                        const { openModal } = findByPropsLazy("openModal");
-                        // Logique pour ouvrir les settings raincordAI si possible
-                    }
+                Alerts.show({
+                    title: "API Key Required",
+                    body: "AutoResponder requires a Groq API Key to function. Please configure it once in the raincordAI settings.",
+                    confirmText: "Close"
                 });
             } catch (e) {
                 console.error("[AutoResponder] API Key missing and could not open modal", e);
@@ -253,14 +247,12 @@ const AutoResponderButton = () => {
             const key = await getGroqKey();
             if (!key) {
                 try {
-                    const { openConfirmationModal } = findByPropsLazy("openConfirmationModal");
-                    openConfirmationModal({
-                        header: "API Key Required",
-                        content: "AutoResponder requires a Groq API Key to function. Please configure it once in the raincordAI settings.",
-                        confirmText: "Close",
-                        confirmColor: "brand"
-                    });
-                } catch { }
+                Alerts.show({
+                    title: "API Key Required",
+                    body: "AutoResponder requires a Groq API Key to function. Please configure it once in the raincordAI settings.",
+                    confirmText: "Close"
+                });
+            } catch { }
                 return;
             }
         }

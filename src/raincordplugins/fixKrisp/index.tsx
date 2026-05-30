@@ -52,7 +52,7 @@ export default definePlugin({
             if (DN.nativeModules._krispPatched) return;
 
             const originalRequire = DN.nativeModules.requireModule;
-            DN.nativeModules.requireModule = function(name: string) {
+            const patchedRequire = function(name: string) {
                 const module = originalRequire.apply(this, arguments);
                 if (name === "discord_voice" && module && !module._krispPatched) {
                     module.getSupportsKrisp = () => true;
@@ -66,6 +66,17 @@ export default definePlugin({
                 }
                 return module;
             };
+
+            try {
+                DN.nativeModules.requireModule = patchedRequire;
+            } catch {
+                try {
+                    Object.defineProperty(DN.nativeModules, "requireModule", { value: patchedRequire, configurable: true, writable: true });
+                } catch {
+                    console.warn("[FixKrisp] Cannot patch requireModule — property is non-writable/non-configurable");
+                    return;
+                }
+            }
             DN.nativeModules._krispPatched = true;
         };
 
