@@ -392,6 +392,7 @@ export const commonOpts = {
         "@webpack/patcher": "./src/webpack/patchWebpack",
         "@webpack": "./src/webpack/webpack",
         "@raincordplugins": "./src/raincordplugins",
+        "@equicordplugins": "./src/raincordplugins",
     }
 };
 
