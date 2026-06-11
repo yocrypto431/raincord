@@ -11,14 +11,16 @@ let mainWindow;
 
 function httpsGet(url) {
     return new Promise((resolve, reject) => {
-        https.get(url, { headers: { "User-Agent": "RainCord-Installer" } }, res => {
+        const req = https.get(url, { headers: { "User-Agent": "RainCord-Installer" } }, res => {
             if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
                 return httpsGet(res.headers.location).then(resolve).catch(reject);
             }
             const chunks = [];
             res.on("data", c => chunks.push(c));
             res.on("end", () => resolve({ status: res.statusCode, data: Buffer.concat(chunks) }));
-        }).on("error", reject);
+        });
+        req.on("error", reject);
+        req.setTimeout(20000, () => req.destroy(new Error("Request timed out")));
     });
 }
 
@@ -357,15 +359,15 @@ ipcMain.handle("check-update", async () => {
 ipcMain.handle("self-update", async (_, url) => {
     try {
         const res = await httpsGet(url);
-        if (res.status !== 200) return { ok: false, error: "Download failed" };
-        const currentExe = process.execPath;
+        if (res.status !== 200) return { ok: false, error: "Download failed (HTTP " + res.status + ")" };
+        const currentExe = process.env.PORTABLE_EXECUTABLE_FILE || process.execPath;
         const dir = path.dirname(currentExe);
         const name = path.basename(currentExe);
         const newExe = path.join(dir, name + ".update");
         fs.writeFileSync(newExe, res.data);
-        const ps = `$ErrorActionPreference='SilentlyContinue'; Start-Sleep -Seconds 3; $old='${currentExe}'; $new='${newExe}'; for($i=0;$i -lt 10;$i++){ try { Remove-Item -Force -LiteralPath $old; break } catch { Start-Sleep -Seconds 1 } }; Move-Item -Force -LiteralPath $new -Destination $old; Start-Process -FilePath $old`;
+        const ps = `$ErrorActionPreference='SilentlyContinue'; Start-Sleep -Seconds 2; $old='${currentExe}'; $new='${newExe}'; for($i=0;$i -lt 15;$i++){ try { Remove-Item -Force -LiteralPath $old -ErrorAction Stop; break } catch { Start-Sleep -Seconds 1 } }; Move-Item -Force -LiteralPath $new -Destination $old; Start-Process -FilePath $old`;
         spawn("powershell", ["-NoProfile", "-WindowStyle", "Hidden", "-Command", ps], { detached: true, stdio: "ignore", shell: false }).unref();
-        setTimeout(() => app.quit(), 500);
+        setTimeout(() => app.quit(), 800);
         return { ok: true };
     } catch (e) {
         return { ok: false, error: e.message };

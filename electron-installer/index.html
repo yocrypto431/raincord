@@ -234,16 +234,32 @@
     function closeApp() { ipcRenderer.invoke("close-app"); }
     function minimize() { ipcRenderer.invoke("minimize-app"); }
 
+    let pendingUpdate = null;
+
     async function checkUpdate() {
       const ver = await ipcRenderer.invoke("get-version");
       document.getElementById("current-ver").textContent = ver;
-      const update = await ipcRenderer.invoke("check-update");
+      const el = document.getElementById("update-status");
+      let update = null;
+      try { update = await ipcRenderer.invoke("check-update"); } catch { }
       if (update) {
-        document.getElementById("update-status").innerHTML = `<span style="color:#faa61a">updating to v${update.version}...</span>`;
-        await ipcRenderer.invoke("self-update", update.url);
+        pendingUpdate = update;
+        el.innerHTML = `<span style="color:#faa61a;cursor:pointer;text-decoration:underline" title="Optional. Installing works without updating." onclick="doSelfUpdate()">update available (v${update.version}) — click to update</span>`;
       } else {
-        document.getElementById("update-status").textContent = "latest";
-        document.getElementById("update-status").style.color = "#23a55a";
+        el.textContent = "latest";
+        el.style.color = "#23a55a";
+      }
+    }
+
+    async function doSelfUpdate() {
+      if (!pendingUpdate) return;
+      const el = document.getElementById("update-status");
+      el.innerHTML = `<span style="color:#faa61a">downloading v${pendingUpdate.version}...</span>`;
+      let res = null;
+      try { res = await ipcRenderer.invoke("self-update", pendingUpdate.url); } catch (e) { res = { ok: false, error: String(e && e.message || e) }; }
+      if (!res || !res.ok) {
+        el.textContent = "update failed — you can still install below";
+        el.style.color = "#f23f43";
       }
     }
 
