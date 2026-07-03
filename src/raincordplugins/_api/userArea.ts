@@ -17,16 +17,19 @@ export default definePlugin({
 
     patches: [
         {
-            find: ".DISPLAY_NAME_STYLES_COACHMARK)",
+            // Discord's account panel button row (buttons__37e49 — mute/deafen/
+            // settings buttons). This is a separate function component ("rv"
+            // internally) from the account nameplate/name-zone container, and
+            // injecting into the wrong one (the nameplate container) stretches
+            // it to fit our extra buttons and breaks the account panel layout.
+            // Anchored on the accountContainerRef prop, which is unique to this
+            // component's destructured parameters and precedes its children
+            // array regardless of how Discord renames/reorders the other props.
+            find: "accountContainerRef:",
             replacement: [
                 {
-                    match: /(?<=className:(\i)\.\i,style:\i,)children:\[/,
-                    replace: "children:[...$self.renderButtons(arguments[0],$1),"
-                },
-                // fix discord weird shrink with extra buttons
-                {
-                    match: /(?<=\{ref:\i,)style:(\i)/,
-                    replace: "style:{...$1,minWidth:0}"
+                    match: /(?<=accountContainerRef:\i,[\s\S]{0,450}?)children:\[/,
+                    replace: "children:[...$self.renderButtons(arguments[0]),"
                 }
             ]
         }

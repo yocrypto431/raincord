@@ -8,6 +8,16 @@ let isGhostActive = false;
 let configFakeMute = true;
 let configFakeDeafen = true;
 
+const FAKE_VOICE_CHANGE_EVENT = "RAINCORD-fake-voice-change";
+
+// Notifica o botão da user area (e qualquer outro listener) que o estado
+// mudou, mesmo quando a mudança vem de fora do clique no botão (ex: comandos
+// /fakemute, /fakedeafen, /fakedeafen_mute). Sem isso o ícone do botão fica
+// desatualizado até o usuário clicar nele manualmente.
+function notifyFakeVoiceChange() {
+    try { window.dispatchEvent(new CustomEvent(FAKE_VOICE_CHANGE_EVENT)); } catch { }
+}
+
 const syncState = () => {
     const SelectedChannelStore = findByProps("getVoiceChannelId");
     const vm = findByProps("toggleSelfMute");
@@ -44,6 +54,7 @@ function GhostContextMenu() {
                         configFakeMute = nextState;
                         configFakeDeafen = nextState;
                         forceUpdate();
+                        notifyFakeVoiceChange();
                     }}
                 />
                 <Menu.MenuSeparator />
@@ -54,6 +65,7 @@ function GhostContextMenu() {
                     action={() => {
                         configFakeMute = !configFakeMute;
                         forceUpdate();
+                        notifyFakeVoiceChange();
                     }}
                 />
                 <Menu.MenuCheckboxItem
@@ -63,6 +75,7 @@ function GhostContextMenu() {
                     action={() => {
                         configFakeDeafen = !configFakeDeafen;
                         forceUpdate();
+                        notifyFakeVoiceChange();
                     }}
                 />
             </Menu.MenuGroup>
@@ -72,12 +85,20 @@ function GhostContextMenu() {
 
 function FakeDeafenUserButton({ iconForeground, hideTooltips, nameplate }: UserAreaRenderProps & { hideTooltips?: boolean }) {
     const [, forceUpdate] = React.useReducer((x: number) => x + 1, 0);
+
+    React.useEffect(() => {
+        const listener = () => forceUpdate();
+        window.addEventListener(FAKE_VOICE_CHANGE_EVENT, listener);
+        return () => window.removeEventListener(FAKE_VOICE_CHANGE_EVENT, listener);
+    }, []);
+
     return (
         <UserAreaButton
             onClick={() => {
                 isGhostActive = !isGhostActive;
                 syncState();
                 forceUpdate();
+                notifyFakeVoiceChange();
             }}
             onContextMenu={(e: React.MouseEvent) => ContextMenuApi.openContextMenu(e, () => <GhostContextMenu />)}
             tooltipText={hideTooltips ? undefined : isGhostActive ? "Desativar Fake Voice" : "Ativar Fake Voice (Direito: Config)"}
@@ -129,6 +150,7 @@ export default definePlugin({
                 configFakeMute = !configFakeMute;
                 isGhostActive = configFakeMute;
                 syncState();
+                notifyFakeVoiceChange();
                 sendBotMessage(ctx.channel.id, { content: `👻 **Fake Mute** est ${isGhostActive ? "activé" : "désactivé"}.` });
             },
         },
@@ -140,6 +162,7 @@ export default definePlugin({
                 configFakeDeafen = !configFakeDeafen;
                 isGhostActive = configFakeDeafen;
                 syncState();
+                notifyFakeVoiceChange();
                 sendBotMessage(ctx.channel.id, { content: `👻 **Fake Deafen** est ${isGhostActive ? "activé" : "désactivé"}.` });
             },
         },
@@ -153,6 +176,7 @@ export default definePlugin({
                 configFakeDeafen = next;
                 isGhostActive = next;
                 syncState();
+                notifyFakeVoiceChange();
                 sendBotMessage(ctx.channel.id, { content: `👻 **Fake Deafen & Mute** sont ${isGhostActive ? "activés" : "désactivés"}.` });
             },
         },
