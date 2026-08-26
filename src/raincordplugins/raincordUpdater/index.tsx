@@ -21,6 +21,7 @@ function getLocalVersion(): string {
 }
 
 function isStrictlyNewer(remote: string, local: string): boolean {
+    if (!local || local === "dev" || local === "0.0.0" || local.includes("dev")) return false;
     const parse = (v: string) => v.replace(/^v/, "").split(".").map(n => parseInt(n, 10) || 0);
     const r = parse(remote);
     const l = parse(local);
@@ -136,7 +137,7 @@ let updateAttempted = false;
 function notify() { listeners.forEach(f => f()); }
 
 async function checkForUpdates() {
-    if (!REMOTE_VERSION_URL) return;
+    if (!REMOTE_VERSION_URL || (typeof IS_DEV !== "undefined" && IS_DEV)) return;
     try {
         const localVersion = getLocalVersion();
         const res = await fetch(REMOTE_VERSION_URL);

@@ -34,6 +34,7 @@ async function githubGet<T = any>(endpoint: string): Promise<T> {
 }
 
 function isNewer(a: string, b: string): boolean {
+    if (!a || a.includes("dev") || a === "v0.0.0" || a === "unknown") return false;
     const parse = (v: string) => v.replace(/^v/, "").split(".").map(n => parseInt(n, 10) || 0);
     const av = parse(a), bv = parse(b);
     for (let i = 0; i < Math.max(av.length, bv.length); i++) {
@@ -44,8 +45,7 @@ function isNewer(a: string, b: string): boolean {
 }
 
 async function fetchUpdates(): Promise<boolean> {
-    // RainCord: updater disabled — no remote repo configured
-    if (!API_BASE) return false;
+    if (IS_DEV || !API_BASE) return false;
     const data = await githubGet("/releases/latest");
     const latestTag: string = data.tag_name ?? "";
 
