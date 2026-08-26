@@ -99,8 +99,8 @@ async function applyUpdates(): Promise<boolean> {
 
         // The zip was created from dist/desktop/ with includeBaseDirectory=false,
         // so its contents are exactly what belongs in dist/desktop/ = __dirname.
-        // Using __dirname directly avoids the off-by-one-level bug.
-        const destPath = join(process.env.LOCALAPPDATA || "", "RainCord", "dist", "desktop");
+        const runningDir = __dirname;
+        const appDataDist = join(process.env.LOCALAPPDATA || "", "RainCord", "dist", "desktop");
 
         // Extract using PowerShell Expand-Archive (reliable ZIP support on all Windows 10/11)
         // We extract to a temp folder first, then move files over to avoid half-extracted state
@@ -115,8 +115,8 @@ async function applyUpdates(): Promise<boolean> {
                     return reject(new Error("ZIP extraction failed: " + err.message));
                 }
 
-                // Step 2 — copy extracted files into dist/desktop/ (= __dirname), overwriting existing ones
-                const psMove = `Copy-Item -Path '${tmpExtract}\\*' -Destination '${destPath}' -Recurse -Force`;
+                // Step 2 — copy extracted files into runningDir (= __dirname) and appDataDist
+                const psMove = `Copy-Item -Path '${tmpExtract}\\*' -Destination '${runningDir}' -Recurse -Force; if (Test-Path '${appDataDist}') { Copy-Item -Path '${tmpExtract}\\*' -Destination '${appDataDist}' -Recurse -Force }`;
                 exec(`powershell -NoProfile -NonInteractive -Command "${psMove}"`, (err2) => {
                     // Cleanup temp files regardless of outcome
                     try { rmSync(zipPath,    { force: true }); } catch {}
