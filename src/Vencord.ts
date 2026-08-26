@@ -169,17 +169,14 @@ function showGreenUpdateBanner() {
     statusSpan.style.textOverflow = "ellipsis";
     statusSpan.style.whiteSpace = "nowrap";
 
-    let countdown = 10;
     let installing = false;
-    let countdownTimer: ReturnType<typeof setInterval> | null = null;
 
     function setStatus(text: string) { statusSpan.textContent = text; }
-    setStatus(`Instalação automática em ${countdown}s… (ou clique para instalar agora)`);
+    setStatus("Clique para instalar agora ou feche para ignorar.");
 
     async function doInstall() {
         if (installing) return;
         installing = true;
-        if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
         updateBtn.style.cursor = "not-allowed";
         updateBtn.textContent = "⏳ Instalando…";
         setStatus("⬇ Baixando…");
@@ -193,24 +190,12 @@ function showGreenUpdateBanner() {
             setTimeout(() => relaunch(), 3_000);
         } catch (e) {
             UpdateLogger.error("Auto-install failed", e);
-            setStatus("❌ Erro na instalação. Verifique sua conexão. A atualização será aplicada no próximo fechamento.");
+            setStatus("❌ Erro na instalação.");
             installing = false;
             updateBtn.style.cursor = "pointer";
             updateBtn.textContent = "⬇ Tentar novamente";
         }
     }
-
-    // Compte à rebours — auto-install après 10s
-    countdownTimer = setInterval(() => {
-        countdown--;
-        if (countdown <= 0) {
-            clearInterval(countdownTimer!);
-            countdownTimer = null;
-            doInstall();
-        } else {
-            setStatus(`Instalação automática em ${countdown}s… (ou clique para instalar agora)`);
-        }
-    }, 1_000);
 
     leftContent.appendChild(titleSpan);
     leftContent.appendChild(statusSpan);
@@ -234,7 +219,7 @@ function showGreenUpdateBanner() {
         fontWeight: "700",
         fontFamily: "inherit",
     });
-    updateBtn.textContent = "⬇ Installer maintenant";
+    updateBtn.textContent = "⬇ Atualizar agora";
     updateBtn.addEventListener("click", doInstall);
 
     const closeBtn = document.createElement("button");
@@ -249,12 +234,10 @@ function showGreenUpdateBanner() {
         lineHeight: "1",
     });
     closeBtn.textContent = "✕";
-    closeBtn.title = "Ignorer (la mise à jour sera installée à la fermeture de Discord)";
+    closeBtn.title = "Fechar";
     closeBtn.addEventListener("click", () => {
-        if (installing) return; // ne pas fermer si installation en cours
-        if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+        if (installing) return;
         banner.remove();
-        UpdateLogger.info("Update banner dismissed — will auto-apply on Discord quit.");
     });
 
     rightContent.appendChild(updateBtn);

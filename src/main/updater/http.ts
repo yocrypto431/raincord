@@ -46,19 +46,33 @@ function isNewer(a: string, b: string): boolean {
 
 async function fetchUpdates(): Promise<boolean> {
     if (IS_DEV || !API_BASE) return false;
-    const data = await githubGet("/releases/latest");
-    const latestTag: string = data.tag_name ?? "";
+    try {
+        const data = await githubGet("/releases/latest");
+        const latestTag: string = data.tag_name ?? "";
 
-    if (!latestTag || !isNewer(CURRENT_VERSION, latestTag)) return false;
+        if (!latestTag || !isNewer(CURRENT_VERSION, latestTag)) {
+            pendingDownloadUrl = null;
+            pendingVersion     = null;
+            return false;
+        }
 
-    const asset = (data.assets as any[])?.find(
-        (a: any) => a.name === ZIP_FILE
-    );
-    if (!asset) return false;
+        const asset = (data.assets as any[])?.find(
+            (a: any) => a.name === ZIP_FILE
+        );
+        if (!asset) {
+            pendingDownloadUrl = null;
+            pendingVersion     = null;
+            return false;
+        }
 
-    pendingDownloadUrl = asset.browser_download_url;
-    pendingVersion     = latestTag;
-    return true;
+        pendingDownloadUrl = asset.browser_download_url;
+        pendingVersion     = latestTag;
+        return true;
+    } catch {
+        pendingDownloadUrl = null;
+        pendingVersion     = null;
+        return false;
+    }
 }
 
 async function getUpdates() {
