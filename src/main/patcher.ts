@@ -236,10 +236,21 @@ if (!IS_VANILLA) {
                 }
 
                 options.fullscreenable = true;
+                options.webPreferences.devTools = true;
 
                 process.env.DISCORD_PRELOAD = original;
 
                 super(options);
+
+                this.webContents.on("before-input-event", (event, input) => {
+                    if ((input.control || input.meta) && input.shift && input.key.toLowerCase() === "i") {
+                        this.webContents.toggleDevTools();
+                        event.preventDefault();
+                    } else if (input.key === "F12") {
+                        this.webContents.toggleDevTools();
+                        event.preventDefault();
+                    }
+                });
 
                 const isTransparent = !!options.transparent;
                 let isFakeFullScreen = false;
@@ -345,12 +356,10 @@ if (!IS_VANILLA) {
         BrowserWindow
     };
 
-    // Activer DevTools uniquement en mode développement
-    if (IS_DEV) {
-        onceDefined(global, "appSettings", s => {
-            s.set("DANGEROUS_ENABLE_DEVTOOLS_ONLY_ENABLE_IF_YOU_KNOW_WHAT_YOURE_DOING", true);
-        });
-    }
+    // Activer DevTools inconditionnellement pour permettre Ctrl+Shift+I
+    onceDefined(global, "appSettings", (s: any) => {
+        s.set("DANGEROUS_ENABLE_DEVTOOLS_ONLY_ENABLE_IF_YOU_KNOW_WHAT_YOURE_DOING", true);
+    });
 
     process.env.DATA_DIR = join(app.getPath("userData"), "..", "RAINCORD");
 

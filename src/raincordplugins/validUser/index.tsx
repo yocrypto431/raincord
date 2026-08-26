@@ -1,20 +1,8 @@
 /*
  * Vencord, a modification for Discord's desktop app
- * Copyright (c) 2023 Vendicated and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
+ * Copyright (c) 2023-2026 Vendicated, Dolfies, and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
 
 import ErrorBoundary from "@components/ErrorBoundary";
 import { Devs } from "@utils/constants";
@@ -23,11 +11,11 @@ import { sleep } from "@utils/misc";
 import { Queue } from "@utils/Queue";
 import definePlugin from "@utils/types";
 import { ProfileBadge } from "@vencord/discord-types";
-import { Constants, FluxDispatcher, RestAPI, UserProfileStore, UserStore, useState } from "@webpack/common";
-import { type ComponentType, type ReactNode } from "react";
+import { Constants, FluxDispatcher, Parser, RestAPI, UserProfileStore, UserStore } from "@webpack/common";
+import { type MouseEvent } from "react";
 
-// LYING to the type checker here
-const UserFlags = Constants.UserFlags as Record<string, number>;
+// Types
+const UserFlags = (Constants.UserFlags ?? {}) as Record<string, number>;
 const badges: Record<string, ProfileBadge> = {
     active_developer: { id: "active_developer", description: "Active Developer", icon: "6bdc42827a38498929a4920da12695d9", link: "https://support-dev.discord.com/hc/en-us/articles/10113997751447" },
     bug_hunter_level_1: { id: "bug_hunter_level_1", description: "Discord Bug Hunter", icon: "2717692c7dca7289b35297368a940dd0", link: "https://support.discord.com/hc/en-us/articles/360046057772-Discord-Bugs" },
@@ -48,169 +36,218 @@ const badges: Record<string, ProfileBadge> = {
 const fetching = new Set<string>();
 const queue = new Queue(5);
 
-interface MentionProps {
-    data: {
-        userId?: string;
-        channelId?: string;
-        content: any;
-    };
-    parse: (content: any, props: MentionProps["props"]) => ReactNode;
-    props: {
-        key: string;
-        formatInline: boolean;
-        noStyleAndInteraction: boolean;
-    };
-    RoleMention: ComponentType<any>;
-    UserMention: ComponentType<any>;
-}
+export async function fetchUser(id: string) {
+    if (!id || typeof id !== "string" || !/^\d{17,20}$/.test(id)) return null;
 
-async function getUser(id: string) {
     let userObj = UserStore.getUser(id);
-    if (userObj)
-        return userObj;
+    if (userObj) return userObj;
 
-    const user: any = await RestAPI.get({ url: Constants.Endpoints.USER(id) }).then(response => {
-        FluxDispatcher.dispatch({
-            type: "USER_UPDATE",
-            user: response.body,
+    if (fetching.has(id)) return null;
+    fetching.add(id);
+
+    try {
+        const endpoint = Constants.Endpoints?.USER ? Constants.Endpoints.USER(id) : `/users/${id}`;
+        const response = await RestAPI.get({
+            url: endpoint,
+            retries: 2
         });
 
-        return response.body;
-    });
+        const user = response?.body;
+        if (!user || !user.id) return null;
 
-    // Populate the profile
-    await FluxDispatcher.dispatch(
-        {
-            type: "USER_PROFILE_FETCH_FAILURE",
-            userId: id,
+        FluxDispatcher.dispatch({
+            type: "USER_UPDATE",
+            user: user,
+        });
+
+        userObj = UserStore.getUser(id);
+
+        try {
+            const fakeBadges: ProfileBadge[] = Object.entries(UserFlags)
+                .filter(([_, flag]) => !isNaN(flag) && userObj?.hasFlag?.(flag))
+                .map(([key]) => badges[key.toLowerCase()])
+                .filter(isNonNullish);
+
+            if (user.premium_type || (!user.bot && (user.banner || user.avatar?.startsWith?.("a_")))) {
+                fakeBadges.push(badges.premium);
+            }
+
+            const profile = UserProfileStore.getUserProfile(id);
+            if (profile) {
+                profile.accentColor = user.accent_color;
+                profile.badges = fakeBadges;
+                profile.banner = user.banner;
+                profile.premiumType = user.premium_type;
+            }
+        } catch { }
+
+        return userObj;
+    } catch (e: any) {
+        if (e?.status === 429) {
+            const retryAfter = e?.body?.retry_after ?? 1000;
+            queue.unshift(() => sleep(retryAfter).then(() => fetchUser(id)));
         }
-    );
-
-    userObj = UserStore.getUser(id);
-    const fakeBadges: ProfileBadge[] = Object.entries(UserFlags)
-        .filter(([_, flag]) => !isNaN(flag) && userObj.hasFlag(flag))
-        .map(([key]) => badges[key.toLowerCase()])
-        .filter(isNonNullish);
-    if (user.premium_type || !user.bot && (user.banner || user.avatar?.startsWith?.("a_")))
-        fakeBadges.push(badges.premium);
-
-    // Fill in what we can deduce
-    const profile = UserProfileStore.getUserProfile(id);
-    if (profile) {
-        profile.accentColor = user.accent_color;
-        profile.badges = fakeBadges;
-        profile.banner = user.banner;
-        profile.premiumType = user.premium_type;
+        return null;
+    } finally {
+        fetching.delete(id);
+        await sleep(200);
     }
-
-    return userObj;
 }
 
-function MentionWrapper({ data, UserMention, RoleMention, parse, props }: MentionProps) {
-    const [userId, setUserId] = useState(data.userId);
-
-    // if userId is set it means the user is cached. Uncached users have userId set to undefined
-    if (userId)
-        return (
-            <UserMention
-                className="mention"
-                userId={userId}
-                channelId={data.channelId}
-                inlinePreview={props.noStyleAndInteraction}
-                props={props}
-                key={props.key}
-            />
-        );
-
-    // Parses the raw text node array data.content into a ReactNode[]: ["<@userid>"]
-    const children = parse(data.content, props);
-
-    return (
-        // Discord is deranged and renders unknown user mentions as role mentions
-        <RoleMention
-            {...data}
-            props={props}
-            inlinePreview={props.formatInline}
-        >
-            <span
-                onMouseEnter={() => {
-                    const mention = children?.[0]?.props?.children;
-                    if (typeof mention !== "string") return;
-
-                    const id = mention.match(/<@!?(\d+)>/)?.[1];
-                    if (!id) return;
-
-                    if (fetching.has(id))
-                        return;
-
-                    if (UserStore.getUser(id))
-                        return setUserId(id);
-
-                    const fetch = () => {
-                        fetching.add(id);
-
-                        queue.unshift(() =>
-                            getUser(id)
-                                .then(() => {
-                                    setUserId(id);
-                                    fetching.delete(id);
-                                })
-                                .catch(e => {
-                                    if (e?.status === 429) {
-                                        queue.unshift(() => sleep(e?.body?.retry_after ?? 1000).then(fetch));
-                                        fetching.delete(id);
-                                    }
-                                })
-                                .finally(() => sleep(300))
-                        );
-                    };
-
-                    fetch();
-                }}
-            >
-                {children}
-            </span>
-        </RoleMention>
-    );
+function queueFetchUser(id?: string) {
+    if (!id || typeof id !== "string" || !/^\d{17,20}$/.test(id)) return;
+    if (UserStore.getUser(id) || fetching.has(id)) return;
+    queue.unshift(() => fetchUser(id));
 }
+
+function extractSnowflake(val: any): string | null {
+    if (!val) return null;
+    if (typeof val === "string") {
+        const match = val.match(/<@!?(\d{17,20})>/) || val.match(/\b(\d{17,20})\b/);
+        if (match) return match[1];
+    }
+    if (typeof val === "object") {
+        if (val.userId && /^\d{17,20}$/.test(String(val.userId))) return String(val.userId);
+        if (val.id && /^\d{17,20}$/.test(String(val.id))) return String(val.id);
+        if (val.roleId && /^\d{17,20}$/.test(String(val.roleId))) return String(val.roleId);
+        if (val.props) return extractSnowflake(val.props);
+        if (val.content) return extractSnowflake(val.content);
+        if (Array.isArray(val)) {
+            for (const item of val) {
+                const found = extractSnowflake(item);
+                if (found) return found;
+            }
+        }
+    }
+    return null;
+}
+
+let unhookParser: (() => void) | null = null;
 
 export default definePlugin({
     name: "ValidUser",
     description: "Fix mentions for unknown users showing up as '@unknown-user' (hover over a mention to fix it)",
     authors: [Devs.Ven, Devs.Dolfies],
-    tags: ["MentionCacheFix"],
+    tags: ["MentionCacheFix", "Chat", "Utility"],
 
     patches: [
+        // Patch UserMention component (has .USER_MENTION)
         {
-            find: 'className:"mention"',
-            replacement: {
-                // mention = { react: function (data, parse, props) { if (data.userId == null) return RoleMention() else return UserMention()
-                match: /react(?=\(\i,\i,\i\).{0,100}return null==.{0,70}\?\(0,\i\.jsx\)\((\i\.\i),.+?jsx\)\((\i\.\i),\{className:"mention")/,
-                // react: (...args) => OurWrapper(RoleMention, UserMention, ...args), originalReact: theirFunc
-                replace: "react:(...args)=>$self.renderMention($1,$2,...args),originalReact"
-            }
+            find: ".USER_MENTION)",
+            replacement: [
+                {
+                    match: /(className:"mention",)/,
+                    replace: "$1onMouseEnter:(e)=>$self.handleUserMentionHover(arguments[0],e),"
+                }
+            ]
         },
+        // Patch RoleMention component (has .ROLE_MENTION) - used as fallback for uncached mentions
         {
-            find: "unknownUserMentionPlaceholder:",
-            replacement: {
-                match: /unknownUserMentionPlaceholder:/,
-                replace: "$&false&&"
-            }
+            find: ".ROLE_MENTION)",
+            replacement: [
+                {
+                    match: /(?<=className:\i\.\i,background:!1,.{0,60}?)(?=children:)/,
+                    replace: "onMouseEnter:(e)=>$self.handleRoleMentionHover(arguments[0],e),"
+                }
+            ]
+        },
+        // Patch Markdown mention rule to ensure userId and props are preserved
+        {
+            find: "noStyleAndInteraction},",
+            replacement: [
+                {
+                    match: /(className:"mention",)/,
+                    replace: "$1props:arguments[2],onMouseEnter:(e)=>$self.handleMentionRuleHover(arguments[0],e),"
+                }
+            ]
         }
     ],
 
-    renderMention(RoleMention, UserMention, data, parse, props) {
-        return (
-            <ErrorBoundary noop>
-                <MentionWrapper
-                    key={"mention" + data.userId}
-                    RoleMention={RoleMention}
-                    UserMention={UserMention}
-                    data={data}
-                    parse={parse}
-                    props={props}
-                />
-            </ErrorBoundary>
-        );
+    start() {
+        // Runtime hook into SimpleMarkdown mention parser rule if available
+        if (Parser?.defaultRules?.mention) {
+            const originalParse = Parser.defaultRules.mention.parse;
+            const originalReact = Parser.defaultRules.mention.react;
+
+            if (originalParse) {
+                Parser.defaultRules.mention.parse = function (capture: any, parse: any, state: any) {
+                    const node = originalParse.call(this, capture, parse, state);
+                    if (node && capture?.[0]) {
+                        const id = capture[0].match(/<@!?(\d{17,20})>/)?.[1];
+                        if (id) {
+                            node.userId = id;
+                            node.id = id;
+                        }
+                    }
+                    return node;
+                };
+            }
+
+            if (originalReact) {
+                Parser.defaultRules.mention.react = function (node: any, output: any, state: any) {
+                    const id = node?.userId || node?.id || extractSnowflake(node);
+                    const rendered = originalReact.call(this, node, output, state);
+
+                    if (id && !UserStore.getUser(id)) {
+                        return (
+                            <span
+                                onMouseEnter={() => queueFetchUser(id)}
+                                className="vc-validuser-container"
+                                style={{ display: "inline-contents" }}
+                            >
+                                {rendered}
+                            </span>
+                        );
+                    }
+
+                    return rendered;
+                };
+            }
+
+            unhookParser = () => {
+                if (Parser?.defaultRules?.mention) {
+                    if (originalParse) Parser.defaultRules.mention.parse = originalParse;
+                    if (originalReact) Parser.defaultRules.mention.react = originalReact;
+                }
+            };
+        }
     },
+
+    stop() {
+        if (unhookParser) {
+            unhookParser();
+            unhookParser = null;
+        }
+    },
+
+    handleUserMentionHover(props: any, event?: MouseEvent) {
+        const id = props?.userId || props?.id || extractSnowflake(props);
+        if (id) {
+            queueFetchUser(id);
+        } else if (event?.currentTarget?.textContent) {
+            const extracted = extractSnowflake(event.currentTarget.textContent);
+            if (extracted) queueFetchUser(extracted);
+        }
+    },
+
+    handleRoleMentionHover(props: any, event?: MouseEvent) {
+        const id = props?.userId || props?.id || extractSnowflake(props);
+        if (id && !id.startsWith("&")) {
+            queueFetchUser(id);
+        } else if (event?.currentTarget?.textContent) {
+            const text = event.currentTarget.textContent;
+            const extracted = extractSnowflake(text);
+            if (extracted) queueFetchUser(extracted);
+        }
+    },
+
+    handleMentionRuleHover(data: any, event?: MouseEvent) {
+        const id = data?.userId || data?.id || extractSnowflake(data);
+        if (id) {
+            queueFetchUser(id);
+        } else if (event?.currentTarget?.textContent) {
+            const extracted = extractSnowflake(event.currentTarget.textContent);
+            if (extracted) queueFetchUser(extracted);
+        }
+    }
 });
