@@ -6,23 +6,23 @@
 import { fetchBuffer, fetchJson } from "@main/utils/http";
 import { IpcEvents } from "@shared/IpcEvents";
 import { VENCORD_USER_AGENT } from "@shared/vencordUserAgent";
-import { ipcMain, app } from "electron";
-import { writeFileSync, rmSync } from "original-fs";
-import { join } from "path";
-import { exec } from "child_process";
+import { app,ipcMain } from "electron";
+import { unzipSync } from "fflate";
+import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "original-fs";
+import { dirname, isAbsolute, join, relative, resolve } from "path";
 
 import { serializeErrors } from "./common";
 
 const RELEASES_REPO = "yocrypto431/raincord";
-const API_BASE      = "https://api.github.com/repos/yocrypto431/raincord";
-const REPO_URL      = "https://github.com/yocrypto431/raincord";
+const API_BASE = "https://api.github.com/repos/yocrypto431/raincord";
+const REPO_URL = "https://github.com/yocrypto431/raincord";
 declare const VERSION: string;
 const CURRENT_VERSION = `v${VERSION}`;
 const ZIP_FILE = "RAINCORD-dist.zip";
 
-let pendingDownloadUrl: string | null  = null;
-let pendingVersion:     string | null  = null;
-let isApplying                         = false;
+let pendingDownloadUrl: string | null = null;
+let pendingVersion: string | null = null;
+let isApplying = false;
 
 async function githubGet<T = any>(endpoint: string): Promise<T> {
     return fetchJson<T>(API_BASE + endpoint, {
@@ -52,7 +52,7 @@ async function fetchUpdates(): Promise<boolean> {
 
         if (!latestTag || !isNewer(CURRENT_VERSION, latestTag)) {
             pendingDownloadUrl = null;
-            pendingVersion     = null;
+            pendingVersion = null;
             return false;
         }
 
@@ -61,16 +61,16 @@ async function fetchUpdates(): Promise<boolean> {
         );
         if (!asset) {
             pendingDownloadUrl = null;
-            pendingVersion     = null;
+            pendingVersion = null;
             return false;
         }
 
         pendingDownloadUrl = asset.browser_download_url;
-        pendingVersion     = latestTag;
+        pendingVersion = latestTag;
         return true;
     } catch {
         pendingDownloadUrl = null;
-        pendingVersion     = null;
+        pendingVersion = null;
         return false;
     }
 }
@@ -90,58 +90,42 @@ async function applyUpdates(): Promise<boolean> {
     if (isApplying) return false;
     isApplying = true;
 
+    let stagingDir: string | undefined;
     try {
-        const data = await fetchBuffer(pendingDownloadUrl);
+        const files = unzipSync(await fetchBuffer(pendingDownloadUrl));
+        if (!files["patcher.js"]?.length || !files["renderer.js"]?.length || !files["preload.js"]?.length) {
+            throw new Error("O pacote de atualização está incompleto.");
+        }
 
-        // Save zip to temp
-        const zipPath = join(app.getPath("temp"), `RAINCORD-update-${Date.now()}.zip`);
-        writeFileSync(zipPath, data, { flush: true });
+        stagingDir = mkdtempSync(join(app.getPath("temp"), "RAINCORD-update-"));
+        for (const [name, contents] of Object.entries(files)) {
+            const destination = resolve(stagingDir, name);
+            const relativePath = relative(stagingDir, destination);
+            if (relativePath.startsWith("..") || isAbsolute(relativePath) || name.includes("\\") || name.includes(":")) {
+                throw new Error("O pacote contém um caminho inválido.");
+            }
+            if (name.endsWith("/")) {
+                mkdirSync(destination, { recursive: true });
+                continue;
+            }
+            mkdirSync(dirname(destination), { recursive: true });
+            writeFileSync(destination, contents, { flush: true });
+        }
 
-        // The zip was created from dist/desktop/ with includeBaseDirectory=false,
-        // so its contents are exactly what belongs in dist/desktop/ = __dirname.
-        const runningDir = __dirname;
-        const appDataDist = join(process.env.LOCALAPPDATA || "", "RainCord", "dist", "desktop");
-
-        // Extract using PowerShell Expand-Archive (reliable ZIP support on all Windows 10/11)
-        // We extract to a temp folder first, then move files over to avoid half-extracted state
-        const tmpExtract = join(app.getPath("temp"), `RAINCORD-extract-${Date.now()}`);
-
-        return await new Promise<boolean>((resolve, reject) => {
-            // Step 1 — extract zip to temp folder
-            const psExtract = `Expand-Archive -LiteralPath '${zipPath}' -DestinationPath '${tmpExtract}' -Force`;
-            exec(`powershell -NoProfile -NonInteractive -Command "${psExtract}"`, (err) => {
-                if (err) {
-                    try { rmSync(zipPath, { force: true }); } catch {}
-                    return reject(new Error("ZIP extraction failed: " + err.message));
-                }
-
-                // Step 2 — copy extracted files into runningDir (= __dirname) and appDataDist
-                const psMove = `Copy-Item -Path '${tmpExtract}\\*' -Destination '${runningDir}' -Recurse -Force; if (Test-Path '${appDataDist}') { Copy-Item -Path '${tmpExtract}\\*' -Destination '${appDataDist}' -Recurse -Force }`;
-                exec(`powershell -NoProfile -NonInteractive -Command "${psMove}"`, (err2) => {
-                    // Cleanup temp files regardless of outcome
-                    try { rmSync(zipPath,    { force: true }); } catch {}
-                    try { rmSync(tmpExtract, { recursive: true, force: true }); } catch {}
-
-                    if (err2) {
-                        return reject(new Error("File copy failed: " + err2.message));
-                    }
-
-                    pendingDownloadUrl = null;
-                    pendingVersion = null;
-                    console.log("[RAINCORD] Atualização aplicada com sucesso! Reinicie o Discord.");
-                    resolve(true);
-                });
-            });
-        });
+        cpSync(stagingDir, __dirname, { recursive: true, force: true });
+        pendingDownloadUrl = null;
+        pendingVersion = null;
+        return true;
     } finally {
         isApplying = false;
+        if (stagingDir) rmSync(stagingDir, { recursive: true, force: true });
     }
 }
 
 // ─── Auto-update on quit ─────────────────────────────────────────────────────
 // Si une mise à jour est en attente quand Discord se ferme, on l'installe
 // silencieusement avant de quitter (timeout de sécurité 45s).
-app.on("before-quit", (event) => {
+app.on("before-quit", event => {
     // Ne tenter l'update que si une URL est en attente ET qu'on n'est pas déjà en train
     if (!pendingDownloadUrl || isApplying) return;
 
@@ -159,7 +143,7 @@ app.on("before-quit", (event) => {
     applyUpdates()
         .then(ok => {
             if (ok) console.log("[RAINCORD] Update applied successfully on quit.");
-            else    console.warn("[RAINCORD] Update on quit returned false.");
+            else console.warn("[RAINCORD] Update on quit returned false.");
         })
         .catch(err => {
             console.error("[RAINCORD] Update on quit failed:", err);
@@ -173,7 +157,7 @@ app.on("before-quit", (event) => {
         });
 });
 
-ipcMain.handle(IpcEvents.GET_REPO,    serializeErrors(() => REPO_URL));
+ipcMain.handle(IpcEvents.GET_REPO, serializeErrors(() => REPO_URL));
 ipcMain.handle(IpcEvents.GET_UPDATES, serializeErrors(getUpdates));
-ipcMain.handle(IpcEvents.UPDATE,      serializeErrors(fetchUpdates));
-ipcMain.handle(IpcEvents.BUILD,       serializeErrors(applyUpdates));
+ipcMain.handle(IpcEvents.UPDATE, serializeErrors(fetchUpdates));
+ipcMain.handle(IpcEvents.BUILD, serializeErrors(applyUpdates));
