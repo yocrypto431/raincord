@@ -3,16 +3,20 @@
  * Loga pedidos de amizade e remoções. Visual clean estilo Discord.
  */
 
+import "./styles.css";
+
 import * as DataStore from "@api/DataStore";
 import { addHeaderBarButton, HeaderBarButton, removeHeaderBarButton } from "@api/HeaderBar";
 import { showNotification } from "@api/Notifications";
+import { classNameFactory } from "@utils/css";
+import { openUserProfile } from "@utils/discord";
+import { Logger } from "@utils/Logger";
+import { ModalCloseButton,ModalContent, ModalHeader, ModalRoot, ModalSize, openModal } from "@utils/modal";
 import definePlugin from "@utils/types";
-import { openModal, ModalRoot, ModalSize, ModalHeader, ModalContent, ModalCloseButton } from "@utils/modal";
-import { RestAPI, React, UserStore, useState, useEffect, Button, Forms } from "@webpack/common";
-import { findByPropsLazy } from "@webpack";
+import { IconUtils,React, useEffect, UserStore, useState } from "@webpack/common";
 
-const UserUtils = findByPropsLazy("getUser", "fetchCurrentUser");
-const UserProfileActions = findByPropsLazy("openUserProfileModal", "closeUserProfileModal");
+const cl = classNameFactory("rc-friend-log-");
+const logger = new Logger("FriendLog");
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -54,26 +58,11 @@ async function addEvent(ev: FriendEvent) {
 
 // ── Resolve user ──────────────────────────────────────────────────────────────
 
-async function resolveUser(id: string): Promise<{ name: string; avatar: string | null; }> {
-    try {
-        let user = UserStore.getUser?.(id);
-        if (!user) user = await UserUtils.getUser(id);
-        if (user) {
-            const avatar = user.avatar
-                ? `https://cdn.discordapp.com/avatars/${id}/${user.avatar}.${user.avatar.startsWith("a_") ? "gif" : "png"}?size=128`
-                : null;
-            return { name: user.username ?? user.global_name ?? id, avatar };
-        }
-    } catch { }
-    try {
-        const res = await RestAPI.get({ url: `/users/${id}` });
-        if (res.body) {
-            const u = res.body;
-            const avatar = u.avatar ? `https://cdn.discordapp.com/avatars/${id}/${u.avatar}.png?size=128` : null;
-            return { name: u.username ?? u.global_name ?? id, avatar };
-        }
-    } catch { }
-    return { name: id, avatar: null };
+function resolveUser(id: string): { name: string; avatar: string | null; } {
+    const user = UserStore.getUser(id);
+    if (!user) return { name: id, avatar: null };
+
+    return { name: user.username ?? user.globalName ?? id, avatar: IconUtils.getUserAvatarURL(user, false, 128) };
 }
 
 // ── Flux Handlers ─────────────────────────────────────────────────────────────
@@ -82,7 +71,7 @@ async function onRelationshipAdd(event: any) {
     const { relationship } = event;
     if (!relationship) return;
     const { id, type } = relationship;
-    const info = await resolveUser(id);
+    const info = resolveUser(id);
 
     if (type === 3) {
         await addEvent({ id: crypto.randomUUID(), userId: id, username: info.name, avatar: info.avatar, type: "request_received", timestamp: Date.now() });
@@ -96,7 +85,7 @@ async function onRelationshipRemove(event: any) {
     const { relationship } = event;
     if (!relationship) return;
     const { id, type } = relationship;
-    const info = await resolveUser(id);
+    const info = resolveUser(id);
 
     if (type === 3) {
         await addEvent({ id: crypto.randomUUID(), userId: id, username: info.name, avatar: info.avatar, type: "request_cancelled", timestamp: Date.now() });
@@ -112,7 +101,7 @@ async function onRelationshipRemove(event: any) {
 function getEventText(ev: FriendEvent): string {
     switch (ev.type) {
         case "request_received": return "te enviou um pedido de amizade.";
-        case "friend_added": return "aceitou seu pedido de amizade.";
+        case "friend_added": return "agora está na sua lista de amigos.";
         case "friend_removed": return "não é mais seu amigo.";
         case "request_cancelled": return "cancelou o pedido de amizade.";
     }
@@ -132,179 +121,128 @@ function getEventDot(type: EventType): string {
 function timeAgo(ts: number): string {
     const diff = Date.now() - ts;
     const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "now";
+    if (mins < 1) return "agora";
     if (mins < 60) return `${mins}m`;
     const hours = Math.floor(mins / 60);
     if (hours < 24) return `${hours}h`;
     const days = Math.floor(hours / 24);
     if (days < 30) return `${days}d`;
     const months = Math.floor(days / 30);
-    return `${months}mo`;
+    return `${months} meses`;
 }
 
 // ── Open Profile ──────────────────────────────────────────────────────────────
 
-function openProfile(userId: string) {
-    try { UserProfileActions.openUserProfileModal?.({ userId }); } catch { }
+async function openProfile(userId: string): Promise<boolean> {
+    try {
+        await openUserProfile(userId);
+        return true;
+    } catch (error) {
+        logger.error("Failed to open profile", error);
+        showNotification({ title: "Não foi possível abrir o perfil", body: "Tente novamente em alguns instantes." });
+        return false;
+    }
 }
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
 
 function FriendLogModal({ onClose }: { onClose: () => void; }) {
-    const [localEvents, setLocalEvents] = useState<FriendEvent[]>([...events].reverse());
+    const [localEvents, setLocalEvents] = useState<FriendEvent[]>(() => [...events].reverse());
     const [filter, setFilter] = useState<"all" | EventType>("all");
+    const [opening, setOpening] = useState<string | null>(null);
 
     useEffect(() => {
-        loadEvents().then(() => setLocalEvents([...events].reverse()));
+        const update = () => {
+            unreadCount = 0;
+            setLocalEvents([...events].reverse());
+        };
+        uiListeners.push(update);
         unreadCount = 0;
         notifyUI();
+        return () => { uiListeners = uiListeners.filter(listener => listener !== update); };
     }, []);
 
-    const clearAll = async () => { events = []; await saveEvents(); setLocalEvents([]); };
-
-    const filtered = filter === "all" ? localEvents : localEvents.filter(e => e.type === filter);
-
-    const filterButtons: Array<{ key: "all" | EventType; label: string; color: string; }> = [
-        { key: "all", label: "All", color: "#5865f2" },
-        { key: "request_received", label: "Requests", color: "#5865f2" },
-        { key: "friend_added", label: "Added", color: "#23a55a" },
-        { key: "friend_removed", label: "Removed", color: "#f23f43" },
-        { key: "request_cancelled", label: "Cancelled", color: "#80848e" },
+    const clearAll = async () => {
+        events = [];
+        unreadCount = 0;
+        notifyUI();
+        try {
+            await saveEvents();
+        } catch (error) {
+            logger.error("Failed to clear history", error);
+            showNotification({ title: "Erro ao salvar", body: "Não foi possível salvar a limpeza do histórico." });
+        }
+    };
+    const filtered = filter === "all" ? localEvents : localEvents.filter(event => event.type === filter);
+    const filters: Array<{ key: "all" | EventType; label: string; }> = [
+        { key: "all", label: "Todos" },
+        { key: "request_received", label: "Pedidos" },
+        { key: "friend_added", label: "Adicionados" },
+        { key: "friend_removed", label: "Removidos" },
+        { key: "request_cancelled", label: "Cancelados" }
     ];
 
     return (
         <>
-            <ModalHeader separator={false} style={{ padding: "16px 20px", background: "linear-gradient(180deg, var(--background-secondary) 0%, transparent 100%)" }}>
-                <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{
-                        width: 32, height: 32, borderRadius: 8,
-                        background: "linear-gradient(135deg, #5865f2, #4752c4)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
-                            <path d="M18.5 4A1.5 1.5 0 0 0 17 5.5V7h-4V5.5A1.5 1.5 0 0 0 11.5 4h-3A1.5 1.5 0 0 0 7 5.5V7H5.5A1.5 1.5 0 0 0 4 8.5v10A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-10A1.5 1.5 0 0 0 18.5 7H17V5.5A1.5 1.5 0 0 0 15.5 4h-3z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <Forms.FormTitle tag="h2" style={{ margin: 0, fontSize: 18 }}>FriendLog</Forms.FormTitle>
-                        <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{localEvents.length} events</div>
-                    </div>
+            <ModalHeader separator={false} className={cl("header")}>
+                <div className={cl("heading")}>
+                    <h2 className={cl("title")}>FriendLog</h2>
+                    <p className={cl("subtitle")}>Seu histórico de amizades</p>
                 </div>
-                <button
-                    onClick={clearAll}
-                    style={{
-                        background: "var(--button-secondary-background)",
-                        border: "none", color: "var(--text-normal)",
-                        cursor: "pointer", fontSize: 12, fontWeight: 600,
-                        padding: "8px 14px", borderRadius: 6,
-                        marginRight: 8,
-                    }}
-                >
-                    Clear All
-                </button>
+                <button type="button" className={cl("clear")} onClick={clearAll} disabled={!localEvents.length}>Limpar histórico</button>
                 <ModalCloseButton onClick={onClose} />
             </ModalHeader>
-            <ModalContent style={{ padding: 0 }}>
-                <div style={{ display: "flex", gap: 6, padding: "12px 20px", overflowX: "auto", borderBottom: "1px solid var(--background-modifier-accent)" }}>
-                    {filterButtons.map(b => (
-                        <button
-                            key={b.key}
-                            onClick={() => setFilter(b.key)}
-                            style={{
-                                background: filter === b.key ? b.color : "var(--background-modifier-hover)",
-                                color: filter === b.key ? "white" : "var(--text-normal)",
-                                border: "none",
-                                padding: "6px 12px",
-                                borderRadius: 14,
-                                fontSize: 12,
-                                fontWeight: 600,
-                                cursor: "pointer",
-                                whiteSpace: "nowrap",
-                                transition: "all 0.15s",
-                            }}
-                        >
-                            {b.label}
-                        </button>
-                    ))}
-                </div>
-                <div style={{ padding: "8px 0 16px" }}>
-                    {filtered.length === 0 ? (
-                        <div style={{ textAlign: "center", padding: 60, color: "var(--text-muted)" }}>
-                            <div style={{ fontSize: 48, marginBottom: 8 }}>📭</div>
-                            <div style={{ fontSize: 14, fontWeight: 600 }}>No events yet</div>
-                            <div style={{ fontSize: 12, marginTop: 4 }}>Friend activity will appear here.</div>
-                        </div>
-                    ) : filtered.map(ev => (
-                        <div
-                            key={ev.id}
-                            onClick={() => openProfile(ev.userId)}
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 14,
-                                padding: "12px 20px",
-                                cursor: "pointer",
-                                transition: "background 0.15s",
-                                position: "relative",
-                            }}
-                            onMouseEnter={e => (e.currentTarget.style.background = "var(--background-modifier-hover)")}
-                            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-                        >
-                            <div style={{
-                                position: "absolute",
-                                left: 0, top: "50%", transform: "translateY(-50%)",
-                                width: 3, height: "60%",
-                                background: getEventDot(ev.type),
-                                borderRadius: "0 2px 2px 0",
-                            }} />
-                            <div style={{ position: "relative", flexShrink: 0 }}>
-                                <img
-                                    src={ev.avatar ?? `https://cdn.discordapp.com/embed/avatars/${parseInt(ev.userId) % 5}.png`}
-                                    width={44}
-                                    height={44}
-                                    style={{ borderRadius: "50%" }}
-                                    onError={e => { (e.target as HTMLImageElement).src = "https://cdn.discordapp.com/embed/avatars/0.png"; }}
-                                />
-                                <div style={{
-                                    position: "absolute",
-                                    bottom: -2, right: -2,
-                                    width: 18, height: 18,
-                                    borderRadius: "50%",
-                                    background: getEventDot(ev.type),
-                                    border: "2px solid var(--background-primary)",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    fontSize: 10,
-                                }}>
-                                    {ev.type === "request_received" ? "📨" : ev.type === "friend_added" ? "✓" : ev.type === "friend_removed" ? "✕" : "↩"}
-                                </div>
-                            </div>
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                                <div style={{ fontSize: 14, lineHeight: "18px", marginBottom: 2 }}>
-                                    <strong style={{ color: "var(--text-normal)" }}>{ev.username}</strong>
-                                    {" "}
-                                    <span style={{ color: "var(--text-muted)" }}>{getEventText(ev)}</span>
-                                </div>
-                                <div style={{ fontSize: 11, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6 }}>
-                                    <span>{timeAgo(ev.timestamp)}</span>
-                                    <span>•</span>
-                                    <span style={{ color: getEventDot(ev.type), fontWeight: 600 }}>
-                                        {ev.type === "request_received" ? "Request" : ev.type === "friend_added" ? "Friend Added" : ev.type === "friend_removed" ? "Removed" : "Cancelled"}
+            <div className={cl("filters")} role="group" aria-label="Filtrar atividades">
+                {filters.map(item => (
+                    <button type="button" key={item.key} className={cl("filter")} aria-pressed={filter === item.key} onClick={() => setFilter(item.key)}>
+                        {item.label}
+                        <span className={cl("count")}>{item.key === "all" ? localEvents.length : localEvents.filter(event => event.type === item.key).length}</span>
+                    </button>
+                ))}
+            </div>
+            <ModalContent className={cl("content")}>
+                {filtered.length === 0 ? (
+                    <div className={cl("empty")}>
+                        <strong>Nenhuma atividade por aqui</strong>
+                        <p>{localEvents.length ? "Escolha outro filtro para ver os registros." : "Novos pedidos e mudanças nas amizades aparecerão aqui."}</p>
+                    </div>
+                ) : (
+                    <ul className={cl("list")}>
+                        {filtered.map(event => (
+                            <li key={event.id}>
+                                <button type="button" className={cl("entry")} disabled={opening !== null} aria-busy={opening === event.id}
+                                    onClick={async () => {
+                                        setOpening(event.id);
+                                        const opened = await openProfile(event.userId);
+                                        if (opened) onClose();
+                                        else setOpening(null);
+                                    }}>
+                                    <img className={cl("avatar")} src={event.avatar ?? IconUtils.getDefaultAvatarURL(event.userId)} width={40} height={40} alt="" loading="lazy" />
+                                    <span className={cl("details")}>
+                                        <strong className={cl("username")}>{event.username}</strong>
+                                        <span className={cl("description")}>{getEventText(event)}</span>
+                                        <span className={cl("meta")}>
+                                            <span className={cl("dot")} style={{ backgroundColor: getEventDot(event.type) }} />
+                                            <span>{filters.find(item => item.key === event.type)?.label}</span>
+                                            <span aria-hidden="true">·</span>
+                                            <time dateTime={new Date(event.timestamp).toISOString()} title={new Date(event.timestamp).toLocaleString("pt-BR")}>{timeAgo(event.timestamp)}</time>
+                                        </span>
                                     </span>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                                    <span className={cl("open")}>{opening === event.id ? "Abrindo…" : "Ver perfil"}<span aria-hidden="true"> ↗</span></span>
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                )}
             </ModalContent>
+            <div className={cl("footer")}>Histórico salvo neste dispositivo · Até 200 registros</div>
         </>
     );
 }
 
 function openFriendLogModal() {
     openModal(props => (
-        <ModalRoot {...props} size={ModalSize.MEDIUM}>
+        <ModalRoot {...props} size={ModalSize.DYNAMIC} className={cl("modal")} aria-label="FriendLog">
             <FriendLogModal onClose={props.onClose} />
         </ModalRoot>
     ));

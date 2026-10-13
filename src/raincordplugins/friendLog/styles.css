@@ -1,0 +1,235 @@
+.rc-friend-log-modal {
+    --fl-text: var(--text-default, var(--text-normal, #f2f3f5));
+    --fl-muted: var(--text-muted, #b5bac1);
+    --fl-surface: var(--background-base-low, var(--background-secondary, #232428));
+    --fl-hover: var(--background-mod-subtle, var(--background-modifier-hover, #35373c));
+    --fl-border: var(--border-subtle, #ffffff14);
+
+    width: min(580px, calc(100vw - 32px));
+    max-height: min(620px, calc(100vh - 48px));
+    min-height: 0;
+    color: var(--fl-text);
+    background: var(--fl-surface);
+    border: 1px solid var(--fl-border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 24px 80px #0006;
+}
+
+.rc-friend-log-modal .rc-friend-log-header {
+    padding: 22px 24px 18px;
+    gap: 12px;
+
+}
+
+.rc-friend-log-heading {
+    flex: 1;
+    min-width: 0;
+}
+
+.rc-friend-log-title {
+    margin: 0;
+    color: var(--fl-text);
+    font-size: 20px;
+    line-height: 28px;
+    font-weight: 700;
+}
+
+.rc-friend-log-subtitle {
+    margin: 3px 0 0;
+    color: var(--fl-muted);
+    font-size: 13px;
+    line-height: 20px;
+}
+
+.rc-friend-log-modal button {
+    font: inherit;
+}
+
+.rc-friend-log-modal .rc-friend-log-clear {
+    padding: 8px 10px;
+    border: 1px solid var(--fl-border);
+    border-radius: 8px;
+    color: var(--fl-text);
+    background: transparent;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.rc-friend-log-clear:disabled {
+    opacity: .45;
+    cursor: default;
+}
+
+.rc-friend-log-clear:not(:disabled):hover {
+    background: var(--fl-hover);
+}
+
+.rc-friend-log-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0 24px 18px;
+    border-bottom: 1px solid var(--fl-border);
+}
+
+.rc-friend-log-modal .rc-friend-log-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 10px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: var(--fl-text);
+    font-size: 12px;
+    line-height: 18px;
+    cursor: pointer;
+}
+
+.rc-friend-log-filter:hover {
+    background: var(--fl-hover);
+}
+
+.rc-friend-log-modal .rc-friend-log-filter[aria-pressed="true"] {
+    color: #fff;
+    background: #5865f2;
+}
+
+.rc-friend-log-count {
+    font-size: 11px;
+    opacity: .8;
+    font-variant-numeric: tabular-nums;
+}
+
+.rc-friend-log-modal .rc-friend-log-content {
+    padding: 12px 16px;
+    min-height: 100px;
+}
+
+.rc-friend-log-list {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.rc-friend-log-list > li + li {
+    border-top: 1px solid var(--fl-border);
+}
+
+.rc-friend-log-modal .rc-friend-log-entry {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px 8px;
+    border: 0;
+    border-radius: 10px;
+    color: var(--fl-text);
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 120ms ease;
+}
+
+.rc-friend-log-entry:hover {
+    background: var(--fl-hover);
+}
+
+.rc-friend-log-entry:disabled {
+    cursor: progress;
+}
+
+.rc-friend-log-avatar {
+    border-radius: 50%;
+    flex-shrink: 0;
+    object-fit: cover;
+}
+
+.rc-friend-log-details {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.rc-friend-log-username {
+    color: var(--fl-text);
+    font-size: 14px;
+    line-height: 20px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rc-friend-log-description {
+    color: var(--fl-muted);
+    font-size: 13px;
+    line-height: 19px;
+}
+
+.rc-friend-log-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--fl-muted);
+    font-size: 11px;
+    line-height: 18px;
+}
+
+.rc-friend-log-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.rc-friend-log-open {
+    color: var(--fl-text);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.rc-friend-log-empty {
+    padding: 28px 16px;
+    text-align: center;
+    color: var(--fl-text);
+}
+
+.rc-friend-log-empty p {
+    margin: 8px auto 0;
+    max-width: 300px;
+    color: var(--fl-muted);
+    font-size: 13px;
+    line-height: 20px;
+}
+
+.rc-friend-log-footer {
+    padding: 12px 24px;
+    border-top: 1px solid var(--fl-border);
+    color: var(--fl-muted);
+    font-size: 11px;
+    line-height: 18px;
+}
+
+.rc-friend-log-modal button:focus-visible {
+    outline: 2px solid var(--focus-primary, #00a8fc);
+    outline-offset: 2px;
+}
+
+@media (width <= 480px) {
+    .rc-friend-log-modal .rc-friend-log-header {
+        padding: 16px;
+        flex-wrap: wrap;
+    }
+
+    .rc-friend-log-filters {
+        padding: 0 16px 14px;
+    }
+
+    .rc-friend-log-open {
+        display: none;
+    }
+}
+
