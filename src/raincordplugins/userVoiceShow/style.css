@@ -43,3 +43,24 @@
     display: flex;
     gap: 6px;
 }
+
+.vc-uvs-channel-link {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text-link);
+    font: inherit;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+}
+
+.vc-uvs-channel-link:hover {
+    text-decoration: underline;
+}
+
+.vc-uvs-channel-link:focus-visible,
+.vc-uvs-clickable:focus-visible {
+    outline: 2px solid var(--focus-primary);
+    outline-offset: 2px;
+}

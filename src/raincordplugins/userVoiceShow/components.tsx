@@ -4,19 +4,19 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { isPluginEnabled } from "@api/PluginManager";
 import { BaseText } from "@components/BaseText";
 import ErrorBoundary from "@components/ErrorBoundary";
 import { classNameFactory } from "@utils/css";
+import { Logger } from "@utils/Logger";
 import { classes } from "@utils/misc";
 import { Channel } from "@vencord/discord-types";
-import { findByPropsLazy, findCssClassesLazy } from "@webpack";
-import { ChannelRouter, ChannelStore, Parser, PermissionsBits, PermissionStore, React, showToast, Toasts, Tooltip, useMemo, UserStore, UserSummaryItem, useStateFromStores, VoiceStateStore } from "@webpack/common";
+import { findCssClassesLazy } from "@webpack";
+import { ChannelActions, ChannelRouter, ChannelStore, GuildStore, PermissionsBits, PermissionStore, React, showToast, Toasts, Tooltip, useMemo, UserStore, UserSummaryItem, useStateFromStores, VoiceStateStore } from "@webpack/common";
 import { PropsWithChildren } from "react";
 
 const cl = classNameFactory("vc-uvs-");
 
-const { selectVoiceChannel } = findByPropsLazy("selectVoiceChannel", "selectChannel");
+const logger = new Logger("UserVoiceShow");
 
 const ActionButtonClasses = findCssClassesLazy("actionButton", "highlight");
 
@@ -85,9 +85,10 @@ function DeafIcon(props: IconProps) {
 interface VoiceChannelTooltipProps {
     channel: Channel;
     isLocked: boolean;
+    onJoin: () => void;
 }
 
-function VoiceChannelTooltip({ channel, isLocked }: VoiceChannelTooltipProps) {
+function VoiceChannelTooltip({ channel, isLocked, onJoin }: VoiceChannelTooltipProps) {
     const voiceStates = useStateFromStores([VoiceStateStore], () => VoiceStateStore.getVoiceStatesForChannel(channel.id));
 
     const users = useMemo(
@@ -98,8 +99,11 @@ function VoiceChannelTooltip({ channel, isLocked }: VoiceChannelTooltipProps) {
     const Icon = isLocked ? LockedSpeakerIcon : SpeakerIcon;
     return (
         <>
-            <BaseText size="sm" weight="bold">In Voice Chat</BaseText>
-            <BaseText size="sm" weight="bold">{Parser.parse(`<#${channel.id}>`)}</BaseText>
+            <BaseText size="sm" weight="bold">Em chamada de voz</BaseText>
+            <button type="button" className={cl("channel-link")} onClick={onJoin}>
+                {channel.guild_id && `${GuildStore.getGuild(channel.guild_id)?.name ?? "Servidor"} › `}{channel.name || "Chamada privada"}
+            </button>
+            <BaseText size="xs">{isLocked ? "Você não tem permissão para entrar." : "Clique para entrar na chamada."}</BaseText>
             <div className={cl("vc-members")}>
                 <Icon size={18} />
                 <UserSummaryItem
@@ -121,8 +125,6 @@ export type VoiceChannelIndicatorProps = {
     shouldHighlight?: boolean;
 };
 
-const clickTimers = new Map<string, any>();
-
 export const VoiceChannelIndicator = ErrorBoundary.wrap(({ userId, isProfile, isActionButton, shouldHighlight }: VoiceChannelIndicatorProps) => {
     const channelId = useStateFromStores([VoiceStateStore], () => VoiceStateStore.getVoiceStateForUser(userId)?.channelId);
 
@@ -142,29 +144,33 @@ export const VoiceChannelIndicator = ErrorBoundary.wrap(({ userId, isProfile, is
 
     const isLocked = !isDM && (!PermissionStore.can(PermissionsBits.VIEW_CHANNEL, channel) || !PermissionStore.can(PermissionsBits.CONNECT, channel));
 
+    async function joinChannel() {
+        const currentChannelId = VoiceStateStore.getVoiceStateForUser(userId)?.channelId;
+        const currentChannel = currentChannelId ? ChannelStore.getChannel(currentChannelId) : undefined;
+        if (!currentChannel) {
+            showToast("Este usuário não está mais em uma chamada.", Toasts.Type.FAILURE);
+            return;
+        }
+        if (!currentChannel.isDM() && !currentChannel.isMultiUserDM() &&
+            (!PermissionStore.can(PermissionsBits.VIEW_CHANNEL, currentChannel) || !PermissionStore.can(PermissionsBits.CONNECT, currentChannel))) {
+            showToast("Você não tem permissão para entrar nesta chamada.", Toasts.Type.FAILURE);
+            return;
+        }
+
+        try {
+            await ChannelActions.selectVoiceChannel(currentChannel.id);
+            ChannelRouter.transitionToChannel(currentChannel.id);
+        } catch (error) {
+            logger.error("Failed to join voice channel", error);
+            showToast("Não foi possível entrar na chamada. Tente novamente.", Toasts.Type.FAILURE);
+        }
+    }
+
     function onClick(e: React.MouseEvent) {
         e.preventDefault();
         e.stopPropagation();
-
-        if (channel == null || channelId == null) return;
-
-        clearTimeout(clickTimers.get(channelId));
-        clickTimers.delete(channelId);
-
-        if (e.detail > 1) {
-            if (!isDM && !PermissionStore.can(PermissionsBits.CONNECT, channel)) {
-                showToast("You cannot join the user's Voice Channel", Toasts.Type.FAILURE);
-                return;
-            }
-
-            selectVoiceChannel(channelId);
-        } else {
-            const timeoutId = setTimeout(() => {
-                ChannelRouter.transitionToChannel(channelId);
-                clickTimers.delete(channelId);
-            }, 250);
-            clickTimers.set(channelId, timeoutId);
-        }
+        if (e.detail > 1) return;
+        void joinChannel();
     }
 
     const IconComponent =
@@ -178,7 +184,7 @@ export const VoiceChannelIndicator = ErrorBoundary.wrap(({ userId, isProfile, is
 
     return (
         <Tooltip
-            text={<VoiceChannelTooltip channel={channel} isLocked={isLocked} />}
+            text={<VoiceChannelTooltip channel={channel} isLocked={isLocked} onJoin={joinChannel} />}
             tooltipClassName={cl("tooltip-container")}
             tooltipContentClassName={cl("tooltip-content")}
         >
@@ -186,7 +192,15 @@ export const VoiceChannelIndicator = ErrorBoundary.wrap(({ userId, isProfile, is
                 <IconComponent
                     {...props}
                     role="button"
+                    tabIndex={0}
+                    aria-label="Entrar na chamada de voz"
                     onClick={onClick}
+                    onKeyDown={event => {
+                        if (event.key !== "Enter" && event.key !== " ") return;
+                        event.preventDefault();
+                        event.stopPropagation();
+                        void joinChannel();
+                    }}
                     className={classes(
                         cl("clickable"),
                         isActionButton && ActionButtonClasses.actionButton,
