@@ -7,82 +7,100 @@
 import { addContextMenuPatch, NavContextMenuPatchCallback, removeContextMenuPatch } from "@api/ContextMenu";
 import { HeaderBarButton } from "@api/HeaderBar";
 import { DataStore } from "@api/index";
+import { Logger } from "@utils/Logger";
 import definePlugin from "@utils/types";
-import { findStoreLazy } from "@webpack";
-import { Menu, React, Toasts, useState, useEffect, UserStore, PermissionStore, PermissionsBits, ChannelStore, RestAPI, Constants } from "@webpack/common";
+import { User, VoiceState } from "@vencord/discord-types";
+import { ChannelStore, Constants, Menu, PermissionsBits, PermissionStore, React, RestAPI, Toasts, useEffect, UserStore, useState, VoiceStateStore } from "@webpack/common";
 
-const VoiceStateStore = findStoreLazy("VoiceStateStore");
+const logger = new Logger("FollowMe");
 
 const DS_KEY = "followme-target-v1";
 
 // ── Etat global ──────────────────────────────────────────────────────────────
-let targetId: string | null = null;
-let targetName: string = "";
+interface Target {
+    id: string;
+    name: string;
+}
+
+const targets = new Map<string, string>();
+const pending = new Set<string>();
+let running = false;
+let generation = 0;
+let saveQueue = Promise.resolve();
 
 const listeners = new Set<() => void>();
 function notifyAll() { listeners.forEach(fn => fn()); }
 
-function useFollowMeId(): string | null {
+function useFollowMeTargets() {
     const [, tick] = useState(0);
     useEffect(() => {
         const fn = () => tick(n => n + 1);
         listeners.add(fn);
         return () => { listeners.delete(fn); };
     }, []);
-    return targetId;
+    return Array.from(targets, ([id, name]) => ({ id, name }));
 }
 
-async function persist() {
-    await DataStore.set(DS_KEY, targetId ? { id: targetId, name: targetName } : null);
+function persist() {
+    const saved = Array.from(targets, ([id, name]) => ({ id, name }));
+    saveQueue = saveQueue.then(() => DataStore.set(DS_KEY, saved)).catch(error => {
+        logger.error("Não foi possível salvar a seleção do Follow Me", error);
+    });
 }
 
-async function moveTargetTo(guildId: string, channelId: string) {
-    if (!targetId || !guildId || !channelId) return;
-
-    const targetState = VoiceStateStore.getVoiceStateForUser(targetId);
-    if (!targetState) return;
-
-    if (targetState.channelId === channelId) return;
-
+async function moveTargetTo(userId: string, guildId: string, channelId: string) {
+    if (!running || !targets.has(userId) || pending.has(userId)) return;
+    const targetState = VoiceStateStore.getVoiceState(guildId, userId);
+    if (!targetState?.channelId || targetState.channelId === channelId) return;
     const channel = ChannelStore.getChannel(channelId);
-    if (!channel) return;
-    const canMove = PermissionStore.can(PermissionsBits.MOVE_MEMBERS, channel);
-
-    if (!canMove) return;
-
+    const source = ChannelStore.getChannel(targetState.channelId);
+    if (!channel || !source || source.guild_id !== guildId || channel.guild_id !== guildId) return;
+    if (!PermissionStore.can(PermissionsBits.MOVE_MEMBERS, channel) || !PermissionStore.can(PermissionsBits.MOVE_MEMBERS, source)) return;
+    const version = generation;
+    pending.add(userId);
     try {
         await RestAPI.patch({
-            url: Constants.Endpoints.GUILD_MEMBER(guildId, targetId),
+            url: Constants.Endpoints.GUILD_MEMBER(guildId, userId),
             body: { channel_id: channelId }
         });
-    } catch (e) {
-        console.error("[FollowMe] Failed to move user:", e);
+    } catch (error) {
+        logger.error("Não foi possível mover a pessoa no Follow Me", error);
+    } finally {
+        if (version === generation) {
+            pending.delete(userId);
+            const myId = UserStore.getCurrentUser()?.id;
+            const current = myId ? VoiceStateStore.getVoiceStateForUser(myId) : undefined;
+            const destination = current?.channelId ? ChannelStore.getChannel(current.channelId) : null;
+            if (current?.channelId && destination?.guild_id === guildId && current.channelId !== channelId) {
+                void moveTargetTo(userId, guildId, current.channelId);
+            }
+        }
     }
 }
 
 function followMe(userId: string) {
-    if (targetId === userId) return;
-    const user = UserStore?.getUser?.(userId);
-    targetId = userId;
-    targetName = user?.globalName ?? user?.username ?? userId;
-
+    if (!running || targets.has(userId)) return;
+    const user = UserStore.getUser(userId);
+    const name = user?.globalName ?? user?.username ?? userId;
+    targets.set(userId, name);
     const myId = UserStore.getCurrentUser()?.id;
-    const myState = VoiceStateStore.getVoiceStateForUser(myId);
-    if (myState?.channelId && myState.guildId) {
-        moveTargetTo(myState.guildId, myState.channelId);
+    const myState = myId ? VoiceStateStore.getVoiceStateForUser(myId) : undefined;
+    const channel = myState?.channelId ? ChannelStore.getChannel(myState.channelId) : null;
+    if (myState?.channelId && channel?.guild_id) {
+        void moveTargetTo(userId, channel.guild_id, myState.channelId);
     }
-
     notifyAll();
-    persist().catch(() => { });
-    Toasts.show({ message: `Following Me: ${targetName} 🏃‍♂️`, type: Toasts.Type.SUCCESS, id: Toasts.genId() });
+    persist();
+    Toasts.show({ message: `Follow Me ativado para ${name}.`, type: Toasts.Type.SUCCESS, id: Toasts.genId() });
 }
 
-function unfollowMe() {
-    const name = targetName;
-    targetId = null; targetName = "";
+function unfollowMe(userId?: string) {
+    const name = userId ? targets.get(userId) : undefined;
+    if (userId) targets.delete(userId);
+    else targets.clear();
     notifyAll();
-    persist().catch(() => { });
-    Toasts.show({ message: `Stopped forcing ${name} to follow`, type: Toasts.Type.MESSAGE, id: Toasts.genId() });
+    persist();
+    Toasts.show({ message: name ? `Follow Me desligado para ${name}.` : "Follow Me desligado para todos.", type: Toasts.Type.MESSAGE, id: Toasts.genId() });
 }
 
 // ── Icone ──
@@ -99,8 +117,8 @@ function FollowMeIcon({ filled = false }: { filled?: boolean; }) {
 
 // ── HeaderBar Button ──
 function FollowMeHeaderButton() {
-    const tid = useFollowMeId();
-    if (!tid) return null;
+    const selected = useFollowMeTargets();
+    if (!selected.length) return null;
 
     return (
         <HeaderBarButton
@@ -109,38 +127,38 @@ function FollowMeHeaderButton() {
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z" />
                 </svg>
             )}
-            tooltip={`Stop Follow Me: ${targetName}`}
+            tooltip={`Desligar Follow Me (${selected.length}): ${selected.map(target => target.name).join(", ")}`}
             onClick={() => unfollowMe()}
         />
     );
 }
 
 // ── Context Menu ──
-const ctxPatch: NavContextMenuPatchCallback = (children, props) => {
+const ctxPatch: NavContextMenuPatchCallback = (children, props: { user?: User; }) => {
     if (!children || !Array.isArray(children)) return;
     try {
         const userId: string | undefined = props?.user?.id;
         if (!userId || userId === UserStore.getCurrentUser()?.id) return;
 
-        const isFollowed = targetId === userId;
+        const isFollowed = targets.has(userId);
 
         children.push(
             <Menu.MenuCheckboxItem
                 id="follow-me-ctx"
-                label={isFollowed ? "Stop Follow Me" : "Follow Me"}
+                label={isFollowed ? "Desligar Follow Me para esta pessoa" : "Follow Me"}
                 checked={isFollowed}
-                action={() => { if (isFollowed) unfollowMe(); else followMe(userId); }}
+                action={() => { if (isFollowed) unfollowMe(userId); else followMe(userId); }}
             />
         );
     } catch (e) {
-        console.error("[FollowMe] Context menu patch error:", e);
+        logger.error("Context menu patch error", e);
     }
 };
 
 // ── Plugin ───────────────────────────────────────────────────────────────────
 export default definePlugin({
     name: "FollowMe",
-    description: "Forces a user to follow you in voice channels (if you have permissions). Right-click a user -> Follow Me.",
+    description: "Move as pessoas selecionadas para seu canal de voz no mesmo servidor, quando você tem permissão. Clique com o botão direito e marque Follow Me.",
     authors: [{ name: "RAINCORD", id: 0n }],
 
     headerBarButton: {
@@ -150,40 +168,43 @@ export default definePlugin({
     },
 
     flux: {
-        VOICE_STATE_UPDATES({ voiceStates }) {
-            if (!targetId) return;
+        VOICE_STATE_UPDATES({ voiceStates }: { voiceStates: VoiceState[]; }) {
+            if (!running || !targets.size) return;
             const myId = UserStore.getCurrentUser()?.id;
-
-            for (const s of voiceStates) {
-                if (s.userId === myId) {
-                    if (s.channelId && s.guildId) {
-                        moveTargetTo(s.guildId, s.channelId);
-                    }
-                }
-                else if (s.userId === targetId) {
-                    const myState = VoiceStateStore.getVoiceStateForUser(myId);
-                    if (myState?.channelId && myState.guildId && s.channelId !== myState.channelId) {
-                        if (s.guildId === myState.guildId) {
-                            moveTargetTo(myState.guildId, myState.channelId);
-                        }
-                    }
-                }
-            }
+            if (!myId) return;
+            const myEvent = voiceStates.find(state => state.userId === myId);
+            const myState = myEvent ?? VoiceStateStore.getVoiceStateForUser(myId);
+            const channel = myState?.channelId ? ChannelStore.getChannel(myState.channelId) : null;
+            if (!myState?.channelId || !channel?.guild_id) return;
+            const userIds = myEvent ? targets.keys() : voiceStates.filter(state => targets.has(state.userId)).map(state => state.userId);
+            for (const userId of userIds) void moveTargetTo(userId, channel.guild_id, myState.channelId);
         }
     },
 
     async start() {
-        const saved = await DataStore.get(DS_KEY) as { id: string; name: string; } | null;
-        if (saved?.id) {
-            targetId = saved.id;
-            targetName = saved.name ?? saved.id;
+        running = true;
+        const version = ++generation;
+        try {
+            const saved = await DataStore.get<Target[] | Target | null>(DS_KEY);
+            if (!running || version !== generation) return;
+            for (const target of Array.isArray(saved) ? saved : saved ? [saved] : []) {
+                if (typeof target.id === "string") targets.set(target.id, target.name ?? target.id);
+            }
+            notifyAll();
+        } catch (error) {
+            logger.error("Não foi possível restaurar o Follow Me", error);
         }
+        if (!running || version !== generation) return;
         addContextMenuPatch("user-context", ctxPatch);
         addContextMenuPatch("user-profile-actions", ctxPatch);
     },
 
     stop() {
-        targetId = null; targetName = "";
+        running = false;
+        ++generation;
+        targets.clear();
+        pending.clear();
+        notifyAll();
         removeContextMenuPatch("user-context", ctxPatch);
         removeContextMenuPatch("user-profile-actions", ctxPatch);
     },

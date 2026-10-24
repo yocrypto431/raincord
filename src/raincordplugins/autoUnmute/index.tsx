@@ -1,8 +1,10 @@
+import { isPluginEnabled } from "@api/PluginManager";
+import { UserAreaButton, UserAreaButtonFactory } from "@api/UserArea";
 import { definePluginSettings } from "@api/Settings";
 import { Logger } from "@utils/Logger";
 import definePlugin, { makeRange, OptionType } from "@utils/types";
 import { findByPropsLazy, findStoreLazy } from "@webpack";
-import { ChannelStore, Constants, MediaEngineStore, PermissionsBits, PermissionStore, RestAPI, showToast, Toasts, UserStore, VoiceActions } from "@webpack/common";
+import { ChannelStore, Constants, MediaEngineStore, PermissionsBits, PermissionStore, RestAPI, React, showToast, Toasts, UserStore, VoiceActions } from "@webpack/common";
 
 import { isProtectionEnabled } from "@raincordplugins/antiMoveDeco";
 
@@ -22,10 +24,15 @@ interface VoiceState {
 }
 
 const settings = definePluginSettings({
+    protectionEnabled: {
+        type: OptionType.BOOLEAN,
+        description: "Ativar a proteção contra mute e deaf no servidor.",
+        default: true
+    },
     onlyWithAntiMoveDeco: {
         type: OptionType.BOOLEAN,
         description: "Only act while the AntiMove&Deco button is turned on",
-        default: true
+        default: false
     },
     undoServerMute: {
         type: OptionType.BOOLEAN,
@@ -141,15 +148,15 @@ function sleep(ms: number) {
 
 function isGateOpen() {
     try {
-        return isProtectionEnabled();
+        return isPluginEnabled("AntiMoveDeco") && isProtectionEnabled();
     } catch (err) {
-        logger.warn("Could not read AntiMove&Deco state, acting anyway", err);
-        return true;
+        logger.warn("Could not read AntiMove&Deco state, keeping protection paused", err);
+        return false;
     }
 }
 
 async function enforce(attempt = 1, eventState?: VoiceState) {
-    if (!running) return;
+    if (!running || !settings.store.protectionEnabled) return;
 
     if (settings.store.onlyWithAntiMoveDeco && !isGateOpen()) {
         logger.info("AntiMove&Deco is off, ignoring");
@@ -217,6 +224,13 @@ async function enforce(attempt = 1, eventState?: VoiceState) {
         const gap = Date.now() - lastPatchAt;
         if (gap < MIN_PATCH_GAP) await sleep(MIN_PATCH_GAP - gap);
 
+        const latest = getSelfVoiceState();
+        if (!running || !settings.store.protectionEnabled || latest?.channelId !== state.channelId) return;
+        if (settings.store.onlyWithAntiMoveDeco && !isGateOpen()) return;
+        if (body.mute && !latest.mute) delete body.mute;
+        if (body.deaf && !latest.deaf) delete body.deaf;
+        if (!Object.keys(body).length) return;
+
         const url = guildMemberUrl(guildId, userId);
 
         try {
@@ -275,11 +289,31 @@ function schedule() {
     }, 150);
 }
 
+function AutoUnmuteIcon({ className }: { className?: string; }) {
+    return <svg className={className} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6Z" /><path d="m8 12 3 3 5-6" /></svg>;
+}
+
+const AutoUnmuteButton: UserAreaButtonFactory = ({ iconForeground, hideTooltips }) => {
+    const { protectionEnabled, onlyWithAntiMoveDeco } = settings.use();
+    return <UserAreaButton
+        icon={<AutoUnmuteIcon className={iconForeground} />}
+        role="switch"
+        aria-label="AutoUnmute"
+        aria-checked={protectionEnabled}
+        tooltipText={hideTooltips ? undefined : `AutoUnmute: ${protectionEnabled ? "ligado" : "desligado"}${onlyWithAntiMoveDeco ? " (depende do AntiMove&Deco)" : ""}`}
+        onClick={() => {
+            settings.store.protectionEnabled = !protectionEnabled;
+            if (!protectionEnabled) schedule();
+        }}
+    />;
+};
+
 export default definePlugin({
     name: "AutoUnmute",
     description: "Automatically lifts server mute and server deafen on yourself when you have the permissions.",
     authors: [{ name: "Bash", id: 1327483363518582784n }],
     settings,
+    userAreaButton: { icon: AutoUnmuteIcon, render: AutoUnmuteButton },
 
     flux: {
         VOICE_STATE_UPDATES({ voiceStates }: { voiceStates: VoiceState[]; }) {
@@ -289,9 +323,9 @@ export default definePlugin({
             if (!myId) return;
 
             const myState = voiceStates.find(state => state.userId === myId);
-            if (!myState?.channelId) return;
-
-            lastEventState = myState;
+            if (!myState) return;
+            lastEventState = myState.channelId ? myState : null;
+            if (!myState.channelId) return;
             if (!myState.mute && !myState.deaf) return;
 
             logger.info(`event: mute=${myState.mute} deaf=${myState.deaf} guild=${myState.guildId}`);
