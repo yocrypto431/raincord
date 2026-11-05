@@ -65,14 +65,7 @@ export async function loadLazyChunks() {
             const shouldForceDefer = false;
 
             await Promise.all(Array.from(lazyChunks).map(async ([, rawChunkIds, entryPoint]) => {
-                const chunkIds = rawChunkIds
-                    ?.matchAll(Webpack.ChunkIdsRegex)
-                    .map(m => {
-                        const numChunkId = Number(m[1]);
-                        return Number.isNaN(numChunkId) ? m[1] : String(numChunkId);
-                    })
-                    .toArray()
-                    ?? [];
+                const chunkIds = rawChunkIds ? Webpack.parseChunkIds(rawChunkIds) : [];
 
                 if (chunkIds.length === 0) {
                     return;

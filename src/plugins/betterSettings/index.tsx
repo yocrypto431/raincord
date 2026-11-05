@@ -135,11 +135,17 @@ export default definePlugin({
             predicate: () => settings.store.disableFade
         },
         { // Disable initial and exit delay for settings menu
-            find: "headerId:void 0,headerIdIsManaged:!1",
-            replacement: {
-                match: /let (\i)=300/,
-                replace: "let $1=0"
-            },
+            find: '||"replace"===',
+            replacement: [
+                {
+                    match: /(?:(?<=\?0:\i\.\i))|(?:300(?=\*!\i))/g,
+                    replace: "0"
+                },
+                {
+                    match: /(?<=setTimeout\(\(\)=>\i\(\),)\i\.\i|300(?=\))/,
+                    replace: "0"
+                }
+            ],
             predicate: () => settings.store.disableFade
         },
         { // Load menu TOC eagerly

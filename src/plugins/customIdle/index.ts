@@ -37,11 +37,11 @@ export default definePlugin({
             find: 'type:"IDLE",idle:',
             replacement: [
                 {
-                    match: /(?<=Date\.now\(\)-\i>)\i\.\i\|\|/,
+                    match: /(?<=Date\.now\(\)-\i>)(?:\i\.\i|6e5)\|\|/,
                     replace: "$self.getIdleTimeout()||"
                 },
                 {
-                    match: /Math\.min\((\i\*\i\.\i\.\i\.SECOND),\i\.\i\)/,
+                    match: /Math\.min\((\i\*\i\.\i\.\i\.SECOND),(?:\i\.\i|6e5)\)/,
                     replace: "$1" // Decouple idle from afk (phone notifications will remain at user setting or 10 min maximum)
                 },
                 {

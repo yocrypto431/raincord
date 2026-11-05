@@ -269,7 +269,7 @@ export default definePlugin({
         {
             find: ".getUserIsAdmin(",
             replacement: {
-                match: /(function \i\(\i,\i)\){(.{0,250}.getUserIsAdmin\(.+?return!1})/,
+                match: /(function(?: \i)?\(\i,\i)\){(.{0,250}.getUserIsAdmin\(.+?return!1})/,
                 replace: (_, rest1, rest2) => `${rest1},fakeNitroOriginal){if(!fakeNitroOriginal)return false;${rest2}`
             }
         },
@@ -310,7 +310,7 @@ export default definePlugin({
         {
             find: ",updateTheme(",
             replacement: {
-                match: /(function \i\(\i\){let{backgroundGradientPresetId:(\i).+?)(\i\.\i\.updateAsync.+?theme=(.+?),.+?},\i\))/,
+                match: /(function(?: \i)?\(\i\){let{backgroundGradientPresetId:(\i).+?)(\i\.\i\.updateAsync.+?theme=(.+?),.+?},\i\))/,
                 replace: (_, rest, backgroundGradientPresetId, originalCall, theme) => `${rest}$self.handleGradientThemeSelect(${backgroundGradientPresetId},${theme},()=>${originalCall});`
             }
         },
