@@ -164,28 +164,29 @@ export default definePlugin({
         {
             find: "canUseCustomStickersEverywhere:",
             replacement: [
+                // Rename to _can* and replace with () => true (function-body patches no longer match Discord's module shape)
                 {
-                    match: /(?<=canUseCustomStickersEverywhere:function\(\i\)\{)/,
-                    replace: "return true;",
+                    match: /canUseCustomStickersEverywhere:/,
+                    replace: "$&()=>true,_$&",
                     predicate: () => settings.store.enableStickerBypass
                 },
                 {
-                    match: /(?<=canUseHighVideoUploadQuality:function\(\i\)\{)/,
-                    replace: "return true;",
+                    match: /canUseHighVideoUploadQuality:/,
+                    replace: "$&()=>true,_$&",
                     predicate: () => settings.store.enableStreamQualityBypass
                 },
                 {
-                    match: /(?<=canStreamQuality:function\(\i,\i\)\{)/,
-                    replace: "return true;",
+                    match: /canStreamQuality:/,
+                    replace: "$&()=>true,_$&",
                     predicate: () => settings.store.enableStreamQualityBypass
                 },
                 {
-                    match: /(?<=canUseClientThemes:function\(\i\)\{)/,
-                    replace: "return true;"
+                    match: /canUseClientThemes:/,
+                    replace: "$&()=>true,_$&"
                 },
                 {
-                    match: /(?<=canUsePremiumAppIcons:function\(\i\)\{)/,
-                    replace: "return true;"
+                    match: /canUsePremiumAppIcons:/,
+                    replace: "$&()=>true,_$&"
                 }
             ],
         },
@@ -220,8 +221,8 @@ export default definePlugin({
                 },
                 {
                     // Disallow the emoji for premium locked if the intention doesn't allow it
-                    match: /!(\i\.\i\.canUseEmojisEverywhere\(\i\))/,
-                    replace: m => `(${m}&&!${IS_BYPASSEABLE_INTENTION})`
+                    match: /(?<=!\(\i\|\|)\i\.\i\.canUseEmojisEverywhere\(\i\)/,
+                    replace: check => `(${check}||${IS_BYPASSEABLE_INTENTION})`
                 },
                 {
                     // Allow animated emojis to be used if the intention allows it
@@ -234,7 +235,8 @@ export default definePlugin({
         {
             find: ".getUserIsAdmin(",
             replacement: {
-                match: /(function \i\(\i,\i)\){(.{0,250}.getUserIsAdmin\(.+?return!1})/,
+                // FIXME: Stable compat: (?: \i)?
+                match: /(function(?: \i)?\(\i,\i)\){(.{0,250}.getUserIsAdmin\(.+?return!1})/,
                 replace: (_, rest1, rest2) => `${rest1},fakeNitroOriginal){if(!fakeNitroOriginal)return false;${rest2}`
             }
         },
@@ -275,7 +277,8 @@ export default definePlugin({
         {
             find: ",updateTheme(",
             replacement: {
-                match: /(function \i\(\i\){let{backgroundGradientPresetId:(\i).+?)(\i\.\i\.updateAsync.+?theme=(.+?),.+?},\i\))/,
+                // FIXME: Stable compat: (?: \i)?
+                match: /(function(?: \i)?\(\i\){let{backgroundGradientPresetId:(\i).+?)(\i\.\i\.updateAsync.+?theme=(.+?),.+?},\i\))/,
                 replace: (_, rest, backgroundGradientPresetId, originalCall, theme) => `${rest}$self.handleGradientThemeSelect(${backgroundGradientPresetId},${theme},()=>${originalCall});`
             }
         },
