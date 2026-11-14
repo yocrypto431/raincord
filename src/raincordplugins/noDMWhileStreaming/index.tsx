@@ -1,7 +1,6 @@
 import "./styles.css";
 
 import { definePluginSettings } from "@api/Settings";
-import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { findByProps, findByPropsLazy } from "@webpack";
 import { FluxDispatcher, UserStore, ChannelStore, ReadStateStore, useStateFromStores, React } from "@webpack/common";
@@ -65,7 +64,7 @@ function isStreaming(): boolean {
 export default definePlugin({
     name: "NoDMWhileStreaming",
     description: "Hides DM and Group DM notifications and sidebar items while you are streaming",
-    authors: [Devs.Unknown],
+    authors: [{ name: "Unknown", id: 0n }],
     enabledByDefault: false,
     settings,
     patches: [
@@ -206,7 +205,6 @@ export default definePlugin({
                 };
                 // Copy properties to maintain compatibility
                 window.Notification.prototype = originalNotification.prototype;
-                window.Notification.permission = originalNotification.permission;
                 window.Notification.requestPermission = originalNotification.requestPermission;
             } catch (e) {
                 console.error("[NoDMWhileStreaming] Failed to patch window.Notification:", e);

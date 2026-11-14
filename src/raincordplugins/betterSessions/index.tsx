@@ -21,7 +21,6 @@ import "./styles.css";
 import { showNotification } from "@api/Notifications";
 import { definePluginSettings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
-import { Devs } from "@utils/constants";
 import definePlugin, { OptionType } from "@utils/types";
 import { findComponentByCodeLazy, findCssClassesLazy, findStoreLazy } from "@webpack";
 import { Constants, React, RestAPI, SettingsRouter, Tooltip } from "@webpack/common";
@@ -55,7 +54,8 @@ const settings = definePluginSettings({
 export default definePlugin({
     name: "BetterSessions",
     description: "Improves Security > Sessions tab: precise timestamps, device renfriendng, and alerts on new connection detection.",
-    authors: [Devs.frienda],
+    // Dev id not registered in utils/constants Devs; add the real id there to link the profile
+    authors: [{ name: "frienda", id: 0n }],
 
     settings: settings,
 
