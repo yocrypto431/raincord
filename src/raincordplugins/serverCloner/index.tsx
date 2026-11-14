@@ -253,10 +253,11 @@ async function cloneServer(
 
     // ── Channels ────────────────────────────────────────────────────
     const channelMapping = new Map<string, string>();
+    let sourceChannels: any[] = [];
     if (options.channels && !isCancelled()) {
         try {
             log({ text: "Copying channels...", type: "info" });
-            const sourceChannels: any[] = await apiCall("get", `/guilds/${sourceId}/channels`);
+            sourceChannels = await apiCall("get", `/guilds/${sourceId}/channels`);
             const categories = sourceChannels.filter(c => c.type === 4).sort((a, b) => a.position - b.position);
             const nonCategories = sourceChannels.filter(c => c.type !== 4).sort((a, b) => a.position - b.position);
 

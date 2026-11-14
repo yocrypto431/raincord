@@ -1,4 +1,5 @@
 import { React, useState, useEffect, useRef, ReactDOM, createRoot, MessageActions, SelectedChannelStore, ComponentDispatch } from "@webpack/common";
+import { isPluginEnabled } from "@api/PluginManager";
 import { getGroqKey } from "../../raincordAI/groqManager";
 
 const DICT_URLS = [
@@ -79,7 +80,12 @@ export function WordBombOverlay() {
     const [theme, setTheme] = useState(() => getSetting("wb_theme", ""));
     const [themeWords, setThemeWords] = useState<Set<string>>(new Set());
     const [playMode, setPlayMode] = useState(() => getSetting("wb_playMode", "Normal"));
-    const [noSpace, setNoSpace] = useState(() => getSetting("wb_noSpace", "false") === "true");    // Load dictionary
+    const [noSpace, setNoSpace] = useState(() => getSetting("wb_noSpace", "false") === "true");
+    const [isCalibrating, setIsCalibrating] = useState(false);
+    const [calibratedPos, setCalibratedPos] = useState<{ x: number; y: number; } | null>(() => {
+        try { return JSON.parse(getSetting("wb_calibPos", "null")); } catch { return null; }
+    });
+    // Load dictionary
     useEffect(() => {
         setStatus("Loading dictionaries...");
         Promise.all(DICT_URLS.map(url => fetch(url).then(async res => {
@@ -217,7 +223,7 @@ export function WordBombOverlay() {
                 // VencordNative est exposé via contextBridge sous le nom "VencordNative"
                 // Dans le renderer Electron packagé, il faut passer par window
                 const nc = (window as any).VencordNative ?? (globalThis as any).VencordNative;
-                const cursorPos = await nc?.wordBomb?.getCursorPos?.() || await nc?.worldBomb?.getCursorPos?.();
+                const cursorPos = await nc?.wordBomb?.getCursorPos?.();
                 if (cursorPos && typeof cursorPos.x === "number" && typeof cursorPos.y === "number") {
                     setCalibratedPos(cursorPos);
                     setSetting("wb_calibPos", JSON.stringify(cursorPos));
@@ -584,7 +590,7 @@ export function WordBombOverlay() {
                                     const checked = e.target.checked;
                                     setSafeMode(checked);
                                     setSetting("wb_safeMode", String(checked));
-                                    if (checked && streamProof) {
+                                    if (checked && isPluginEnabled("StreamProof")) {
                                         setTimeout(() => {
                                             unmountOverlay();
                                             toggleWordBombOverlay();

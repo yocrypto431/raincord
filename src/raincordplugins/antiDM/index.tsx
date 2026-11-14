@@ -65,7 +65,7 @@ async function resolveUser(id: string): Promise<{ name: string; avatar: string |
             const avatar = user.avatar
                 ? `https://cdn.discordapp.com/avatars/${id}/${user.avatar}.${user.avatar.startsWith("a_") ? "gif" : "png"}?size=64`
                 : null;
-            return { name: user.username ?? user.global_name ?? id, avatar };
+            return { name: user.username ?? user.globalName ?? id, avatar };
         }
     } catch { }
     // Last resort: fetch via REST
