@@ -1,8 +1,7 @@
-import { findByProps } from "@webpack";
 import definePlugin from "@utils/types";
 import { ApplicationCommandInputType, sendBotMessage } from "@api/Commands";
 import { UserAreaButton, UserAreaRenderProps } from "@api/UserArea";
-import { React, ContextMenuApi, Menu } from "@webpack/common";
+import { ContextMenuApi, Menu, React, SelectedChannelStore, VoiceActions } from "@webpack/common";
 
 let isGhostActive = false;
 let configFakeMute = true;
@@ -10,22 +9,26 @@ let configFakeDeafen = true;
 
 const FAKE_VOICE_CHANGE_EVENT = "RAINCORD-fake-voice-change";
 
-// Notifica o botão da user area (e qualquer outro listener) que o estado
-// mudou, mesmo quando a mudança vem de fora do clique no botão (ex: comandos
-// /fakemute, /fakedeafen, /fakedeafen_mute). Sem isso o ícone do botão fica
-// desatualizado até o usuário clicar nele manualmente.
 function notifyFakeVoiceChange() {
     try { window.dispatchEvent(new CustomEvent(FAKE_VOICE_CHANGE_EVENT)); } catch { }
 }
 
 const syncState = () => {
-    const SelectedChannelStore = findByProps("getVoiceChannelId");
-    const vm = findByProps("toggleSelfMute");
-    if (vm && SelectedChannelStore?.getVoiceChannelId()) {
-        vm.toggleSelfMute();
-        vm.toggleSelfMute();
+    if (VoiceActions?.toggleSelfMute && SelectedChannelStore?.getVoiceChannelId?.()) {
+        VoiceActions.toggleSelfMute();
+        VoiceActions.toggleSelfMute();
     }
 };
+
+function refreshGhost() {
+    isGhostActive = configFakeMute || configFakeDeafen;
+}
+
+function applyChange() {
+    refreshGhost();
+    syncState();
+    notifyFakeVoiceChange();
+}
 
 function FakeDeafenIcon({ className }: { className?: string }) {
     return (
@@ -53,8 +56,8 @@ function GhostContextMenu() {
                         const nextState = !(configFakeMute && configFakeDeafen);
                         configFakeMute = nextState;
                         configFakeDeafen = nextState;
+                        applyChange();
                         forceUpdate();
-                        notifyFakeVoiceChange();
                     }}
                 />
                 <Menu.MenuSeparator />
@@ -64,8 +67,8 @@ function GhostContextMenu() {
                     checked={configFakeMute}
                     action={() => {
                         configFakeMute = !configFakeMute;
+                        applyChange();
                         forceUpdate();
-                        notifyFakeVoiceChange();
                     }}
                 />
                 <Menu.MenuCheckboxItem
@@ -74,8 +77,8 @@ function GhostContextMenu() {
                     checked={configFakeDeafen}
                     action={() => {
                         configFakeDeafen = !configFakeDeafen;
+                        applyChange();
                         forceUpdate();
-                        notifyFakeVoiceChange();
                     }}
                 />
             </Menu.MenuGroup>
@@ -96,6 +99,10 @@ function FakeDeafenUserButton({ iconForeground, hideTooltips, nameplate }: UserA
         <UserAreaButton
             onClick={() => {
                 isGhostActive = !isGhostActive;
+                if (isGhostActive && !configFakeMute && !configFakeDeafen) {
+                    configFakeMute = true;
+                    configFakeDeafen = true;
+                }
                 syncState();
                 forceUpdate();
                 notifyFakeVoiceChange();
@@ -148,10 +155,8 @@ export default definePlugin({
             description: "Toggle Fake Mute",
             execute: async (_, ctx) => {
                 configFakeMute = !configFakeMute;
-                isGhostActive = configFakeMute;
-                syncState();
-                notifyFakeVoiceChange();
-                sendBotMessage(ctx.channel.id, { content: `👻 **Fake Mute** est ${isGhostActive ? "activé" : "désactivé"}.` });
+                applyChange();
+                sendBotMessage(ctx.channel.id, { content: `👻 **Fake Mute** est ${configFakeMute ? "activé" : "désactivé"}.` });
             },
         },
         {
@@ -160,10 +165,8 @@ export default definePlugin({
             description: "Toggle Fake Deafen",
             execute: async (_, ctx) => {
                 configFakeDeafen = !configFakeDeafen;
-                isGhostActive = configFakeDeafen;
-                syncState();
-                notifyFakeVoiceChange();
-                sendBotMessage(ctx.channel.id, { content: `👻 **Fake Deafen** est ${isGhostActive ? "activé" : "désactivé"}.` });
+                applyChange();
+                sendBotMessage(ctx.channel.id, { content: `👻 **Fake Deafen** est ${configFakeDeafen ? "activé" : "désactivé"}.` });
             },
         },
         {
@@ -174,10 +177,8 @@ export default definePlugin({
                 const next = !(configFakeMute && configFakeDeafen);
                 configFakeMute = next;
                 configFakeDeafen = next;
-                isGhostActive = next;
-                syncState();
-                notifyFakeVoiceChange();
-                sendBotMessage(ctx.channel.id, { content: `👻 **Fake Deafen & Mute** sont ${isGhostActive ? "activés" : "désactivés"}.` });
+                applyChange();
+                sendBotMessage(ctx.channel.id, { content: `👻 **Fake Deafen & Mute** sont ${next ? "activés" : "désactivés"}.` });
             },
         },
     ],
