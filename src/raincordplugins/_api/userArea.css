@@ -1,0 +1,16 @@
+[class*="container_"]:has(> [class*="accountPopoutButtonWrapper_"]) {
+    height: auto !important;
+    min-height: 56px;
+    flex-wrap: wrap;
+    row-gap: 4px;
+}
+
+[class*="container_"]:has(> [class*="accountPopoutButtonWrapper_"]) > [class*="accountPopoutButtonWrapper_"] {
+    flex: 1 1 150px;
+    min-width: 150px;
+}
+
+[class*="container_"]:has(> [class*="accountPopoutButtonWrapper_"]) > [class*="buttons_"] {
+    flex: 0 1 auto;
+    margin-left: auto;
+}

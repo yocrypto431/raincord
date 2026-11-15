@@ -8,12 +8,16 @@ import { Devs } from "@utils/constants";
 import definePlugin from "@utils/types";
 import { findCssClassesLazy } from "@webpack";
 
+import managedStyle from "./userArea.css?managed";
+
 const cssClasses = findCssClassesLazy("iconForeground", "accountPopoutButtonWrapper");
 
 export default definePlugin({
     name: "UserAreaAPI",
     description: "API to add buttons to the user area panel.",
     authors: [Devs.prism],
+
+    managedStyle,
 
     patches: [
         {
