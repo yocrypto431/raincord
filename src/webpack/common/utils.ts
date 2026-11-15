@@ -230,7 +230,7 @@ export { openModal, openModalLazy, closeModal, closeAllModals, ModalRoot, ModalH
 export const Modal = findExportedComponentLazy("Modal");
 
 // Actions
-export const VoiceActions = findByPropsLazy("toggleSelfMute", "setChannel");
+export const VoiceActions = findByPropsLazy("toggleSelfMute");
 export const GuildActions = findByPropsLazy("requestMembersById", "leaveGuild");
 export const PinActions = findByPropsLazy("pinMessage", "unpinMessage");
 
