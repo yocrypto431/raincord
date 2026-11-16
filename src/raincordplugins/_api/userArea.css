@@ -9,9 +9,10 @@
 }
 
 [class*="container_"]:has(> [class*="accountPopoutButtonWrapper_"]) > [class*="accountPopoutButtonWrapper_"] {
-    flex: 1 1 100%;
+    flex: 0 1 auto !important;
     min-width: 0;
-    justify-content: center;
+    margin-left: 28px !important;
+    margin-right: auto !important;
 }
 
 [class*="container_"]:has(> [class*="accountPopoutButtonWrapper_"]) > [class*="accountPopoutButtonWrapper_"] > [class*="nameTag_"] {
