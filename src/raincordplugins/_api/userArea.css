@@ -2,17 +2,15 @@
     height: auto !important;
     min-height: 56px;
     flex-wrap: wrap;
-    justify-content: center;
     align-items: center;
     row-gap: 6px;
-    padding-bottom: 8px;
+    padding-bottom: 10px;
 }
 
 [class*="container_"]:has(> [class*="accountPopoutButtonWrapper_"]) > [class*="accountPopoutButtonWrapper_"] {
     flex: 0 1 auto !important;
     min-width: 0;
-    margin-left: 28px !important;
-    margin-right: auto !important;
+    margin: 0 auto 0 0 !important;
 }
 
 [class*="container_"]:has(> [class*="accountPopoutButtonWrapper_"]) > [class*="accountPopoutButtonWrapper_"] > [class*="nameTag_"] {
@@ -22,6 +20,7 @@
 
 [class*="container_"]:has(> [class*="accountPopoutButtonWrapper_"]) > [class*="buttons_"] {
     flex: 1 1 100%;
-    margin-left: 0;
-    justify-content: center;
+    margin-left: 0 !important;
+    justify-content: space-between !important;
+    padding: 0 4px;
 }
