@@ -8,9 +8,9 @@
 }
 
 [class*="container_"]:has(> [class*="accountPopoutButtonWrapper_"]) > [class*="accountPopoutButtonWrapper_"] {
-    flex: 0 1 auto !important;
-    min-width: 0;
-    margin: 0 auto 0 0 !important;
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    margin: 0 !important;
 }
 
 [class*="container_"]:has(> [class*="accountPopoutButtonWrapper_"]) > [class*="accountPopoutButtonWrapper_"] > [class*="nameTag_"] {
@@ -19,8 +19,17 @@
 }
 
 [class*="container_"]:has(> [class*="accountPopoutButtonWrapper_"]) > [class*="buttons_"] {
+    display: contents !important;
+}
+
+[class*="container_"]:has(> [class*="accountPopoutButtonWrapper_"]) > [class*="buttons_"] > :not(.vc-user-area-btns) {
+    order: 1;
+}
+
+body:not(.RAINCORD-stealth) [class*="container_"]:has(> [class*="accountPopoutButtonWrapper_"]) > [class*="buttons_"] > .vc-user-area-btns {
+    display: flex !important;
+    order: 2;
     flex: 1 1 100%;
-    margin-left: 0 !important;
-    justify-content: space-between !important;
-    padding: 0 4px;
+    justify-content: center;
+    gap: 8px;
 }
