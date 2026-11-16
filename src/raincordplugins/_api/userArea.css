@@ -2,15 +2,25 @@
     height: auto !important;
     min-height: 56px;
     flex-wrap: wrap;
-    row-gap: 4px;
+    justify-content: center;
+    align-items: center;
+    row-gap: 6px;
+    padding-bottom: 8px;
 }
 
 [class*="container_"]:has(> [class*="accountPopoutButtonWrapper_"]) > [class*="accountPopoutButtonWrapper_"] {
-    flex: 1 1 150px;
-    min-width: 150px;
+    flex: 1 1 100%;
+    min-width: 0;
+    justify-content: center;
+}
+
+[class*="container_"]:has(> [class*="accountPopoutButtonWrapper_"]) > [class*="accountPopoutButtonWrapper_"] > [class*="nameTag_"] {
+    flex: 0 1 auto;
+    min-width: 0;
 }
 
 [class*="container_"]:has(> [class*="accountPopoutButtonWrapper_"]) > [class*="buttons_"] {
-    flex: 0 1 auto;
-    margin-left: auto;
+    flex: 1 1 100%;
+    margin-left: 0;
+    justify-content: center;
 }
