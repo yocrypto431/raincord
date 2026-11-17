@@ -316,6 +316,22 @@ function EquicordSettings() {
                     ),
                 )}
 
+                <Heading className={Margins.top20}>Plugin Buttons Location</Heading>
+                <Paragraph className={Margins.bottom16}>
+                    Choose where the plugin buttons appear: in the user panel at the bottom left or in the title bar at the top.
+                </Paragraph>
+                <Select
+                    className={Margins.bottom20}
+                    placeholder="Plugin buttons location"
+                    options={[
+                        { label: "User panel (bottom left)", value: "userArea" },
+                        { label: "Title bar (top)", value: "titleBar" },
+                    ]}
+                    select={v => (settings.userAreaLocation = v)}
+                    isSelected={v => (settings.userAreaLocation ?? "userArea") === v}
+                    serialize={identity}
+                />
+
                 {needsVibrancySettings && (
                     <>
                         <Divider className={Margins.top20} />
