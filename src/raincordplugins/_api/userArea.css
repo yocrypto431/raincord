@@ -36,3 +36,24 @@ body:not(.RAINCORD-stealth) [class*="container_"]:has(> [class*="accountPopoutBu
     justify-content: center;
     gap: 8px;
 }
+
+.vc-user-area-btns-titlebar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin: 0 8px;
+    -webkit-app-region: no-drag;
+}
+
+.vc-user-area-btns-titlebar button {
+    width: 26px;
+    height: 22px;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+}
+
+.vc-user-area-btns-titlebar svg {
+    width: 16px;
+    height: 16px;
+}

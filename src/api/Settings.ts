@@ -80,6 +80,7 @@ export interface Settings {
     | undefined;
     disableMinSize: boolean;
     winNativeTitleBar: boolean;
+    userAreaLocation: "userArea" | "titleBar";
     plugins: {
         [plugin: string]: {
             enabled: boolean;
@@ -136,6 +137,7 @@ const DefaultSettings: Settings = {
     macosVibrancyStyle: undefined,
     disableMinSize: false,
     winNativeTitleBar: false,
+    userAreaLocation: "userArea",
     plugins: {},
 
     uiElements: {

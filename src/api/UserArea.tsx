@@ -9,7 +9,8 @@ import { Logger } from "@utils/Logger";
 import { findComponentByCodeLazy } from "@webpack";
 import { useEffect, useState } from "@webpack/common";
 import type { ComponentType, MouseEventHandler, ReactNode } from "react";
-import { addStealthListener, isStealthModeEnabled, removeStealthListener } from "./HeaderBar";
+import { addHeaderBarButton, addStealthListener, isStealthModeEnabled, removeStealthListener } from "./HeaderBar";
+import { useSettings } from "./Settings";
 
 const PanelButton = findComponentByCodeLazy("tooltipPositionKey", "positionKeyStemOverride") as ComponentType<UserAreaButtonProps>;
 
@@ -63,36 +64,22 @@ export function removeUserAreaButton(id: string) {
 
 export type UserAreaLocation = "userArea" | "titleBar";
 
-let currentLocation: UserAreaLocation = "userArea";
-const locationListeners = new Set<() => void>();
-
-export function getUserAreaLocation() {
-    return currentLocation;
-}
-
-export function setUserAreaLocation(next: UserAreaLocation) {
-    if (currentLocation === next) return;
-    currentLocation = next;
-    locationListeners.forEach(listener => listener());
-}
-
 function UserAreaButtons({ props, where }: { props: UserAreaRenderProps; where: UserAreaLocation; }) {
     const [, forceUpdate] = useState(0);
+    const { userAreaLocation } = useSettings(["userAreaLocation"]);
 
     useEffect(() => {
         const listener = () => forceUpdate(n => n + 1);
         addStealthListener(listener);
-        locationListeners.add(listener);
         window.addEventListener("RAINCORD-stealth-change", listener);
         return () => {
             removeStealthListener(listener);
-            locationListeners.delete(listener);
             window.removeEventListener("RAINCORD-stealth-change", listener);
         };
     }, []);
 
     if (isStealthModeEnabled()) return null;
-    if (currentLocation !== where) return null;
+    if ((userAreaLocation ?? "userArea") !== where) return null;
 
     const inTitleBar = where === "titleBar";
 
@@ -112,6 +99,8 @@ function UserAreaButtons({ props, where }: { props: UserAreaRenderProps; where: 
 export function UserAreaTitleBarButtons() {
     return <UserAreaButtons where="titleBar" props={{}} />;
 }
+
+addHeaderBarButton("RAINCORD-userarea-buttons", () => <UserAreaTitleBarButtons />, 100);
 
 export function _renderButtons(props: UserAreaRenderProps) {
     return [<UserAreaButtons key="vc-user-area-buttons" props={props} where="userArea" />];
