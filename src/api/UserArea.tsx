@@ -61,34 +61,58 @@ export function removeUserAreaButton(id: string) {
     buttons.delete(id);
 }
 
-function UserAreaButtons({ props }: { props: UserAreaRenderProps; }) {
+export type UserAreaLocation = "userArea" | "titleBar";
+
+let currentLocation: UserAreaLocation = "userArea";
+const locationListeners = new Set<() => void>();
+
+export function getUserAreaLocation() {
+    return currentLocation;
+}
+
+export function setUserAreaLocation(next: UserAreaLocation) {
+    if (currentLocation === next) return;
+    currentLocation = next;
+    locationListeners.forEach(listener => listener());
+}
+
+function UserAreaButtons({ props, where }: { props: UserAreaRenderProps; where: UserAreaLocation; }) {
     const [, forceUpdate] = useState(0);
 
     useEffect(() => {
         const listener = () => forceUpdate(n => n + 1);
         addStealthListener(listener);
+        locationListeners.add(listener);
         window.addEventListener("RAINCORD-stealth-change", listener);
         return () => {
             removeStealthListener(listener);
+            locationListeners.delete(listener);
             window.removeEventListener("RAINCORD-stealth-change", listener);
         };
     }, []);
 
     if (isStealthModeEnabled()) return null;
+    if (currentLocation !== where) return null;
+
+    const inTitleBar = where === "titleBar";
 
     return (
-        <div className="vc-user-area-btns" style={{ display: "contents" }}>
+        <div className={inTitleBar ? "vc-user-area-btns-titlebar" : "vc-user-area-btns"} style={inTitleBar ? undefined : { display: "contents" }}>
             {Array.from(buttons)
                 .sort(([, a], [, b]) => a.priority - b.priority)
                 .map(([id, { render: Button }]) => (
                     <ErrorBoundary noop key={id} onError={e => logger.error(`Failed to render ${id}`, e.error)}>
-                        <Button {...props} />
+                        <Button {...props} hideTooltips={false} />
                     </ErrorBoundary>
                 ))}
         </div>
     );
 }
 
+export function UserAreaTitleBarButtons() {
+    return <UserAreaButtons where="titleBar" props={{}} />;
+}
+
 export function _renderButtons(props: UserAreaRenderProps) {
-    return [<UserAreaButtons key="vc-user-area-buttons" props={props} />];
+    return [<UserAreaButtons key="vc-user-area-buttons" props={props} where="userArea" />];
 }

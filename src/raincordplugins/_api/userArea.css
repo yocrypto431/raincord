@@ -4,6 +4,9 @@
     flex-wrap: wrap;
     align-items: center;
     row-gap: 6px;
+}
+
+[class*="container_"]:has(> [class*="accountPopoutButtonWrapper_"] ~ [class*="buttons_"] > .vc-user-area-btns) {
     padding-bottom: 10px;
 }
 
