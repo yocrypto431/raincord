@@ -192,8 +192,9 @@ export const ChannelRouter: t.ChannelRouter = mapMangledModuleLazy('"Thread must
     transitionToThread: filters.byCode('"Thread must have a parent ID."')
 });
 
-export let SettingsRouter: any;
-waitFor(["openUserSettings", "USER_SETTINGS_MODAL_KEY"], m => SettingsRouter = m);
+export const SettingsRouter: any = mapMangledModuleLazy('type:"USER_SETTINGS_MODAL_OPEN"', {
+    openUserSettings: filters.byCode('type:"USER_SETTINGS_MODAL_OPEN"')
+});
 
 export const PermissionsBits: t.PermissionsBits = findLazy(m => typeof m.ADMINISTRATOR === "bigint");
 
@@ -245,7 +246,7 @@ export const DateUtils: t.DateUtils = mapMangledModuleLazy("millisecondsInUnit:"
 export const MessageTypeSets: t.MessageTypeSets = findByPropsLazy("REPLYABLE", "FORWARDABLE");
 
 export const CloudUploader = findLazy(m => m.prototype?.trackUploadFinished);
-export const ChannelActions = findByPropsLazy("selectChannel", "preload");
+export const ChannelActions = findByPropsLazy("selectChannel", "selectVoiceChannel");
 
 // ─── Re-exports for compatibility with Equicord/Vencord plugins ────────────────
 
@@ -258,19 +259,23 @@ export const Modal = findExportedComponentLazy("Modal");
 
 // Actions
 export const VoiceActions = findByPropsLazy("toggleSelfMute");
-export const GuildActions = findByPropsLazy("requestMembersById", "leaveGuild");
+export const GuildActions = findByPropsLazy("setServerMute", "setServerDeaf", "requestMembersById");
 export const PinActions = findByPropsLazy("pinMessage", "unpinMessage");
 
 // Utils
-export const ReadStateUtils = findByPropsLazy("ackMessage", "hasUnread");
-export const ColorUtils = findByPropsLazy("hex2int", "int2hex");
+export const ReadStateUtils = mapMangledModuleLazy('type:"ENABLE_AUTOMATIC_ACK",', {
+    ackChannel: filters.byCode(".isForumLikeChannel(")
+});
+export const ColorUtils = mapMangledModuleLazy("Invalid hex color format", {
+    rgbToHex: filters.byCode(".toString(16).slice(1)"),
+    hexToRgba: filters.byCode("`rgba(${"),
+    hexToRgb: filters.byCode(".rgb();return")
+});
 export const ApplicationStreamingStore = findByPropsLazy("getAnyStreamForUser", "getStreamForUser");
 export const ApplicationStreamPreviewStore = findByPropsLazy("getPreviewURL");
-export const fetchApplicationsRPC = findByCodeLazy("APPLICATION_RPC(");
+export const fetchApplicationsRPC = findByCodeLazy('"Invalid Origin"', ".application");
 
-// React DnD hooks
-export const useDrag = findByCodeLazy("useDrag", "DragSourceMonitor");
-export const useDrop = findByCodeLazy("useDrop", "DropTargetMonitor");
+export const useDrag = findByCodeLazy("useDrag::spec.begin was deprecated");
+export const useDrop = findByCodeLazy(".disconnectDropTarget()", ".dropTargetOptions=");
 
-// ConfirmModal component
-export const ConfirmModal = findByCodeLazy('"confirmButtonText"', '"cancelButtonText"');
+export const ConfirmModal = findByCodeLazy('role:"alertdialog"', "checkboxProps:", "onCloseCallback");
