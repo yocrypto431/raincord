@@ -16,8 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import { Logger } from "@utils/Logger";
 import type * as t from "@vencord/discord-types";
-import { _resolveReady, filters, findByCodeLazy, findByPropsLazy, findExportedComponentLazy, findLazy, mapMangledModuleLazy, waitFor } from "@webpack";
+import { _resolveReady, filters, findByCode, findByCodeLazy, findByPropsLazy, findExportedComponentLazy, findLazy, mapMangledModuleLazy, proxyLazyWebpack, waitFor } from "@webpack";
 import type * as TSPattern from "ts-pattern";
 
 export let FluxDispatcher: t.FluxDispatcher;
@@ -102,15 +103,41 @@ export interface ToastOptions {
     duration?: number;
 }
 
-interface ToastsExports {
-    showToast: (data: ToastData) => void;
-    popToast(): void;
+interface NativeToastData {
+    text: string;
+    variant?: "default" | "success" | "critical";
+    position?: "top" | "bottom";
+    duration?: number;
 }
 
-const ToastsExports = mapMangledModuleLazy(".currentToastMap.has(", {
-    showToast: filters.byCode(".currentToastMap.has("),
-    popToast: filters.byCode(".delete(")
+const toastLogger = new Logger("Toast");
+
+const nativeShowToast = proxyLazyWebpack<(data: NativeToastData) => void>(() => {
+    const found = findByCode(".currentToastMap.get(", "setState");
+    if (typeof found === "function") return found;
+
+    toastLogger.error("Failed to find showToast! Falling back to logging");
+    return (data: NativeToastData) => toastLogger.log(data.text);
 });
+
+const toastVariants: Record<string, NativeToastData["variant"]> = {
+    [ToastType.SUCCESS]: "success",
+    [ToastType.FAILURE]: "critical"
+};
+
+function showNativeToast(data: ToastData) {
+    try {
+        const position = data.options?.position;
+        nativeShowToast({
+            text: data.message,
+            variant: toastVariants[data.type] ?? "default",
+            position: position === ToastPosition.TOP ? "top" : position === ToastPosition.BOTTOM ? "bottom" : undefined,
+            duration: data.options?.duration
+        });
+    } catch (e) {
+        toastLogger.error("Failed to show toast", e);
+    }
+}
 
 export function createToast(message: string, type: string, options?: ToastOptions): ToastData {
     return {
@@ -126,8 +153,8 @@ export const Toasts = {
     Position: ToastPosition,
     genId: () => (Math.random() || Math.random()).toString(36).slice(2),
 
-    show: ToastsExports.showToast,
-    pop: ToastsExports.popToast,
+    show: showNativeToast,
+    pop: () => { },
     create: createToast,
 };
 
@@ -165,8 +192,9 @@ export const ChannelRouter: t.ChannelRouter = mapMangledModuleLazy('"Thread must
     transitionToThread: filters.byCode('"Thread must have a parent ID."')
 });
 
-export let SettingsRouter: any;
-waitFor(["openUserSettings", "USER_SETTINGS_MODAL_KEY"], m => SettingsRouter = m);
+export const SettingsRouter: any = mapMangledModuleLazy('type:"USER_SETTINGS_MODAL_OPEN"', {
+    openUserSettings: filters.byCode('type:"USER_SETTINGS_MODAL_OPEN"')
+});
 
 export const PermissionsBits: t.PermissionsBits = findLazy(m => typeof m.ADMINISTRATOR === "bigint");
 
@@ -218,7 +246,7 @@ export const DateUtils: t.DateUtils = mapMangledModuleLazy("millisecondsInUnit:"
 export const MessageTypeSets: t.MessageTypeSets = findByPropsLazy("REPLYABLE", "FORWARDABLE");
 
 export const CloudUploader = findLazy(m => m.prototype?.trackUploadFinished);
-export const ChannelActions = findByPropsLazy("selectChannel", "preload");
+export const ChannelActions = findByPropsLazy("selectChannel", "selectVoiceChannel");
 
 // ─── Re-exports for compatibility with Equicord/Vencord plugins ────────────────
 
@@ -231,19 +259,23 @@ export const Modal = findExportedComponentLazy("Modal");
 
 // Actions
 export const VoiceActions = findByPropsLazy("toggleSelfMute");
-export const GuildActions = findByPropsLazy("requestMembersById", "leaveGuild");
+export const GuildActions = findByPropsLazy("setServerMute", "setServerDeaf", "requestMembersById");
 export const PinActions = findByPropsLazy("pinMessage", "unpinMessage");
 
 // Utils
-export const ReadStateUtils = findByPropsLazy("ackMessage", "hasUnread");
-export const ColorUtils = findByPropsLazy("hex2int", "int2hex");
+export const ReadStateUtils = mapMangledModuleLazy('type:"ENABLE_AUTOMATIC_ACK",', {
+    ackChannel: filters.byCode(".isForumLikeChannel(")
+});
+export const ColorUtils = mapMangledModuleLazy("Invalid hex color format", {
+    rgbToHex: filters.byCode(".toString(16).slice(1)"),
+    hexToRgba: filters.byCode("`rgba(${"),
+    hexToRgb: filters.byCode(".rgb();return")
+});
 export const ApplicationStreamingStore = findByPropsLazy("getAnyStreamForUser", "getStreamForUser");
 export const ApplicationStreamPreviewStore = findByPropsLazy("getPreviewURL");
-export const fetchApplicationsRPC = findByCodeLazy("APPLICATION_RPC(");
+export const fetchApplicationsRPC = findByCodeLazy('"Invalid Origin"', ".application");
 
-// React DnD hooks
-export const useDrag = findByCodeLazy("useDrag", "DragSourceMonitor");
-export const useDrop = findByCodeLazy("useDrop", "DropTargetMonitor");
+export const useDrag = findByCodeLazy("useDrag::spec.begin was deprecated");
+export const useDrop = findByCodeLazy(".disconnectDropTarget()", ".dropTargetOptions=");
 
-// ConfirmModal component
-export const ConfirmModal = findByCodeLazy('"confirmButtonText"', '"cancelButtonText"');
+export const ConfirmModal = findByCodeLazy('role:"alertdialog"', "checkboxProps:", "onCloseCallback");

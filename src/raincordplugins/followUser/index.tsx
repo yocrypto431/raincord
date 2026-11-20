@@ -88,19 +88,23 @@ function clearInactivityTimer() {
 // ── Listener voix ─────────────────────────────────────────────────────────────
 function onVoiceStateUpdates(data: any) {
     if (!followedId) return;
-    const states: any[] = Array.isArray(data?.voiceStates) ? data.voiceStates
-        : data?.voiceStates != null ? Array.from(data.voiceStates as any) : [];
-    for (const s of states) {
-        if (s.userId !== followedId) continue;
-        const newCh: string | null = s.channelId ?? null;
-        if (newCh !== followedChannel) {
-            followedChannel = newCh;
-            if (newCh) {
-                resetInactivityTimer(); // activite detectee, on repart pour 30min
-                joinChannel(newCh);
-                Toasts.show({ message: `Suivi ${followedName} → vocal`, type: Toasts.Type.MESSAGE, id: Toasts.genId() });
+    try {
+        const states: any[] = Array.isArray(data?.voiceStates) ? data.voiceStates
+            : data?.voiceStates != null ? Array.from(data.voiceStates as any) : [];
+        for (const s of states) {
+            if (s.userId !== followedId) continue;
+            const newCh: string | null = s.channelId ?? null;
+            if (newCh !== followedChannel) {
+                followedChannel = newCh;
+                if (newCh) {
+                    resetInactivityTimer();
+                    joinChannel(newCh);
+                    Toasts.show({ message: `Suivi ${followedName} → vocal`, type: Toasts.Type.MESSAGE, id: Toasts.genId() });
+                }
             }
         }
+    } catch (e) {
+        console.error("[FollowUser] VOICE_STATE_UPDATES handler failed", e);
     }
 }
 
