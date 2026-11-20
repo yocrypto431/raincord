@@ -16,8 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+import { Logger } from "@utils/Logger";
 import type * as t from "@vencord/discord-types";
-import { _resolveReady, filters, findByCodeLazy, findByPropsLazy, findExportedComponentLazy, findLazy, mapMangledModuleLazy, waitFor } from "@webpack";
+import { _resolveReady, filters, findByCode, findByCodeLazy, findByPropsLazy, findExportedComponentLazy, findLazy, mapMangledModuleLazy, proxyLazyWebpack, waitFor } from "@webpack";
 import type * as TSPattern from "ts-pattern";
 
 export let FluxDispatcher: t.FluxDispatcher;
@@ -102,15 +103,41 @@ export interface ToastOptions {
     duration?: number;
 }
 
-interface ToastsExports {
-    showToast: (data: ToastData) => void;
-    popToast(): void;
+interface NativeToastData {
+    text: string;
+    variant?: "default" | "success" | "critical";
+    position?: "top" | "bottom";
+    duration?: number;
 }
 
-const ToastsExports = mapMangledModuleLazy(".currentToastMap.has(", {
-    showToast: filters.byCode(".currentToastMap.has("),
-    popToast: filters.byCode(".delete(")
+const toastLogger = new Logger("Toast");
+
+const nativeShowToast = proxyLazyWebpack<(data: NativeToastData) => void>(() => {
+    const found = findByCode(".currentToastMap.get(", "setState");
+    if (typeof found === "function") return found;
+
+    toastLogger.error("Failed to find showToast! Falling back to logging");
+    return (data: NativeToastData) => toastLogger.log(data.text);
 });
+
+const toastVariants: Record<string, NativeToastData["variant"]> = {
+    [ToastType.SUCCESS]: "success",
+    [ToastType.FAILURE]: "critical"
+};
+
+function showNativeToast(data: ToastData) {
+    try {
+        const position = data.options?.position;
+        nativeShowToast({
+            text: data.message,
+            variant: toastVariants[data.type] ?? "default",
+            position: position === ToastPosition.TOP ? "top" : position === ToastPosition.BOTTOM ? "bottom" : undefined,
+            duration: data.options?.duration
+        });
+    } catch (e) {
+        toastLogger.error("Failed to show toast", e);
+    }
+}
 
 export function createToast(message: string, type: string, options?: ToastOptions): ToastData {
     return {
@@ -126,8 +153,8 @@ export const Toasts = {
     Position: ToastPosition,
     genId: () => (Math.random() || Math.random()).toString(36).slice(2),
 
-    show: ToastsExports.showToast,
-    pop: ToastsExports.popToast,
+    show: showNativeToast,
+    pop: () => { },
     create: createToast,
 };
 

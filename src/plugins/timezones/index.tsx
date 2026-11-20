@@ -309,20 +309,10 @@ export default definePlugin({
 
             if (!settings.store.askedTimezone) {
                 showToast(
-                    "",
+                    "Want to save your timezone to the database? Open the Timezones plugin settings and press Set Timezone on Database.",
                     Toasts.Type.MESSAGE,
                     {
                         duration: 10000,
-                        component: (
-                            <Button
-                                color={Button.Colors.GREEN}
-                                onClick={() => {
-                                    openModal(modalProps => <SetTimezoneModal userId={UserStore.getCurrentUser().id} modalProps={modalProps} database={true} />);
-                                }}
-                            >
-                                Want to save your timezone to the database? Click here to set it.
-                            </Button>
-                        ),
                         position: Toasts.Position.BOTTOM
                     }
                 );

@@ -10,7 +10,7 @@ import { createAudioPlayer, AudioPlayerInterface } from "@api/AudioPlayer";
 import definePlugin, { PluginNative } from "@utils/types";
 import { UserAreaButton, UserAreaButtonFactory, UserAreaRenderProps } from "@api/UserArea";
 import { findStoreLazy, waitFor } from "@webpack";
-import { React, useState } from "@webpack/common";
+import { React, Toasts, useState } from "@webpack/common";
 
 const VoiceStateStore = findStoreLazy("VoiceStateStore");
 const UserStore = findStoreLazy("UserStore");
@@ -44,18 +44,7 @@ function getMyVoiceState(): { channelId: string; guildId: string; } | null {
 }
 
 function showToast(msg: string) {
-    try {
-        const W = (window as any).Vencord?.Webpack;
-        if (!W?.find || !W?.filters) { console.log("[DoubleCall]", msg); return; }
-        const Toasts = W.find(W.filters.byProps("createToast", "showToast"), { isIndirect: true })
-            ?? W.find(W.filters.byProps("showToast"), { isIndirect: true });
-        if (Toasts?.showToast) {
-            const toast = Toasts.createToast?.(msg, Toasts.Type?.MESSAGE) ?? msg;
-            Toasts.showToast(toast);
-        } else {
-            console.log("[DoubleCall]", msg);
-        }
-    } catch { }
+    Toasts.show(Toasts.create(msg, Toasts.Type.MESSAGE));
 }
 
 function PhoneIcon({ className }: { className?: string; }) {
