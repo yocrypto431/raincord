@@ -232,3 +232,11 @@
     padding: 18px 0;
     line-height: 1.6;
 }
+
+.mi-account-row--current.mi-account-row--clickable {
+    cursor: pointer;
+}
+
+.mi-account-row--current.mi-account-row--clickable:hover {
+    background: rgba(88,101,242,0.14);
+}

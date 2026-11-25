@@ -14,6 +14,19 @@ import { join } from "path";
 import { registerMediaPermissionsForSession } from "../../raincord/main/mediaPermissions";
 
 const openWindows = new Map<string, BrowserWindow>();
+let duplicateCounter = 0;
+
+function instanceKey(userId: string, duplicate: boolean) {
+    return duplicate ? `${userId}#${++duplicateCounter}` : userId;
+}
+
+function instancePartition(key: string) {
+    return `persist:RAINCORD-mi-${key.replace("#", "-")}`;
+}
+
+function belongsTo(key: string, userId: string) {
+    return key === userId || key.startsWith(`${userId}#`);
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Intercepte les IPC de contrôle de fenêtre pour une instance multi.
@@ -167,11 +180,13 @@ export async function openInstanceWindow(
     token: string,
     userId: string,
     detached = false,
-    username = ""
+    username = "",
+    duplicate = false
 ): Promise<{ ok: boolean; error?: string; }> {
     try {
+        const key = instanceKey(userId, duplicate);
         // Fenetre deja ouverte -> focus
-        const existing = openWindows.get(userId);
+        const existing = openWindows.get(key);
         if (existing && !existing.isDestroyed()) {
             existing.show();
             existing.focus();
@@ -180,7 +195,7 @@ export async function openInstanceWindow(
 
         // ID unique par instance - Windows groupe les fenetres par AppUserModelId
         // En donnant un ID different a chaque fenetre, elles ne se regroupent pas
-        const uniqueAppId = `RAINCORD.instance.${userId}.${Date.now()}`;
+        const uniqueAppId = `RAINCORD.instance.${key.replace("#", ".")}.${Date.now()}`;
 
         // Icone : rotation 1→2→3→4→5→1→... depuis multi-instance-icons/
         let currentIconPath = "";
@@ -189,16 +204,16 @@ export async function openInstanceWindow(
         if (!existsSync(currentIconPath)) currentIconPath = "";
         iconCounter = iconCounter >= 5 ? 1 : iconCounter + 1;
 
-        // Session Electron isolee par userId
-        const partition = `persist:RAINCORD-mi-${userId}`;
+        // Session Electron isolee par instance
+        const partition = instancePartition(key);
         const ses = session.fromPartition(partition, { cache: true });
 
         ses.webRequest.onHeadersReceived((details, callback) => {
             const headers = { ...details.responseHeaders };
-            for (const key of Object.keys(headers)) {
-                const low = key.toLowerCase();
+            for (const headerName of Object.keys(headers)) {
+                const low = headerName.toLowerCase();
                 if (low === "content-security-policy" || low === "permissions-policy" || low === "feature-policy") {
-                    delete headers[key];
+                    delete headers[headerName];
                 }
             }
             callback({ responseHeaders: headers });
@@ -249,7 +264,7 @@ export async function openInstanceWindow(
             }
         }
 
-        openWindows.set(userId, win);
+        openWindows.set(key, win);
 
         win.on("enter-html-full-screen", () => {
             win.setFullScreen(true);
@@ -283,7 +298,7 @@ export async function openInstanceWindow(
 
         win.once("closed", () => {
             cleanupIpc();
-            openWindows.delete(userId);
+            openWindows.delete(key);
             // Nettoie les service workers de la session pour couper définitivement les notifs
             ses.clearStorageData({ storages: ["serviceworkers"] }).catch(() => {});
         });
@@ -338,27 +353,29 @@ export async function openInstanceWindowGrouped(
     _: any,
     token: string,
     userId: string,
-    username = ""
+    username = "",
+    duplicate = false
 ): Promise<{ ok: boolean; error?: string; }> {
     try {
+        const key = instanceKey(userId, duplicate);
         // Focus si deja ouverte
-        const existing = openGroupedWindows.get(userId);
+        const existing = openGroupedWindows.get(key);
         if (existing && !existing.isDestroyed()) {
             existing.show();
             existing.focus();
             return { ok: true };
         }
 
-        // Session isolee par userId
-        const partition = `persist:RAINCORD-mi-${userId}`;
+        // Session isolee par instance
+        const partition = instancePartition(key);
         const ses = session.fromPartition(partition, { cache: true });
 
         ses.webRequest.onHeadersReceived((details, callback) => {
             const headers = { ...details.responseHeaders };
-            for (const key of Object.keys(headers)) {
-                const low = key.toLowerCase();
+            for (const headerName of Object.keys(headers)) {
+                const low = headerName.toLowerCase();
                 if (low === "content-security-policy" || low === "permissions-policy" || low === "feature-policy") {
-                    delete headers[key];
+                    delete headers[headerName];
                 }
             }
             callback({ responseHeaders: headers });
@@ -393,7 +410,7 @@ export async function openInstanceWindowGrouped(
             },
         });
 
-        openGroupedWindows.set(userId, win);
+        openGroupedWindows.set(key, win);
 
         win.on("enter-html-full-screen", () => {
             win.setFullScreen(true);
@@ -424,7 +441,7 @@ export async function openInstanceWindowGrouped(
 
         win.once("closed", () => {
             cleanupIpc();
-            openGroupedWindows.delete(userId);
+            openGroupedWindows.delete(key);
             ses.clearStorageData({ storages: ["serviceworkers"] }).catch(() => {});
         });
 
@@ -494,12 +511,15 @@ export async function arrangeSplit(_: any, userId: string): Promise<void> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function getOpenInstances(_: any): Promise<string[]> {
-    return [...openWindows.entries()]
+    return [...openWindows.entries(), ...openGroupedWindows.entries()]
         .filter(([, w]) => !w.isDestroyed())
         .map(([id]) => id);
 }
 
 export async function closeInstance(_: any, userId: string): Promise<void> {
-    const win = openWindows.get(userId);
-    if (win && !win.isDestroyed()) win.close();
+    for (const map of [openWindows, openGroupedWindows]) {
+        for (const [key, win] of map) {
+            if (belongsTo(key, userId) && !win.isDestroyed()) win.close();
+        }
+    }
 }
