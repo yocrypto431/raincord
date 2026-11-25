@@ -110,6 +110,19 @@ interface SavedAccount {
 interface AccountEntry extends SavedAccount {
     hasToken: boolean;
     isNative: boolean;
+    isSelf?: boolean;
+}
+
+function getCurrentToken(): string {
+    try {
+        return findByProps("getToken")?.getToken?.() ?? "";
+    } catch {
+        return "";
+    }
+}
+
+function belongsToAccount(instanceKey: string, userId: string) {
+    return instanceKey === userId || instanceKey.startsWith(`${userId}#`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -253,9 +266,11 @@ function ContextMenuPortal(props: CtxMenuProps) {
                 <div className="mi-ctx-separator" />
             </>}
 
-            <div className="mi-ctx-item" onClick={() => { onSwitch(); onClose(); }}>
-                <SwitchIcon /> {t("Quick switch")}
-            </div>
+            {!acc.isSelf && (
+                <div className="mi-ctx-item" onClick={() => { onSwitch(); onClose(); }}>
+                    <SwitchIcon /> {t("Quick switch")}
+                </div>
+            )}
 
             {isOpen && <>
                 <div className="mi-ctx-separator" />
@@ -312,6 +327,21 @@ function MultiInstanceModal({ rootProps }: { rootProps: any; }) {
         return result;
     }, [savedAccounts, nativeAccounts, currentUser]);
 
+    const selfEntry = React.useMemo<AccountEntry | null>(() => {
+        if (!currentUser) return null;
+        const token = tokenCache[currentUser.id] || getCurrentToken();
+        return {
+            id: currentUser.id,
+            token,
+            username: (currentUser as any).globalName || currentUser.username,
+            discriminator: currentUser.discriminator ?? "0",
+            avatar: getAvatarUrl(currentUser.id, currentUser.avatar, currentUser.discriminator),
+            hasToken: !!token,
+            isNative: true,
+            isSelf: true,
+        };
+    }, [currentUser, nativeAccounts]);
+
     const refreshInstances = async () => {
         const ids = await Native.getOpenInstances().catch(() => []);
         setOpenInstances(ids ?? []);
@@ -322,7 +352,7 @@ function MultiInstanceModal({ rootProps }: { rootProps: any; }) {
         setCtx(null);
         setStatus(t("Opening window…"));
         // @ts-ignore - Passage du pseudo
-        const res = await Native.openInstanceWindow(acc.token, acc.id, false, acc.username).catch(() => ({ ok: false, error: "error" }));
+        const res = await Native.openInstanceWindow(acc.token, acc.id, false, acc.username, !!acc.isSelf).catch(() => ({ ok: false, error: "error" }));
         if ((res as any).ok) {
             setStatus(t("Window opened ✓"));
             await refreshInstances();
@@ -337,7 +367,7 @@ function MultiInstanceModal({ rootProps }: { rootProps: any; }) {
         setCtx(null);
         setStatus(t("Opening detached instance…"));
         // @ts-ignore - Argument 'detached' et pseudo ajoutés
-        const res = await Native.openInstanceWindow(acc.token, acc.id, true, acc.username).catch(() => ({ ok: false, error: "error" }));
+        const res = await Native.openInstanceWindow(acc.token, acc.id, true, acc.username, !!acc.isSelf).catch(() => ({ ok: false, error: "error" }));
         if ((res as any).ok) {
             setStatus(t("Instance opened ✓"));
             await refreshInstances();
@@ -352,7 +382,7 @@ function MultiInstanceModal({ rootProps }: { rootProps: any; }) {
         setCtx(null);
         setStatus(t("Opening grouped instance…"));
         // @ts-ignore
-        const res = await Native.openInstanceWindowGrouped(acc.token, acc.id, acc.username).catch(() => ({ ok: false, error: "error" }));
+        const res = await Native.openInstanceWindowGrouped(acc.token, acc.id, acc.username, !!acc.isSelf).catch(() => ({ ok: false, error: "error" }));
         if ((res as any).ok) {
             setStatus(t("Instance opened ✓"));
             await refreshInstances();
@@ -386,7 +416,11 @@ function MultiInstanceModal({ rootProps }: { rootProps: any; }) {
                 {currentUser && (
                     <div className="mi-list">
                         <div className="mi-section-label">{t("ACTIVE ACCOUNT")}</div>
-                        <div className="mi-account-row mi-account-row--current">
+                        <div
+                            className={`mi-account-row mi-account-row--current${selfEntry?.hasToken ? " mi-account-row--clickable" : ""}${selfEntry && openInstances.some(k => belongsToAccount(k, selfEntry.id)) ? " mi-account-row--active" : ""}`}
+                            onClick={e => selfEntry?.hasToken && openCtx(e, selfEntry)}
+                            onContextMenu={e => selfEntry?.hasToken && openCtx(e, selfEntry)}
+                        >
                             <AccountAvatar
                                 url={getAvatarUrl(currentUser.id, currentUser.avatar, currentUser.discriminator)}
                                 name={currentUser.username}
@@ -395,7 +429,9 @@ function MultiInstanceModal({ rootProps }: { rootProps: any; }) {
                                 <span className="mi-account-name">
                                     {(currentUser as any).globalName || currentUser.username}
                                 </span>
-                                <span className="mi-account-tag">@{currentUser.username}</span>
+                                <span className="mi-account-tag">
+                                    @{currentUser.username}{selfEntry?.hasToken ? ` · ${t("click to open another window")}` : ""}
+                                </span>
                             </div>
                             <span className="mi-badge-current">{t("Active")}</span>
                         </div>
@@ -449,14 +485,14 @@ function MultiInstanceModal({ rootProps }: { rootProps: any; }) {
 
             {/* Context menu via portal */}
             {ctx && (() => {
-                const acc = allAccounts.find(a => a.id === ctx.acc.id);
+                const acc = ctx.acc.isSelf ? selfEntry : allAccounts.find(a => a.id === ctx.acc.id);
                 if (!acc) return null;
                 return (
                     <ContextMenuPortal
                         x={ctx.x}
                         y={ctx.y}
                         acc={acc}
-                        isOpen={openInstances.includes(acc.id)}
+                        isOpen={openInstances.some(k => belongsToAccount(k, acc.id))}
                         onClose={() => setCtx(null)}
                         onNewWindow={() => handleNewWindow(acc)}
                         onNewDetached={() => handleNewDetached(acc)}
